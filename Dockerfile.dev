@@ -1,0 +1,26 @@
+# Imagen base ligera de Python
+FROM python:3.11-slim
+
+# Instala dependencias del sistema necesarias
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl build-essential nano && \
+    rm -rf /var/lib/apt/lists/*
+
+# Establece el directorio de trabajo
+WORKDIR /app
+
+# Copia dependencias e instálalas
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Instala herramientas de desarrollo y FastAPI
+RUN pip install --no-cache-dir fastapi uvicorn[standard] python-dotenv watchdog
+
+# Copia el resto del código fuente
+COPY . .
+
+# Expone el puerto 8080
+EXPOSE 8080
+
+# Comando por defecto: ejecutar el servidor en modo desarrollo
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]

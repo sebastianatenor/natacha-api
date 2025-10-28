@@ -1,0 +1,10 @@
+# Archivos y carpetas a ignorar en despliegues de gcloud
+.git
+.gitignore
+venv/
+__pycache__/
+*.pyc
+*.log
+*.DS_Store
+.env
+deploy_*

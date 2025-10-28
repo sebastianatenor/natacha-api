@@ -1,0 +1,65 @@
+name: 🚀 Natacha CI/CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "natacha_base/**"
+      - "routes/**"
+      - "memory_console/**"
+      - "natacha_core/**"
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - ".github/workflows/deploy.yml"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_ID: asistente-sebastian
+      REGION: us-central1
+      MEMORY_SERVICE: natacha-memory-console
+      CORE_SERVICE: natacha-core
+      API_SERVICE: natacha-api
+
+    steps:
+      - name: 🧩 Checkout repo
+        uses: actions/checkout@v4
+
+      - name: 🔐 Auth with Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: 🐳 Setup Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Build and Push Containers
+        run: |
+          echo "Building and pushing services..."
+          for SERVICE in $MEMORY_SERVICE $CORE_SERVICE $API_SERVICE; do
+            echo "🧱 Building $SERVICE..."
+            docker build -t gcr.io/$PROJECT_ID/$SERVICE:latest -f $SERVICE/Dockerfile .
+            docker push gcr.io/$PROJECT_ID/$SERVICE:latest
+          done
+
+      - name: 🚀 Deploy to Cloud Run
+        run: |
+          echo "Deploying services to Cloud Run..."
+          gcloud run deploy $MEMORY_SERVICE \
+            --image gcr.io/$PROJECT_ID/$MEMORY_SERVICE:latest \
+            --region $REGION --platform managed --allow-unauthenticated
+
+          gcloud run deploy $CORE_SERVICE \
+            --image gcr.io/$PROJECT_ID/$CORE_SERVICE:latest \
+            --region $REGION --platform managed --allow-unauthenticated
+
+          gcloud run deploy $API_SERVICE \
+            --image gcr.io/$PROJECT_ID/$API_SERVICE:latest \
+            --region $REGION --platform managed --allow-unauthenticated
+
+      - name: ✅ Health Check
+        run: |
+          echo "Checking services..."
+          curl -f https://${{ env.API_SERVICE }}-${{ env.REGION }}.a.run.app/health

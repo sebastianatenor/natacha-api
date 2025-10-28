@@ -1,0 +1,59 @@
+services:
+  natacha-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: natacha-api
+    restart: always
+    ports:
+      - "8080:8080"
+    networks:
+      - natacha-net
+
+  natacha-core:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: natacha-core
+    restart: always
+    ports:
+      - "8081:8080"
+    networks:
+      - natacha-net
+
+  natacha-health-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: natacha-health-monitor
+    restart: always
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /app/firestore-key.json
+      GOOGLE_CLOUD_PROJECT: asistente-sebastian
+    volumes:
+      - .:/app
+    networks:
+      - natacha-net
+
+  natacha-service-checker:
+    build:
+      context: .
+      dockerfile: Dockerfile.service_checker
+    container_name: natacha-service-checker
+    restart: always
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /app/firestore-key.json
+      GOOGLE_CLOUD_PROJECT: asistente-sebastian
+    volumes:
+      - .:/app
+    depends_on:
+      natacha-api:
+        condition: service_started
+      natacha-core:
+        condition: service_started
+    networks:
+      - natacha-net
+
+networks:
+  natacha-net:
+    driver: bridge

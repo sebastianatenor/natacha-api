@@ -1,0 +1,12 @@
+# ===========================================================
+# 🧠 Natacha Systems - Service Checker Container
+# ===========================================================
+FROM python:3.13-slim
+
+WORKDIR /app
+COPY . .
+
+RUN pip install --no-cache-dir google-cloud-firestore requests
+
+CMD ["python", "natacha_system/service_checker.py"]
+

@@ -1,0 +1,8 @@
+{
+  "services": {
+    "natacha-api": "http://localhost:8080/health",
+    "natacha-core": "http://localhost:8081/health",
+    "natacha-health-monitor": "http://localhost:8090/health"
+  },
+  "interval_seconds": 60
+}

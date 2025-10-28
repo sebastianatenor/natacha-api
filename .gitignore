@@ -1,0 +1,26 @@
+# Entorno y dependencias
+venv/
+__pycache__/
+*.pyc
+
+# Archivos del sistema
+.DS_Store
+.env
+
+# Logs y temporales
+*.log
+logs/
+*.tmp
+*.bak
+
+# Archivos de despliegue y credenciales
+firestore-key.json
+secrets/
+infra_status*.json
+
+# Archivos generados por Docker o despliegue
+*.tar
+*.zip
+*.tgz
+.deploy_cache/
+.deploy_temp/
