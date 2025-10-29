@@ -1,0 +1,16 @@
+{
+  "createTime": "2025-10-29T18:15:40.321259219Z",
+  "description": "5xx en Cloud Run (sin /debug/boom)",
+  "filter": "resource.type=\"cloud_run_revision\"\nAND resource.labels.service_name=\"natacha-health-monitor\"\nAND logName=\"projects/asistente-sebastian/logs/run.googleapis.com%2Frequests\"\nAND httpRequest.status>=500\nAND -httpRequest.requestUrl:\"/debug/boom\"",
+  "metricDescriptor": {
+    "description": "5xx en Cloud Run (sin /debug/boom)",
+    "metricKind": "DELTA",
+    "name": "projects/asistente-sebastian/metricDescriptors/logging.googleapis.com/user/health-monitor-5xx",
+    "type": "logging.googleapis.com/user/health-monitor-5xx",
+    "unit": "1",
+    "valueType": "INT64"
+  },
+  "name": "health-monitor-5xx",
+  "resourceName": "projects/asistente-sebastian/metrics/health-monitor-5xx",
+  "updateTime": "2025-10-29T18:15:40.321259219Z"
+}

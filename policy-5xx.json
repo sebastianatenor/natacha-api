@@ -1,23 +1,15 @@
 {
-  "displayName": "Cloud Run 5xx – natacha-health-monitor",
+  "displayName": "CRun | natacha-health-monitor | 5xx (sin /debug/boom)",
   "combiner": "OR",
-  "enabled": true,
   "conditions": [
     {
-      "displayName": "5xx > 0 en 1m (NHM)",
+      "displayName": "Logs 5xx > 0 en 1m",
       "conditionMonitoringQueryLanguage": {
-        "query": "fetch cloud_run_revision\n| metric 'run.googleapis.com/request_count'\n| filter (resource.service_name == 'natacha-health-monitor' && metric.response_code_class == '5xx')\n| group_by 1m, [err: sum(value.request_count)]\n| every 1m\n| condition err > 0",
-        "duration": "0s",
-        "trigger": { "count": 1 }
+        "duration": "60s",
+        "query": "fetch global\n| metric 'logging.googleapis.com/user/health-monitor-5xx'\n| align rate(1m)\n| group_by [], sum(value)\n| every 1m\n| condition val() > 0"
       }
     }
   ],
-  "notificationChannels": [
-    "projects/asistente-sebastian/notificationChannels/5941256893092102238"
-  ],
-  "severity": "ERROR",
-  "documentation": {
-    "content": "Se detectaron respuestas 5xx en Cloud Run para el servicio natacha-health-monitor en los últimos 60s.",
-    "mimeType": "text/markdown"
-  }
+  "notificationChannels": [],
+  "enabled": true
 }
