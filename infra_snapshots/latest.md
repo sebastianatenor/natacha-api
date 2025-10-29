@@ -1,4 +1,4 @@
-# Natacha – Daily Digest (20251029T002906)
+# Natacha – Daily Digest (20251029T011441)
 
 - Proyecto: asistente-sebastian
 - Región: us-central1
@@ -68,3 +68,13 @@
 - projects/422255208682/secrets/SERVICE_ACCOUNT_KEY
 - projects/422255208682/secrets/SLACK_WEBHOOK
 - projects/422255208682/secrets/WABA
+
+## Scheduler (última ejecución de run-auto-heal)
+- Último intento: 2025-10-29T01:15:03.870443Z
+- Resultado: HTTP 200
+- Endpoint: /auto_heal
+
+## Scheduler (run-auto-heal)
+- Último intento: 2025-10-29T01:15:03.870443Z
+- Resultado: HTTP 200
+- Próximo intento: 2025-10-29T01:30:00.760466Z

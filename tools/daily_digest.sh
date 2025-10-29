@@ -1,5 +1,14 @@
 #!/bin/zsh
-set -euo pipefail
+set -eo pipefail
+PROJECT=${PROJECT:-asistente-sebastian}
+REGION=${REGION:-us-central1}
+LOCATION=${LOCATION:-us-central1}
+PROJECT=${PROJECT:-asistente-sebastian}
+REGION=${REGION:-us-central1}
+LOCATION=${LOCATION:-us-central1}
+PROJECT=${PROJECT:-asistente-sebastian}
+REGION=${REGION:-us-central1}
+LOCATION=${LOCATION:-us-central1}
 
 # Último snapshot
 S="$(ls -1dt "$HOME/Projects/natacha-api/infra_snapshots"/20*Z | head -n1)"
@@ -76,3 +85,67 @@ log_metrics=$(val_or_nd "$S/log.metrics.json")
 } > "$OUT_MD"
 
 echo "✅ Digest generado: $OUT_MD"
+
+# === Scheduler: última ejecución de run-auto-heal ===
+{
+  echo
+  echo "## Scheduler (última ejecución de run-auto-heal)"
+  LAST_JSON="$(gcloud logging read \
+    'resource.type="cloud_run_revision" AND resource.labels.service_name="natacha-health-monitor" AND httpRequest.requestUrl:"/auto_heal"' \
+    --project="$PROJECT" --limit=1 --order=desc --format=json 2>/dev/null || echo '[]')"
+
+  if [ "$(echo "$LAST_JSON" | jq 'length')" -gt 0 ]; then
+    TS="$(echo "$LAST_JSON" | jq -r '.[0].timestamp // .[0].receiveTimestamp // "n/a"')"
+    ST="$(echo "$LAST_JSON" | jq -r '.[0].httpRequest.status // "n/a"')"
+    URL="$(echo "$LAST_JSON" | jq -r '.[0].httpRequest.requestUrl // "n/a"')"
+    PATH_ONLY="$(echo "$URL" | sed -E 's#https?://[^/]+##')"
+    echo "- Último intento: $TS"
+    echo "- Resultado: HTTP $ST"
+    echo "- Endpoint: ${PATH_ONLY:-/auto_heal}"
+  else
+    echo "_Sin datos recientes del job run-auto-heal_"
+  fi
+} >> "$OUT_MD"
+
+# ===== Scheduler summary (run-auto-heal) =====
+{
+  echo
+  echo "## Scheduler (run-auto-heal)"
+
+  JOB_ID="run-auto-heal"
+
+  # Último intento (desde Cloud Run logs del servicio health-monitor filtrando /auto_heal)
+  LAST_TS="$(gcloud logging read \
+    'resource.type="cloud_run_revision" AND resource.labels.service_name="natacha-health-monitor" AND httpRequest.requestUrl:"/auto_heal"' \
+    --project="${PROJECT}" --limit=1 --order=desc \
+    --format='value(timestamp)' 2>/dev/null || true)"
+
+  LAST_CODE="$(gcloud logging read \
+    'resource.type="cloud_run_revision" AND resource.labels.service_name="natacha-health-monitor" AND httpRequest.requestUrl:"/auto_heal"' \
+    --project="${PROJECT}" --limit=1 --order=desc \
+    --format='value(httpRequest.status)' 2>/dev/null || true)"
+
+  # Próximo intento programado por el Scheduler
+  NEXT_TS="$(gcloud scheduler jobs describe "${JOB_ID}" \
+    --location="${LOCATION}" --project="${PROJECT}" \
+    --format='value(scheduleTime)' 2>/dev/null || true)"
+
+  if [ -n "${LAST_TS:-}" ] || [ -n "${LAST_CODE:-}" ]; then
+    echo "- Último intento: ${LAST_TS:-_Sin datos_}"
+    if [ -n "${LAST_CODE:-}" ]; then
+      echo "- Resultado: HTTP ${LAST_CODE}"
+    else
+      echo "- Resultado: _Sin datos_"
+    fi
+  else
+    echo "_Sin datos_"
+  fi
+
+  if [ -n "${NEXT_TS:-}" ]; then
+  echo "- Próximo intento: ${NEXT_TS}"
+else
+  CRON="$(gcloud scheduler jobs describe "${JOB_ID}" --location="${LOCATION}" --project="${PROJECT}" --format='value(schedule)')" || true
+  TZID="$(gcloud scheduler jobs describe "${JOB_ID}" --location="${LOCATION}" --project="${PROJECT}" --format='value(timeZone)')" || true
+  echo "- Próximo intento: _Sin datos_ (cron: ${CRON:-n/a}, tz: ${TZID:-n/a})"
+fi
+} >> "$OUT_MD"

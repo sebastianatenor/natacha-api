@@ -18,6 +18,17 @@ PROJECT="asistente-sebastian"
 REGION="us-central1"
 LOCATION="us-central1"
 
+# === Auth for signed HTTP checks ===
+IMPERSONATE_SA="scheduler-invoker@asistente-sebastian.iam.gserviceaccount.com"
+HEALTH_AUD="https://natacha-health-monitor-mkwskljrhq-uc.a.run.app"
+API_HEALTH_URL="https://natacha-api-mkwskljrhq-uc.a.run.app/health"
+AUTO_HEAL_URL="https://natacha-health-monitor-mkwskljrhq-uc.a.run.app/auto_heal"
+# === Auth for signed HTTP checks ===
+IMPERSONATE_SA="scheduler-invoker@asistente-sebastian.iam.gserviceaccount.com"
+HEALTH_AUD="https://natacha-health-monitor-mkwskljrhq-uc.a.run.app"
+API_HEALTH_URL="https://natacha-api-mkwskljrhq-uc.a.run.app/health"
+AUTO_HEAL_URL="https://natacha-health-monitor-mkwskljrhq-uc.a.run.app/auto_heal"
+
 # ================== SISTEMA ==================
 log "▶ sys.uname"
 uname -a > "$OUT/sys.uname" && log "✓ sys.uname"
@@ -165,11 +176,17 @@ gcloud logging read 'resource.type="cloud_run_revision" AND timestamp>="-1h"' \
 
 # ================== HTTP CHECKS ==================
 log "▶ http.health"
-{ CODE=20 20 12 61 79 80 81 701 33 98 100 204 250 395 398 399 400curl -sS -o "/http.health.body" -w "%{http_code}" "https://natacha-api-mkwskljrhq-uc.a.run.app/"); echo "" > "/http.health.code"; } || echo "N/A" > "/http.health.code"
+{
+  CODE=$(TOKEN="$(gcloud auth print-identity-token --impersonate-service-account=$IMPERSONATE_SA --audiences="$HEALTH_AUD" --project=$PROJECT)"     && curl -sS -H "Authorization: Bearer $TOKEN" -o "$OUT/http.health.body" -w "%{http_code}" "$API_HEALTH_URL" || echo "N/A");
+  echo "$CODE" > "$OUT/http.health.code";
+}
 log "✓ http.health"
 
 log "▶ http.auto_heal"
-{ CODE=20 20 12 61 79 80 81 701 33 98 100 204 250 395 398 399 400curl -sS -X POST -o "/http.auto_heal.body" -w "%{http_code}" "https://natacha-health-monitor-mkwskljrhq-uc.a.run.app/auto_heal"); echo "" > "/http.auto_heal.code"; } || echo "N/A" > "/http.auto_heal.code"
+{
+  CODE=$(TOKEN="$(gcloud auth print-identity-token --impersonate-service-account=$IMPERSONATE_SA --audiences="$HEALTH_AUD" --project=$PROJECT)"     && curl -sS -X POST -H "Authorization: Bearer $TOKEN" -o "$OUT/http.auto_heal.body" -w "%{http_code}" "$AUTO_HEAL_URL" || echo "N/A");
+  echo "$CODE" > "$OUT/http.auto_heal.code";
+}
 log "✓ http.auto_heal"
 
 # ================== COMPRESIÓN ==================
