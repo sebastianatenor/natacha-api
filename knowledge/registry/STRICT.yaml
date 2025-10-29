@@ -1,0 +1,30 @@
+# Qué rutas escanear
+scan_paths:
+  - .
+  - knowledge/chats        # ← acá podés guardar exportes de chats (txt, md, json)
+  # Sumá otras si querés, una por línea
+
+# Globs a ignorar
+ignore_globs:
+  - ".git/**"
+  - "venv/**"
+  - "__pycache__/**"
+  - "node_modules/**"
+  - "*.log"
+  - "*.tmp"
+  - "infra_snapshots/**"   # snapshots son permitidos
+  - "knowledge/registry/REGISTRY.md"
+
+# Archivos cuyo nombre puede repetirse sin error (por diseño)
+duplicate_filename_allowlist:
+  - "README.md"
+  - "__init__.py"
+
+# Candidatos “sensibles” que NO deberían existir múltiples veces
+must_be_unique:
+  - "dashboard.py"
+  - "policy-uptime.json"
+  - "policy-5xx.json"
+
+# Umbral de similitud para nombres casi iguales (0.0–1.0)
+near_duplicate_threshold: 0.88

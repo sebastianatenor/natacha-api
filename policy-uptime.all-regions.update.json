@@ -1,0 +1,39 @@
+{
+  "combiner": "OR",
+  "conditions": [
+    {
+      "conditionThreshold": {
+        "aggregations": [
+          {
+            "alignmentPeriod": "60s",
+            "perSeriesAligner": "ALIGN_NEXT_OLDER"
+          },
+          {
+            "alignmentPeriod": "60s",
+            "crossSeriesReducer": "REDUCE_COUNT_TRUE"
+          }
+        ],
+        "comparison": "COMPARISON_LT",
+        "duration": "120s",
+        "evaluationMissingData": "EVALUATION_MISSING_DATA_INACTIVE",
+        "filter": "metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" AND resource.type=\"uptime_url\" AND resource.label.\"host\"=\"natacha-health-monitor-422255208682.us-central1.run.app\""
+      },
+      "displayName": "All regions failing (2m)",
+      "name": "projects/asistente-sebastian/alertPolicies/13575294913821338865/conditions/13575294913821339228"
+    }
+  ],
+  "creationRecord": {
+    "mutateTime": "2025-10-29T19:31:07.687140872Z",
+    "mutatedBy": "sebastianatenor@gmail.com"
+  },
+  "displayName": "CRun | HealthMonitor | Uptime / all regions down",
+  "enabled": true,
+  "mutationRecord": {
+    "mutateTime": "2025-10-29T19:31:07.687140872Z",
+    "mutatedBy": "sebastianatenor@gmail.com"
+  },
+  "name": "projects/asistente-sebastian/alertPolicies/13575294913821338865",
+  "notificationChannels": [
+    "projects/asistente-sebastian/notificationChannels/17012733904319805436"
+  ]
+}

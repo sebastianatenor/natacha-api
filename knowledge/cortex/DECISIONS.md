@@ -1,0 +1,2 @@
+- [2025-10-29 19:05] Alertas solo a sebastianatenor@gmail.com por ahora.
+- [2025-10-29 19:06] Seguimos con email; Slack más adelante.

@@ -29,3 +29,4 @@ policy-*.tmp.json
 *-update.json
 *evaluated.json
 policy-*-test.json
+infra_snapshots/archive/
