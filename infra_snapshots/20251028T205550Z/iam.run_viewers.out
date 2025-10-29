@@ -1,0 +1,3 @@
+ROLE              MEMBERS
+roles/run.viewer  serviceAccount:422255208682-compute@developer.gserviceaccount.com
+roles/run.viewer  serviceAccount:natacha-cloud-executor@asistente-sebastian.iam.gserviceaccount.com

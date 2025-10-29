@@ -1,0 +1,1803 @@
+[
+  {
+    "apiVersion": "serving.knative.dev/v1",
+    "kind": "Service",
+    "metadata": {
+      "annotations": {
+        "cloudfunctions.googleapis.com/function-id": "auto-stop-vm",
+        "run.googleapis.com/build-base-image": "us-central1-docker.pkg.dev/serverless-runtimes/google-22-full/runtimes/python311",
+        "run.googleapis.com/build-enable-automatic-updates": "true",
+        "run.googleapis.com/build-function-target": "auto_stop_vm",
+        "run.googleapis.com/build-image-uri": "us-central1-docker.pkg.dev/asistente-sebastian/gcf-artifacts/asistente--sebastian__us--central1__auto--stop--vm:version_1",
+        "run.googleapis.com/build-name": "projects/422255208682/locations/us-central1/builds/64b38dea-288b-4a74-8ab3-e7935eaf2898",
+        "run.googleapis.com/build-service-account": "projects/asistente-sebastian/serviceAccounts/422255208682-compute@developer.gserviceaccount.com",
+        "run.googleapis.com/build-source-location": "gs://gcf-v2-sources-422255208682-us-central1/auto-stop-vm/function-source.zip#1760800959488580",
+        "run.googleapis.com/client-name": "cloudfunctions",
+        "run.googleapis.com/custom-audiences": "[\"https://us-central1-asistente-sebastian.cloudfunctions.net/auto-stop-vm\"]",
+        "run.googleapis.com/ingress": "all",
+        "run.googleapis.com/ingress-status": "all",
+        "run.googleapis.com/operation-id": "66d912db-45b4-4f9a-b02b-f65a689e1436",
+        "run.googleapis.com/urls": "[\"https://auto-stop-vm-422255208682.us-central1.run.app\",\"https://us-central1-asistente-sebastian.cloudfunctions.net/auto-stop-vm\",\"https://auto-stop-vm-mkwskljrhq-uc.a.run.app\"]",
+        "serving.knative.dev/creator": "service-422255208682@gcf-admin-robot.iam.gserviceaccount.com",
+        "serving.knative.dev/lastModifier": "service-422255208682@gcf-admin-robot.iam.gserviceaccount.com"
+      },
+      "creationTimestamp": "2025-10-18T15:23:27.253595Z",
+      "generation": 1,
+      "labels": {
+        "cloud.googleapis.com/location": "us-central1",
+        "goog-cloudfunctions-runtime": "python311",
+        "goog-drz-cloudfunctions-id": "auto-stop-vm",
+        "goog-drz-cloudfunctions-location": "us-central1",
+        "goog-managed-by": "cloudfunctions"
+      },
+      "name": "auto-stop-vm",
+      "namespace": "422255208682",
+      "resourceVersion": "AAZBcG+gmOg",
+      "selfLink": "/apis/serving.knative.dev/v1/namespaces/422255208682/services/auto-stop-vm",
+      "uid": "683d8400-3e65-4af0-a74c-565220521432"
+    },
+    "spec": {
+      "template": {
+        "metadata": {
+          "annotations": {
+            "autoscaling.knative.dev/maxScale": "100",
+            "cloudfunctions.googleapis.com/trigger-type": "HTTP_TRIGGER",
+            "run.googleapis.com/base-images": "{\"worker\":\"us-central1-docker.pkg.dev/serverless-runtimes/google-22-full/runtimes/python311\"}",
+            "run.googleapis.com/client-name": "cloudfunctions",
+            "run.googleapis.com/startup-cpu-boost": "true"
+          },
+          "labels": {
+            "run.googleapis.com/startupProbeType": "Default"
+          },
+          "name": "auto-stop-vm-00001-qec"
+        },
+        "spec": {
+          "containerConcurrency": 1,
+          "containers": [
+            {
+              "env": [
+                {
+                  "name": "LOG_EXECUTION_ID",
+                  "value": "true"
+                }
+              ],
+              "image": "us-central1-docker.pkg.dev/asistente-sebastian/gcf-artifacts/asistente--sebastian__us--central1__auto--stop--vm:version_1",
+              "name": "worker",
+              "ports": [
+                {
+                  "containerPort": 8080,
+                  "name": "http1"
+                }
+              ],
+              "resources": {
+                "limits": {
+                  "cpu": "0.1666",
+                  "memory": "256M"
+                }
+              },
+              "startupProbe": {
+                "failureThreshold": 1,
+                "periodSeconds": 240,
+                "tcpSocket": {
+                  "port": 8080
+                },
+                "timeoutSeconds": 240
+              }
+            }
+          ],
+          "runtimeClassName": "run.googleapis.com/linux-base-image-update",
+          "serviceAccountName": "natacha-cloud-executor@asistente-sebastian.iam.gserviceaccount.com",
+          "timeoutSeconds": 120
+        }
+      },
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100
+        }
+      ]
+    },
+    "status": {
+      "address": {
+        "url": "https://auto-stop-vm-mkwskljrhq-uc.a.run.app"
+      },
+      "conditions": [
+        {
+          "lastTransitionTime": "2025-10-18T15:23:45.202408Z",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2025-10-18T15:23:44.446783Z",
+          "status": "True",
+          "type": "ConfigurationsReady"
+        },
+        {
+          "lastTransitionTime": "2025-10-18T15:23:45.152848Z",
+          "status": "True",
+          "type": "RoutesReady"
+        }
+      ],
+      "latestCreatedRevisionName": "auto-stop-vm-00001-qec",
+      "latestReadyRevisionName": "auto-stop-vm-00001-qec",
+      "observedGeneration": 1,
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100,
+          "revisionName": "auto-stop-vm-00001-qec"
+        }
+      ],
+      "url": "https://auto-stop-vm-mkwskljrhq-uc.a.run.app"
+    }
+  },
+  {
+    "apiVersion": "serving.knative.dev/v1",
+    "kind": "Service",
+    "metadata": {
+      "annotations": {
+        "cloudfunctions.googleapis.com/function-id": "autostart-vm",
+        "run.googleapis.com/build-base-image": "us-central1-docker.pkg.dev/serverless-runtimes/google-22-full/runtimes/python311",
+        "run.googleapis.com/build-enable-automatic-updates": "true",
+        "run.googleapis.com/build-function-target": "autostart_vm",
+        "run.googleapis.com/build-image-uri": "us-central1-docker.pkg.dev/asistente-sebastian/gcf-artifacts/asistente--sebastian__us--central1__autostart--vm:version_1",
+        "run.googleapis.com/build-name": "projects/422255208682/locations/us-central1/builds/a11901cf-f18d-4633-9ead-b1f9a2ecd067",
+        "run.googleapis.com/build-service-account": "projects/asistente-sebastian/serviceAccounts/422255208682-compute@developer.gserviceaccount.com",
+        "run.googleapis.com/build-source-location": "gs://gcf-v2-sources-422255208682-us-central1/autostart-vm/function-source.zip#1760736864024113",
+        "run.googleapis.com/client-name": "cloudfunctions",
+        "run.googleapis.com/custom-audiences": "[\"https://us-central1-asistente-sebastian.cloudfunctions.net/autostart-vm\"]",
+        "run.googleapis.com/ingress": "all",
+        "run.googleapis.com/ingress-status": "all",
+        "run.googleapis.com/operation-id": "d7943116-86b3-466b-832e-66820b7b8ffd",
+        "run.googleapis.com/urls": "[\"https://autostart-vm-422255208682.us-central1.run.app\",\"https://us-central1-asistente-sebastian.cloudfunctions.net/autostart-vm\",\"https://autostart-vm-mkwskljrhq-uc.a.run.app\"]",
+        "serving.knative.dev/creator": "service-422255208682@gcf-admin-robot.iam.gserviceaccount.com",
+        "serving.knative.dev/lastModifier": "service-422255208682@gcf-admin-robot.iam.gserviceaccount.com"
+      },
+      "creationTimestamp": "2025-10-17T21:14:59.755864Z",
+      "generation": 3,
+      "labels": {
+        "cloud.googleapis.com/location": "us-central1",
+        "goog-cloudfunctions-runtime": "python311",
+        "goog-drz-cloudfunctions-id": "autostart-vm",
+        "goog-drz-cloudfunctions-location": "us-central1",
+        "goog-managed-by": "cloudfunctions"
+      },
+      "name": "autostart-vm",
+      "namespace": "422255208682",
+      "resourceVersion": "AAZBYYTT27Q",
+      "selfLink": "/apis/serving.knative.dev/v1/namespaces/422255208682/services/autostart-vm",
+      "uid": "e58e8bca-4660-4865-a8ef-7e4759b3d10a"
+    },
+    "spec": {
+      "template": {
+        "metadata": {
+          "annotations": {
+            "autoscaling.knative.dev/maxScale": "100",
+            "cloudfunctions.googleapis.com/trigger-type": "HTTP_TRIGGER",
+            "run.googleapis.com/base-images": "{\"worker\":\"us-central1-docker.pkg.dev/serverless-runtimes/google-22-full/runtimes/python311\"}",
+            "run.googleapis.com/client-name": "cloudfunctions",
+            "run.googleapis.com/startup-cpu-boost": "true"
+          },
+          "labels": {
+            "goog-drz-cloudfunctions-id": "autostart-vm",
+            "goog-drz-cloudfunctions-location": "us-central1",
+            "run.googleapis.com/startupProbeType": "Default"
+          },
+          "name": "autostart-vm-00003-dov"
+        },
+        "spec": {
+          "containerConcurrency": 1,
+          "containers": [
+            {
+              "env": [
+                {
+                  "name": "LOG_EXECUTION_ID",
+                  "value": "true"
+                }
+              ],
+              "image": "us-central1-docker.pkg.dev/asistente-sebastian/gcf-artifacts/asistente--sebastian__us--central1__autostart--vm:version_1",
+              "name": "worker",
+              "ports": [
+                {
+                  "containerPort": 8080,
+                  "name": "http1"
+                }
+              ],
+              "resources": {
+                "limits": {
+                  "cpu": "0.1666",
+                  "memory": "256M"
+                }
+              },
+              "startupProbe": {
+                "failureThreshold": 1,
+                "periodSeconds": 240,
+                "tcpSocket": {
+                  "port": 8080
+                },
+                "timeoutSeconds": 240
+              }
+            }
+          ],
+          "runtimeClassName": "run.googleapis.com/linux-base-image-update",
+          "serviceAccountName": "natacha-cloud-executor@asistente-sebastian.iam.gserviceaccount.com",
+          "timeoutSeconds": 120
+        }
+      },
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100
+        }
+      ]
+    },
+    "status": {
+      "address": {
+        "url": "https://autostart-vm-mkwskljrhq-uc.a.run.app"
+      },
+      "conditions": [
+        {
+          "lastTransitionTime": "2025-10-17T21:35:56.373940Z",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2025-10-17T21:35:11.965744Z",
+          "status": "True",
+          "type": "ConfigurationsReady"
+        },
+        {
+          "lastTransitionTime": "2025-10-17T21:35:56.327565Z",
+          "status": "True",
+          "type": "RoutesReady"
+        }
+      ],
+      "latestCreatedRevisionName": "autostart-vm-00003-dov",
+      "latestReadyRevisionName": "autostart-vm-00003-dov",
+      "observedGeneration": 3,
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100,
+          "revisionName": "autostart-vm-00003-dov"
+        }
+      ],
+      "url": "https://autostart-vm-mkwskljrhq-uc.a.run.app"
+    }
+  },
+  {
+    "apiVersion": "serving.knative.dev/v1",
+    "kind": "Service",
+    "metadata": {
+      "annotations": {
+        "cloudfunctions.googleapis.com/function-id": "log-natacha-activity",
+        "run.googleapis.com/build-base-image": "us-central1-docker.pkg.dev/serverless-runtimes/google-22-full/runtimes/python311",
+        "run.googleapis.com/build-enable-automatic-updates": "true",
+        "run.googleapis.com/build-function-target": "log_natacha_activity",
+        "run.googleapis.com/build-image-uri": "us-central1-docker.pkg.dev/asistente-sebastian/gcf-artifacts/asistente--sebastian__us--central1__log--natacha--activity:version_1",
+        "run.googleapis.com/build-name": "projects/422255208682/locations/us-central1/builds/43129a0a-6dda-4dd2-9438-dd1f2647dfba",
+        "run.googleapis.com/build-service-account": "projects/asistente-sebastian/serviceAccounts/422255208682-compute@developer.gserviceaccount.com",
+        "run.googleapis.com/build-source-location": "gs://gcf-v2-sources-422255208682-us-central1/log-natacha-activity/function-source.zip#1760801866340424",
+        "run.googleapis.com/client-name": "gcloud",
+        "run.googleapis.com/custom-audiences": "[\"https://us-central1-asistente-sebastian.cloudfunctions.net/log-natacha-activity\"]",
+        "run.googleapis.com/ingress": "all",
+        "run.googleapis.com/ingress-status": "all",
+        "run.googleapis.com/operation-id": "f1f3481e-3760-4a5b-a53e-9efea7588874",
+        "run.googleapis.com/urls": "[\"https://log-natacha-activity-422255208682.us-central1.run.app\",\"https://us-central1-asistente-sebastian.cloudfunctions.net/log-natacha-activity\",\"https://log-natacha-activity-mkwskljrhq-uc.a.run.app\"]",
+        "serving.knative.dev/creator": "service-422255208682@gcf-admin-robot.iam.gserviceaccount.com",
+        "serving.knative.dev/lastModifier": "service-422255208682@gcf-admin-robot.iam.gserviceaccount.com"
+      },
+      "creationTimestamp": "2025-10-18T15:38:33.204994Z",
+      "generation": 1,
+      "labels": {
+        "cloud.googleapis.com/location": "us-central1",
+        "goog-cloudfunctions-runtime": "python311",
+        "goog-drz-cloudfunctions-id": "log-natacha-activity",
+        "goog-drz-cloudfunctions-location": "us-central1",
+        "goog-managed-by": "cloudfunctions"
+      },
+      "name": "log-natacha-activity",
+      "namespace": "422255208682",
+      "resourceVersion": "AAZBcKUa3ps",
+      "selfLink": "/apis/serving.knative.dev/v1/namespaces/422255208682/services/log-natacha-activity",
+      "uid": "2a61f102-d62c-49e8-bebd-b6486798ed51"
+    },
+    "spec": {
+      "template": {
+        "metadata": {
+          "annotations": {
+            "autoscaling.knative.dev/maxScale": "100",
+            "cloudfunctions.googleapis.com/trigger-type": "HTTP_TRIGGER",
+            "run.googleapis.com/base-images": "{\"worker\":\"us-central1-docker.pkg.dev/serverless-runtimes/google-22-full/runtimes/python311\"}",
+            "run.googleapis.com/client-name": "gcloud",
+            "run.googleapis.com/startup-cpu-boost": "true"
+          },
+          "labels": {
+            "run.googleapis.com/startupProbeType": "Default"
+          },
+          "name": "log-natacha-activity-00001-bev"
+        },
+        "spec": {
+          "containerConcurrency": 1,
+          "containers": [
+            {
+              "env": [
+                {
+                  "name": "LOG_EXECUTION_ID",
+                  "value": "true"
+                }
+              ],
+              "image": "us-central1-docker.pkg.dev/asistente-sebastian/gcf-artifacts/asistente--sebastian__us--central1__log--natacha--activity:version_1",
+              "name": "worker",
+              "ports": [
+                {
+                  "containerPort": 8080,
+                  "name": "http1"
+                }
+              ],
+              "resources": {
+                "limits": {
+                  "cpu": "0.1666",
+                  "memory": "256M"
+                }
+              },
+              "startupProbe": {
+                "failureThreshold": 1,
+                "periodSeconds": 240,
+                "tcpSocket": {
+                  "port": 8080
+                },
+                "timeoutSeconds": 240
+              }
+            }
+          ],
+          "runtimeClassName": "run.googleapis.com/linux-base-image-update",
+          "serviceAccountName": "422255208682-compute@developer.gserviceaccount.com",
+          "timeoutSeconds": 60
+        }
+      },
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100
+        }
+      ]
+    },
+    "status": {
+      "address": {
+        "url": "https://log-natacha-activity-mkwskljrhq-uc.a.run.app"
+      },
+      "conditions": [
+        {
+          "lastTransitionTime": "2025-10-18T15:38:42.408091Z",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2025-10-18T15:38:37.899270Z",
+          "status": "True",
+          "type": "ConfigurationsReady"
+        },
+        {
+          "lastTransitionTime": "2025-10-18T15:38:42.358520Z",
+          "status": "True",
+          "type": "RoutesReady"
+        }
+      ],
+      "latestCreatedRevisionName": "log-natacha-activity-00001-bev",
+      "latestReadyRevisionName": "log-natacha-activity-00001-bev",
+      "observedGeneration": 1,
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100,
+          "revisionName": "log-natacha-activity-00001-bev"
+        }
+      ],
+      "url": "https://log-natacha-activity-mkwskljrhq-uc.a.run.app"
+    }
+  },
+  {
+    "apiVersion": "serving.knative.dev/v1",
+    "kind": "Service",
+    "metadata": {
+      "annotations": {
+        "run.googleapis.com/build-enable-automatic-updates": "false",
+        "run.googleapis.com/build-id": "5535eca1-5131-4bdb-baa7-e462de9ff31e",
+        "run.googleapis.com/build-image-uri": "us-central1-docker.pkg.dev/asistente-sebastian/cloud-run-source-deploy/natacha-api",
+        "run.googleapis.com/build-name": "projects/422255208682/locations/us-central1/builds/5535eca1-5131-4bdb-baa7-e462de9ff31e",
+        "run.googleapis.com/build-source-location": "gs://run-sources-asistente-sebastian-us-central1/services/natacha-api/1760989256.229908-4870e2060a654f73b26a2e2da1bf6f11.zip#1760989336310342",
+        "run.googleapis.com/client-name": "gcloud",
+        "run.googleapis.com/client-version": "544.0.0",
+        "run.googleapis.com/ingress": "all",
+        "run.googleapis.com/ingress-status": "all",
+        "run.googleapis.com/operation-id": "6e708efc-f5ad-4c5f-a38f-bd5429608a82",
+        "run.googleapis.com/urls": "[\"https://natacha-api-422255208682.us-central1.run.app\",\"https://natacha-api-mkwskljrhq-uc.a.run.app\"]",
+        "serving.knative.dev/creator": "sebastianatenor@gmail.com",
+        "serving.knative.dev/lastModifier": "sebastianatenor@gmail.com"
+      },
+      "creationTimestamp": "2025-10-14T16:22:38.586384Z",
+      "generation": 170,
+      "labels": {
+        "cloud.googleapis.com/location": "us-central1"
+      },
+      "name": "natacha-api",
+      "namespace": "422255208682",
+      "resourceVersion": "AAZCLZo+/Gs",
+      "selfLink": "/apis/serving.knative.dev/v1/namespaces/422255208682/services/natacha-api",
+      "uid": "fd4c53ea-76a9-4329-ac58-22f9db3262f9"
+    },
+    "spec": {
+      "template": {
+        "metadata": {
+          "annotations": {
+            "autoscaling.knative.dev/maxScale": "2",
+            "autoscaling.knative.dev/minScale": "1",
+            "run.googleapis.com/client-name": "gcloud",
+            "run.googleapis.com/client-version": "544.0.0",
+            "run.googleapis.com/startup-cpu-boost": "true"
+          },
+          "labels": {
+            "client.knative.dev/nonce": "fgqgiawbdx",
+            "run.googleapis.com/startupProbeType": "Default"
+          }
+        },
+        "spec": {
+          "containerConcurrency": 80,
+          "containers": [
+            {
+              "env": [
+                {
+                  "name": "WHATSAPP_TOKEN",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "key": "latest",
+                      "name": "META_WHATSAPP_TOKEN"
+                    }
+                  }
+                }
+              ],
+              "image": "gcr.io/asistente-sebastian/natacha-api",
+              "ports": [
+                {
+                  "containerPort": 8080,
+                  "name": "http1"
+                }
+              ],
+              "resources": {
+                "limits": {
+                  "cpu": "1",
+                  "memory": "512Mi"
+                }
+              },
+              "startupProbe": {
+                "failureThreshold": 1,
+                "periodSeconds": 240,
+                "tcpSocket": {
+                  "port": 8080
+                },
+                "timeoutSeconds": 240
+              }
+            }
+          ],
+          "serviceAccountName": "natacha-automation@asistente-sebastian.iam.gserviceaccount.com",
+          "timeoutSeconds": 300
+        }
+      },
+      "traffic": [
+        {
+          "percent": 100,
+          "revisionName": "natacha-api-00164-vtv"
+        }
+      ]
+    },
+    "status": {
+      "address": {
+        "url": "https://natacha-api-mkwskljrhq-uc.a.run.app"
+      },
+      "conditions": [
+        {
+          "lastTransitionTime": "2025-10-28T01:04:48.966527Z",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2025-10-28T01:04:49.000951Z",
+          "reason": "Retired",
+          "status": "True",
+          "type": "ConfigurationsReady"
+        },
+        {
+          "lastTransitionTime": "2025-10-28T01:03:33.208229Z",
+          "status": "True",
+          "type": "RoutesReady"
+        }
+      ],
+      "latestCreatedRevisionName": "natacha-api-00166-6bd",
+      "latestReadyRevisionName": "natacha-api-00164-vtv",
+      "observedGeneration": 170,
+      "traffic": [
+        {
+          "percent": 100,
+          "revisionName": "natacha-api-00164-vtv"
+        }
+      ],
+      "url": "https://natacha-api-mkwskljrhq-uc.a.run.app"
+    }
+  },
+  {
+    "apiVersion": "serving.knative.dev/v1",
+    "kind": "Service",
+    "metadata": {
+      "annotations": {
+        "run.googleapis.com/client-name": "gcloud",
+        "run.googleapis.com/client-version": "542.0.0",
+        "run.googleapis.com/ingress": "all",
+        "run.googleapis.com/ingress-status": "all",
+        "run.googleapis.com/operation-id": "f415df88-8f39-4a0f-9791-0477c2a62cd5",
+        "run.googleapis.com/urls": "[\"https://natacha-command-endpoint-422255208682.us-central1.run.app\",\"https://natacha-command-endpoint-mkwskljrhq-uc.a.run.app\"]",
+        "serving.knative.dev/creator": "sebastianatenor@gmail.com",
+        "serving.knative.dev/lastModifier": "sebastianatenor@gmail.com"
+      },
+      "creationTimestamp": "2025-10-16T03:51:45.704090Z",
+      "generation": 1,
+      "labels": {
+        "cloud.googleapis.com/location": "us-central1"
+      },
+      "name": "natacha-command-endpoint",
+      "namespace": "422255208682",
+      "resourceVersion": "AAZBPolwv2g",
+      "selfLink": "/apis/serving.knative.dev/v1/namespaces/422255208682/services/natacha-command-endpoint",
+      "uid": "f9cd826f-3ef6-4a33-9b43-756a1dbf78d9"
+    },
+    "spec": {
+      "template": {
+        "metadata": {
+          "annotations": {
+            "autoscaling.knative.dev/maxScale": "20",
+            "run.googleapis.com/client-name": "gcloud",
+            "run.googleapis.com/client-version": "542.0.0",
+            "run.googleapis.com/startup-cpu-boost": "true"
+          },
+          "labels": {
+            "client.knative.dev/nonce": "ldmhgjpjna",
+            "run.googleapis.com/startupProbeType": "Default"
+          }
+        },
+        "spec": {
+          "containerConcurrency": 80,
+          "containers": [
+            {
+              "image": "gcr.io/cloudrun/hello",
+              "ports": [
+                {
+                  "containerPort": 8080,
+                  "name": "http1"
+                }
+              ],
+              "resources": {
+                "limits": {
+                  "cpu": "1000m",
+                  "memory": "512Mi"
+                }
+              },
+              "startupProbe": {
+                "failureThreshold": 1,
+                "periodSeconds": 240,
+                "tcpSocket": {
+                  "port": 8080
+                },
+                "timeoutSeconds": 240
+              }
+            }
+          ],
+          "serviceAccountName": "natacha-cloud-executor@asistente-sebastian.iam.gserviceaccount.com",
+          "timeoutSeconds": 300
+        }
+      },
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100
+        }
+      ]
+    },
+    "status": {
+      "address": {
+        "url": "https://natacha-command-endpoint-mkwskljrhq-uc.a.run.app"
+      },
+      "conditions": [
+        {
+          "lastTransitionTime": "2025-10-16T03:51:49.909352Z",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2025-10-16T03:51:49.545398Z",
+          "status": "True",
+          "type": "ConfigurationsReady"
+        },
+        {
+          "lastTransitionTime": "2025-10-16T03:51:49.869995Z",
+          "status": "True",
+          "type": "RoutesReady"
+        }
+      ],
+      "latestCreatedRevisionName": "natacha-command-endpoint-00001-wgt",
+      "latestReadyRevisionName": "natacha-command-endpoint-00001-wgt",
+      "observedGeneration": 1,
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100,
+          "revisionName": "natacha-command-endpoint-00001-wgt"
+        }
+      ],
+      "url": "https://natacha-command-endpoint-mkwskljrhq-uc.a.run.app"
+    }
+  },
+  {
+    "apiVersion": "serving.knative.dev/v1",
+    "kind": "Service",
+    "metadata": {
+      "annotations": {
+        "run.googleapis.com/build-enable-automatic-updates": "false",
+        "run.googleapis.com/build-id": "5b6ee6cc-9e80-483b-a508-e533fd2590b2",
+        "run.googleapis.com/build-image-uri": "us-central1-docker.pkg.dev/asistente-sebastian/cloud-run-source-deploy/natacha-core",
+        "run.googleapis.com/build-name": "projects/422255208682/locations/us-central1/builds/5b6ee6cc-9e80-483b-a508-e533fd2590b2",
+        "run.googleapis.com/build-source-location": "gs://run-sources-asistente-sebastian-us-central1/services/natacha-core/1761103518.009457-3d11f90a91e1430280d225f6b4b2a890.zip#1761103662005427",
+        "run.googleapis.com/client-name": "gcloud",
+        "run.googleapis.com/client-version": "544.0.0",
+        "run.googleapis.com/ingress": "all",
+        "run.googleapis.com/ingress-status": "all",
+        "run.googleapis.com/operation-id": "e8324370-d06f-4bf3-b39b-239b9c96825d",
+        "run.googleapis.com/urls": "[\"https://natacha-core-422255208682.us-central1.run.app\",\"https://natacha-core-mkwskljrhq-uc.a.run.app\"]",
+        "serving.knative.dev/creator": "sebastianatenor@gmail.com",
+        "serving.knative.dev/lastModifier": "sebastianatenor@gmail.com"
+      },
+      "creationTimestamp": "2025-10-20T22:56:05.028558Z",
+      "generation": 42,
+      "labels": {
+        "cloud.googleapis.com/location": "us-central1"
+      },
+      "name": "natacha-core",
+      "namespace": "422255208682",
+      "resourceVersion": "AAZCAMLCACg",
+      "selfLink": "/apis/serving.knative.dev/v1/namespaces/422255208682/services/natacha-core",
+      "uid": "0ae7b0a1-8496-47a3-86a2-e8751de6d4b7"
+    },
+    "spec": {
+      "template": {
+        "metadata": {
+          "annotations": {
+            "autoscaling.knative.dev/maxScale": "20",
+            "autoscaling.knative.dev/minScale": "1",
+            "run.googleapis.com/client-name": "gcloud",
+            "run.googleapis.com/client-version": "544.0.0",
+            "run.googleapis.com/startup-cpu-boost": "true"
+          },
+          "labels": {
+            "client.knative.dev/nonce": "ptxmkykqfn",
+            "run.googleapis.com/startupProbeType": "Default"
+          }
+        },
+        "spec": {
+          "containerConcurrency": 80,
+          "containers": [
+            {
+              "env": [
+                {
+                  "name": "GOOGLE_CLOUD_PROJECT",
+                  "value": "asistente-sebastian"
+                }
+              ],
+              "image": "gcr.io/asistente-sebastian/natacha-core",
+              "ports": [
+                {
+                  "containerPort": 8080,
+                  "name": "http1"
+                }
+              ],
+              "resources": {
+                "limits": {
+                  "cpu": "1000m",
+                  "memory": "512Mi"
+                }
+              },
+              "startupProbe": {
+                "failureThreshold": 1,
+                "periodSeconds": 240,
+                "tcpSocket": {
+                  "port": 8080
+                },
+                "timeoutSeconds": 240
+              }
+            }
+          ],
+          "serviceAccountName": "natacha-automation@asistente-sebastian.iam.gserviceaccount.com",
+          "timeoutSeconds": 300
+        }
+      },
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100
+        }
+      ]
+    },
+    "status": {
+      "address": {
+        "url": "https://natacha-core-mkwskljrhq-uc.a.run.app"
+      },
+      "conditions": [
+        {
+          "lastTransitionTime": "2025-10-25T19:34:55.191080Z",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2025-10-25T19:34:53.894502Z",
+          "status": "True",
+          "type": "ConfigurationsReady"
+        },
+        {
+          "lastTransitionTime": "2025-10-25T19:34:55.150407Z",
+          "status": "True",
+          "type": "RoutesReady"
+        }
+      ],
+      "latestCreatedRevisionName": "natacha-core-00042-lgr",
+      "latestReadyRevisionName": "natacha-core-00042-lgr",
+      "observedGeneration": 42,
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100,
+          "revisionName": "natacha-core-00042-lgr"
+        }
+      ],
+      "url": "https://natacha-core-mkwskljrhq-uc.a.run.app"
+    }
+  },
+  {
+    "apiVersion": "serving.knative.dev/v1",
+    "kind": "Service",
+    "metadata": {
+      "annotations": {
+        "run.googleapis.com/build-enable-automatic-updates": "false",
+        "run.googleapis.com/build-id": "17cda978-1df4-467b-a47c-e49e5b9c11f6",
+        "run.googleapis.com/build-image-uri": "us-central1-docker.pkg.dev/asistente-sebastian/cloud-run-source-deploy/natacha-dashboard",
+        "run.googleapis.com/build-name": "projects/422255208682/locations/us-central1/builds/17cda978-1df4-467b-a47c-e49e5b9c11f6",
+        "run.googleapis.com/build-source-location": "gs://run-sources-asistente-sebastian-us-central1/services/natacha-dashboard/1761667337.523563-495966551eaa4013b8cb314cec092fe5.zip#1761667338469096",
+        "run.googleapis.com/client-name": "gcloud",
+        "run.googleapis.com/client-version": "544.0.0",
+        "run.googleapis.com/ingress": "all",
+        "run.googleapis.com/ingress-status": "all",
+        "run.googleapis.com/operation-id": "cb06eaca-c80e-49c3-82ef-5d1d57aac207",
+        "run.googleapis.com/urls": "[\"https://natacha-dashboard-422255208682.us-central1.run.app\",\"https://natacha-dashboard-mkwskljrhq-uc.a.run.app\"]",
+        "serving.knative.dev/creator": "sebastianatenor@gmail.com",
+        "serving.knative.dev/lastModifier": "sebastianatenor@gmail.com"
+      },
+      "creationTimestamp": "2025-10-20T23:01:52.199196Z",
+      "generation": 4,
+      "labels": {
+        "cloud.googleapis.com/location": "us-central1"
+      },
+      "name": "natacha-dashboard",
+      "namespace": "422255208682",
+      "resourceVersion": "AAZCOi5f1Bo",
+      "selfLink": "/apis/serving.knative.dev/v1/namespaces/422255208682/services/natacha-dashboard",
+      "uid": "eb4c5daa-8d5a-46f4-89a9-4d56a3c23d1f"
+    },
+    "spec": {
+      "template": {
+        "metadata": {
+          "annotations": {
+            "autoscaling.knative.dev/maxScale": "20",
+            "run.googleapis.com/client-name": "gcloud",
+            "run.googleapis.com/client-version": "544.0.0",
+            "run.googleapis.com/startup-cpu-boost": "true"
+          },
+          "labels": {
+            "client.knative.dev/nonce": "ezbkjebppx",
+            "run.googleapis.com/startupProbeType": "Default"
+          }
+        },
+        "spec": {
+          "containerConcurrency": 80,
+          "containers": [
+            {
+              "env": [
+                {
+                  "name": "NATACHA_HEALTH_URL",
+                  "value": "https://natacha-health-monitor-422255208682.us-central1.run.app"
+                }
+              ],
+              "image": "us-central1-docker.pkg.dev/asistente-sebastian/cloud-run-source-deploy/natacha-dashboard@sha256:9602f3615ce02828c05d69d6d072f023c588f8342442647485446f707ec1cb8f",
+              "ports": [
+                {
+                  "containerPort": 8080,
+                  "name": "http1"
+                }
+              ],
+              "resources": {
+                "limits": {
+                  "cpu": "1000m",
+                  "memory": "512Mi"
+                }
+              },
+              "startupProbe": {
+                "failureThreshold": 1,
+                "periodSeconds": 240,
+                "tcpSocket": {
+                  "port": 8080
+                },
+                "timeoutSeconds": 240
+              }
+            }
+          ],
+          "serviceAccountName": "natacha-cloud-executor@asistente-sebastian.iam.gserviceaccount.com",
+          "timeoutSeconds": 300
+        }
+      },
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100
+        }
+      ]
+    },
+    "status": {
+      "address": {
+        "url": "https://natacha-dashboard-mkwskljrhq-uc.a.run.app"
+      },
+      "conditions": [
+        {
+          "lastTransitionTime": "2025-10-28T16:05:13.832474Z",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2025-10-28T16:05:02.524268Z",
+          "status": "True",
+          "type": "ConfigurationsReady"
+        },
+        {
+          "lastTransitionTime": "2025-10-28T16:05:13.804836Z",
+          "status": "True",
+          "type": "RoutesReady"
+        }
+      ],
+      "latestCreatedRevisionName": "natacha-dashboard-00004-sw8",
+      "latestReadyRevisionName": "natacha-dashboard-00004-sw8",
+      "observedGeneration": 4,
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100,
+          "revisionName": "natacha-dashboard-00004-sw8"
+        }
+      ],
+      "url": "https://natacha-dashboard-mkwskljrhq-uc.a.run.app"
+    }
+  },
+  {
+    "apiVersion": "serving.knative.dev/v1",
+    "kind": "Service",
+    "metadata": {
+      "annotations": {
+        "run.googleapis.com/build-enable-automatic-updates": "false",
+        "run.googleapis.com/build-id": "29608821-fe52-460c-8460-70c16de9d492",
+        "run.googleapis.com/build-image-uri": "us-central1-docker.pkg.dev/asistente-sebastian/cloud-run-source-deploy/natacha-health-monitor",
+        "run.googleapis.com/build-name": "projects/422255208682/locations/us-central1/builds/29608821-fe52-460c-8460-70c16de9d492",
+        "run.googleapis.com/build-source-location": "gs://run-sources-asistente-sebastian-us-central1/services/natacha-health-monitor/1761682249.160439-17837b4116f041319b4a3d25da0a27f3.zip#1761682250131943",
+        "run.googleapis.com/client-name": "gcloud",
+        "run.googleapis.com/client-version": "544.0.0",
+        "run.googleapis.com/ingress": "all",
+        "run.googleapis.com/ingress-status": "all",
+        "run.googleapis.com/operation-id": "1e0793a7-21b4-4cee-aba7-c7467b2b44e6",
+        "run.googleapis.com/urls": "[\"https://natacha-health-monitor-422255208682.us-central1.run.app\",\"https://natacha-health-monitor-mkwskljrhq-uc.a.run.app\"]",
+        "serving.knative.dev/creator": "sebastianatenor@gmail.com",
+        "serving.knative.dev/lastModifier": "sebastianatenor@gmail.com"
+      },
+      "creationTimestamp": "2025-10-28T01:08:01.223230Z",
+      "generation": 17,
+      "labels": {
+        "cloud.googleapis.com/location": "us-central1"
+      },
+      "name": "natacha-health-monitor",
+      "namespace": "422255208682",
+      "resourceVersion": "AAZCPaA3RAg",
+      "selfLink": "/apis/serving.knative.dev/v1/namespaces/422255208682/services/natacha-health-monitor",
+      "uid": "096b4a8a-85e1-4e77-abda-1ecf5bc6a6ad"
+    },
+    "spec": {
+      "template": {
+        "metadata": {
+          "annotations": {
+            "autoscaling.knative.dev/maxScale": "20",
+            "run.googleapis.com/client-name": "gcloud",
+            "run.googleapis.com/client-version": "544.0.0",
+            "run.googleapis.com/startup-cpu-boost": "true"
+          },
+          "labels": {
+            "client.knative.dev/nonce": "bpzufgarrl",
+            "run.googleapis.com/startupProbeType": "Default"
+          }
+        },
+        "spec": {
+          "containerConcurrency": 80,
+          "containers": [
+            {
+              "env": [
+                {
+                  "name": "GCP_PROJECT",
+                  "value": "asistente-sebastian"
+                },
+                {
+                  "name": "GCP_REGION",
+                  "value": "us-central1"
+                }
+              ],
+              "image": "us-central1-docker.pkg.dev/asistente-sebastian/cloud-run-source-deploy/natacha-health-monitor@sha256:cdcc1ed102bf6dc688db5ef17b14cb9e580adf3642e3ac52fb526f8fa910d3af",
+              "ports": [
+                {
+                  "containerPort": 8080,
+                  "name": "http1"
+                }
+              ],
+              "resources": {
+                "limits": {
+                  "cpu": "1000m",
+                  "memory": "512Mi"
+                }
+              },
+              "startupProbe": {
+                "failureThreshold": 1,
+                "periodSeconds": 240,
+                "tcpSocket": {
+                  "port": 8080
+                },
+                "timeoutSeconds": 240
+              }
+            }
+          ],
+          "serviceAccountName": "natacha-cloud-executor@asistente-sebastian.iam.gserviceaccount.com",
+          "timeoutSeconds": 300
+        }
+      },
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100
+        }
+      ]
+    },
+    "status": {
+      "address": {
+        "url": "https://natacha-health-monitor-mkwskljrhq-uc.a.run.app"
+      },
+      "conditions": [
+        {
+          "lastTransitionTime": "2025-10-28T20:11:48.678664Z",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2025-10-28T20:11:42.423861Z",
+          "status": "True",
+          "type": "ConfigurationsReady"
+        },
+        {
+          "lastTransitionTime": "2025-10-28T20:11:48.641955Z",
+          "status": "True",
+          "type": "RoutesReady"
+        }
+      ],
+      "latestCreatedRevisionName": "natacha-health-monitor-00017-thc",
+      "latestReadyRevisionName": "natacha-health-monitor-00017-thc",
+      "observedGeneration": 17,
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100,
+          "revisionName": "natacha-health-monitor-00017-thc"
+        }
+      ],
+      "url": "https://natacha-health-monitor-mkwskljrhq-uc.a.run.app"
+    }
+  },
+  {
+    "apiVersion": "serving.knative.dev/v1",
+    "kind": "Service",
+    "metadata": {
+      "annotations": {
+        "run.googleapis.com/client-name": "gcloud",
+        "run.googleapis.com/client-version": "544.0.0",
+        "run.googleapis.com/ingress": "all",
+        "run.googleapis.com/ingress-status": "all",
+        "run.googleapis.com/operation-id": "43c81a16-4008-41cd-92b3-f10ad1cc20c3",
+        "run.googleapis.com/urls": "[\"https://natacha-memory-console-422255208682.us-central1.run.app\",\"https://natacha-memory-console-mkwskljrhq-uc.a.run.app\"]",
+        "serving.knative.dev/creator": "sebastianatenor@gmail.com",
+        "serving.knative.dev/lastModifier": "sebastianatenor@gmail.com"
+      },
+      "creationTimestamp": "2025-10-21T00:20:40.921807Z",
+      "generation": 11,
+      "labels": {
+        "cloud.googleapis.com/location": "us-central1"
+      },
+      "name": "natacha-memory-console",
+      "namespace": "422255208682",
+      "resourceVersion": "AAZCAMomSyc",
+      "selfLink": "/apis/serving.knative.dev/v1/namespaces/422255208682/services/natacha-memory-console",
+      "uid": "b9abf357-25ee-4aa6-99e3-9cf50c21a882"
+    },
+    "spec": {
+      "template": {
+        "metadata": {
+          "annotations": {
+            "autoscaling.knative.dev/maxScale": "20",
+            "autoscaling.knative.dev/minScale": "1",
+            "run.googleapis.com/client-name": "gcloud",
+            "run.googleapis.com/client-version": "544.0.0",
+            "run.googleapis.com/startup-cpu-boost": "true"
+          },
+          "labels": {
+            "client.knative.dev/nonce": "hyqbkinyxe",
+            "run.googleapis.com/startupProbeType": "Default"
+          }
+        },
+        "spec": {
+          "containerConcurrency": 80,
+          "containers": [
+            {
+              "image": "gcr.io/asistente-sebastian/natacha-memory-console",
+              "ports": [
+                {
+                  "containerPort": 8080,
+                  "name": "http1"
+                }
+              ],
+              "resources": {
+                "limits": {
+                  "cpu": "1000m",
+                  "memory": "512Mi"
+                }
+              },
+              "startupProbe": {
+                "failureThreshold": 1,
+                "periodSeconds": 240,
+                "tcpSocket": {
+                  "port": 8080
+                },
+                "timeoutSeconds": 240
+              }
+            }
+          ],
+          "serviceAccountName": "natacha-automation@asistente-sebastian.iam.gserviceaccount.com",
+          "timeoutSeconds": 300
+        }
+      },
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100
+        }
+      ]
+    },
+    "status": {
+      "address": {
+        "url": "https://natacha-memory-console-mkwskljrhq-uc.a.run.app"
+      },
+      "conditions": [
+        {
+          "lastTransitionTime": "2025-10-25T19:36:59.204391Z",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2025-10-25T19:36:57.927615Z",
+          "status": "True",
+          "type": "ConfigurationsReady"
+        },
+        {
+          "lastTransitionTime": "2025-10-25T19:36:59.169320Z",
+          "status": "True",
+          "type": "RoutesReady"
+        }
+      ],
+      "latestCreatedRevisionName": "natacha-memory-console-00011-lth",
+      "latestReadyRevisionName": "natacha-memory-console-00011-lth",
+      "observedGeneration": 11,
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100,
+          "revisionName": "natacha-memory-console-00011-lth"
+        }
+      ],
+      "url": "https://natacha-memory-console-mkwskljrhq-uc.a.run.app"
+    }
+  },
+  {
+    "apiVersion": "serving.knative.dev/v1",
+    "kind": "Service",
+    "metadata": {
+      "annotations": {
+        "run.googleapis.com/build-enable-automatic-updates": "false",
+        "run.googleapis.com/build-id": "11f15764-6bfc-46c6-a0c8-3051991446d7",
+        "run.googleapis.com/build-image-uri": "us-central1-docker.pkg.dev/asistente-sebastian/cloud-run-source-deploy/natacha-plugin-registry",
+        "run.googleapis.com/build-name": "projects/422255208682/locations/us-central1/builds/11f15764-6bfc-46c6-a0c8-3051991446d7",
+        "run.googleapis.com/build-source-location": "gs://run-sources-asistente-sebastian-us-central1/services/natacha-plugin-registry/1761015443.712625-62cc6d83e6604b3d80d4ce44ea063927.zip#1761015443846868",
+        "run.googleapis.com/client-name": "gcloud",
+        "run.googleapis.com/client-version": "544.0.0",
+        "run.googleapis.com/ingress": "all",
+        "run.googleapis.com/ingress-status": "all",
+        "run.googleapis.com/operation-id": "f93bbbbe-9aa5-45ae-aec0-ac1f095601fe",
+        "run.googleapis.com/urls": "[\"https://natacha-plugin-registry-422255208682.us-central1.run.app\",\"https://natacha-plugin-registry-mkwskljrhq-uc.a.run.app\"]",
+        "serving.knative.dev/creator": "sebastianatenor@gmail.com",
+        "serving.knative.dev/lastModifier": "sebastianatenor@gmail.com"
+      },
+      "creationTimestamp": "2025-10-21T02:37:30.698557Z",
+      "generation": 4,
+      "labels": {
+        "cloud.googleapis.com/location": "us-central1"
+      },
+      "name": "natacha-plugin-registry",
+      "namespace": "422255208682",
+      "resourceVersion": "AAZCAKdFpBM",
+      "selfLink": "/apis/serving.knative.dev/v1/namespaces/422255208682/services/natacha-plugin-registry",
+      "uid": "1124c914-6c31-4ba3-bcce-353d38e2aa8d"
+    },
+    "spec": {
+      "template": {
+        "metadata": {
+          "annotations": {
+            "autoscaling.knative.dev/maxScale": "20",
+            "run.googleapis.com/client-name": "gcloud",
+            "run.googleapis.com/client-version": "544.0.0",
+            "run.googleapis.com/startup-cpu-boost": "true"
+          },
+          "labels": {
+            "client.knative.dev/nonce": "llllinfypu",
+            "run.googleapis.com/startupProbeType": "Default"
+          }
+        },
+        "spec": {
+          "containerConcurrency": 80,
+          "containers": [
+            {
+              "env": [
+                {
+                  "name": "CONFIG_FILE",
+                  "value": "natacha_plugin_config.json"
+                }
+              ],
+              "image": "gcr.io/asistente-sebastian/natacha-plugin-registry",
+              "ports": [
+                {
+                  "containerPort": 8080,
+                  "name": "http1"
+                }
+              ],
+              "resources": {
+                "limits": {
+                  "cpu": "1000m",
+                  "memory": "512Mi"
+                }
+              },
+              "startupProbe": {
+                "failureThreshold": 1,
+                "periodSeconds": 240,
+                "tcpSocket": {
+                  "port": 8080
+                },
+                "timeoutSeconds": 240
+              }
+            }
+          ],
+          "serviceAccountName": "natacha-automation@asistente-sebastian.iam.gserviceaccount.com",
+          "timeoutSeconds": 300
+        }
+      },
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100
+        }
+      ]
+    },
+    "status": {
+      "address": {
+        "url": "https://natacha-plugin-registry-mkwskljrhq-uc.a.run.app"
+      },
+      "conditions": [
+        {
+          "lastTransitionTime": "2025-10-25T19:27:14.056211Z",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2025-10-25T19:26:47.042427Z",
+          "status": "True",
+          "type": "ConfigurationsReady"
+        },
+        {
+          "lastTransitionTime": "2025-10-25T19:27:13.991343Z",
+          "status": "True",
+          "type": "RoutesReady"
+        }
+      ],
+      "latestCreatedRevisionName": "natacha-plugin-registry-00004-dc4",
+      "latestReadyRevisionName": "natacha-plugin-registry-00004-dc4",
+      "observedGeneration": 4,
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100,
+          "revisionName": "natacha-plugin-registry-00004-dc4"
+        }
+      ],
+      "url": "https://natacha-plugin-registry-mkwskljrhq-uc.a.run.app"
+    }
+  },
+  {
+    "apiVersion": "serving.knative.dev/v1",
+    "kind": "Service",
+    "metadata": {
+      "annotations": {
+        "run.googleapis.com/build-enable-automatic-updates": "false",
+        "run.googleapis.com/build-id": "55c36818-0c5d-4268-aff2-95ff46304f70",
+        "run.googleapis.com/build-image-uri": "us-central1-docker.pkg.dev/asistente-sebastian/cloud-run-source-deploy/natacha-whatsapp",
+        "run.googleapis.com/build-name": "projects/422255208682/locations/us-central1/builds/55c36818-0c5d-4268-aff2-95ff46304f70",
+        "run.googleapis.com/build-source-location": "gs://run-sources-asistente-sebastian-us-central1/services/natacha-whatsapp/1761086898.757009-b796979d28024a1db6dec22206553be9.zip#1761087043300436",
+        "run.googleapis.com/client-name": "gcloud",
+        "run.googleapis.com/client-version": "544.0.0",
+        "run.googleapis.com/ingress": "all",
+        "run.googleapis.com/ingress-status": "all",
+        "run.googleapis.com/operation-id": "9897d64a-7158-4bbd-a2f7-c5d438704b8e",
+        "run.googleapis.com/urls": "[\"https://natacha-whatsapp-422255208682.us-central1.run.app\",\"https://natacha-whatsapp-mkwskljrhq-uc.a.run.app\"]",
+        "serving.knative.dev/creator": "sebastianatenor@gmail.com",
+        "serving.knative.dev/lastModifier": "sebastianatenor@gmail.com"
+      },
+      "creationTimestamp": "2025-10-21T02:45:22.707428Z",
+      "generation": 6,
+      "labels": {
+        "cloud.googleapis.com/location": "us-central1"
+      },
+      "name": "natacha-whatsapp",
+      "namespace": "422255208682",
+      "resourceVersion": "AAZCAKpg3+w",
+      "selfLink": "/apis/serving.knative.dev/v1/namespaces/422255208682/services/natacha-whatsapp",
+      "uid": "99ef87fd-a02a-4deb-8559-dbec05a839b9"
+    },
+    "spec": {
+      "template": {
+        "metadata": {
+          "annotations": {
+            "autoscaling.knative.dev/maxScale": "20",
+            "run.googleapis.com/client-name": "gcloud",
+            "run.googleapis.com/client-version": "544.0.0",
+            "run.googleapis.com/startup-cpu-boost": "true"
+          },
+          "labels": {
+            "client.knative.dev/nonce": "oecctafktn",
+            "run.googleapis.com/startupProbeType": "Default"
+          }
+        },
+        "spec": {
+          "containerConcurrency": 80,
+          "containers": [
+            {
+              "env": [
+                {
+                  "name": "WHATSAPP_VERIFY_TOKEN",
+                  "value": "llvc-verify"
+                }
+              ],
+              "image": "gcr.io/asistente-sebastian/natacha-whatsapp",
+              "ports": [
+                {
+                  "containerPort": 8080,
+                  "name": "http1"
+                }
+              ],
+              "resources": {
+                "limits": {
+                  "cpu": "1000m",
+                  "memory": "512Mi"
+                }
+              },
+              "startupProbe": {
+                "failureThreshold": 1,
+                "periodSeconds": 240,
+                "tcpSocket": {
+                  "port": 8080
+                },
+                "timeoutSeconds": 240
+              }
+            }
+          ],
+          "serviceAccountName": "natacha-automation@asistente-sebastian.iam.gserviceaccount.com",
+          "timeoutSeconds": 300
+        }
+      },
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100
+        }
+      ]
+    },
+    "status": {
+      "address": {
+        "url": "https://natacha-whatsapp-mkwskljrhq-uc.a.run.app"
+      },
+      "conditions": [
+        {
+          "lastTransitionTime": "2025-10-25T19:28:06.172652Z",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2025-10-25T19:28:02.586343Z",
+          "status": "True",
+          "type": "ConfigurationsReady"
+        },
+        {
+          "lastTransitionTime": "2025-10-25T19:28:06.136559Z",
+          "status": "True",
+          "type": "RoutesReady"
+        }
+      ],
+      "latestCreatedRevisionName": "natacha-whatsapp-00006-p2w",
+      "latestReadyRevisionName": "natacha-whatsapp-00006-p2w",
+      "observedGeneration": 6,
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100,
+          "revisionName": "natacha-whatsapp-00006-p2w"
+        }
+      ],
+      "url": "https://natacha-whatsapp-mkwskljrhq-uc.a.run.app"
+    }
+  },
+  {
+    "apiVersion": "serving.knative.dev/v1",
+    "kind": "Service",
+    "metadata": {
+      "annotations": {
+        "cloudfunctions.googleapis.com/function-id": "natachaSpeak",
+        "run.googleapis.com/build-base-image": "us-central1-docker.pkg.dev/serverless-runtimes/google-22-full/runtimes/python310",
+        "run.googleapis.com/build-enable-automatic-updates": "true",
+        "run.googleapis.com/build-function-target": "speak",
+        "run.googleapis.com/build-id": "0b8b28cf-78fa-4e53-b7f7-75ce139b41d7",
+        "run.googleapis.com/build-image-uri": "us-central1-docker.pkg.dev/asistente-sebastian/gcf-artifacts/natachaspeak",
+        "run.googleapis.com/build-name": "projects/422255208682/locations/us-central1/builds/0b8b28cf-78fa-4e53-b7f7-75ce139b41d7",
+        "run.googleapis.com/build-service-account": "projects/asistente-sebastian/serviceAccounts/422255208682-compute@developer.gserviceaccount.com",
+        "run.googleapis.com/build-source-location": "gs://gcf-v2-sources-422255208682-us-central1/services/natachaspeak/1760990486.431866-1ef6c86f2daf47dc9f698764abece54d.zip#1760990486578716",
+        "run.googleapis.com/client-name": "gcloud",
+        "run.googleapis.com/client-version": "544.0.0",
+        "run.googleapis.com/custom-audiences": "[\"https://us-central1-asistente-sebastian.cloudfunctions.net/natachaSpeak\"]",
+        "run.googleapis.com/ingress": "all",
+        "run.googleapis.com/ingress-status": "all",
+        "run.googleapis.com/operation-id": "9d668275-a00b-4d6a-b6af-c41d47de09c5",
+        "run.googleapis.com/urls": "[\"https://natachaspeak-422255208682.us-central1.run.app\",\"https://us-central1-asistente-sebastian.cloudfunctions.net/natachaSpeak\",\"https://natachaspeak-mkwskljrhq-uc.a.run.app\"]",
+        "serving.knative.dev/creator": "service-422255208682@gcf-admin-robot.iam.gserviceaccount.com",
+        "serving.knative.dev/lastModifier": "sebastianatenor@gmail.com"
+      },
+      "creationTimestamp": "2025-09-18T17:09:06.790090Z",
+      "generation": 13,
+      "labels": {
+        "cloud.googleapis.com/location": "us-central1",
+        "goog-cloudfunctions-runtime": "python310",
+        "goog-drz-cloudfunctions-id": "natachaspeak",
+        "goog-drz-cloudfunctions-location": "us-central1",
+        "goog-managed-by": "cloudfunctions"
+      },
+      "name": "natachaspeak",
+      "namespace": "422255208682",
+      "resourceVersion": "AAZCAK1+CA8",
+      "selfLink": "/apis/serving.knative.dev/v1/namespaces/422255208682/services/natachaspeak",
+      "uid": "cd6e909c-ce0a-4cd3-99dc-795703d0d19c"
+    },
+    "spec": {
+      "template": {
+        "metadata": {
+          "annotations": {
+            "autoscaling.knative.dev/maxScale": "100",
+            "cloudfunctions.googleapis.com/trigger-type": "HTTP_TRIGGER",
+            "run.googleapis.com/base-images": "{\"worker\":\"us-central1-docker.pkg.dev/serverless-runtimes/google-22-full/runtimes/python310\"}",
+            "run.googleapis.com/client-name": "gcloud",
+            "run.googleapis.com/client-version": "544.0.0",
+            "run.googleapis.com/startup-cpu-boost": "true"
+          },
+          "labels": {
+            "client.knative.dev/nonce": "lgkwgzxewm",
+            "goog-drz-cloudfunctions-id": "natachaspeak",
+            "goog-drz-cloudfunctions-location": "us-central1",
+            "run.googleapis.com/startupProbeType": "Default"
+          }
+        },
+        "spec": {
+          "containerConcurrency": 1,
+          "containers": [
+            {
+              "env": [
+                {
+                  "name": "DEFAULT_LANG",
+                  "value": "ro-RO"
+                },
+                {
+                  "name": "DEFAULT_PITCH",
+                  "value": "-1"
+                },
+                {
+                  "name": "DEFAULT_RATE",
+                  "value": "0.95"
+                },
+                {
+                  "name": "DEFAULT_VOICE",
+                  "value": "ro-RO-Standard-A"
+                },
+                {
+                  "name": "LOG_EXECUTION_ID",
+                  "value": "true"
+                },
+                {
+                  "name": "DEBUG_MODE",
+                  "value": "true"
+                },
+                {
+                  "name": "NATACHA_TOKEN",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "key": "latest",
+                      "name": "NATACHA_TOKEN"
+                    }
+                  }
+                }
+              ],
+              "image": "gcr.io/asistente-sebastian/natachaspeak",
+              "name": "worker",
+              "ports": [
+                {
+                  "containerPort": 8080,
+                  "name": "http1"
+                }
+              ],
+              "resources": {
+                "limits": {
+                  "cpu": "0.1666",
+                  "memory": "256M"
+                }
+              },
+              "startupProbe": {
+                "failureThreshold": 1,
+                "periodSeconds": 240,
+                "tcpSocket": {
+                  "port": 8080
+                },
+                "timeoutSeconds": 240
+              }
+            }
+          ],
+          "runtimeClassName": "run.googleapis.com/linux-base-image-update",
+          "serviceAccountName": "natacha-automation@asistente-sebastian.iam.gserviceaccount.com",
+          "timeoutSeconds": 60
+        }
+      },
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100
+        }
+      ]
+    },
+    "status": {
+      "address": {
+        "url": "https://natachaspeak-mkwskljrhq-uc.a.run.app"
+      },
+      "conditions": [
+        {
+          "lastTransitionTime": "2025-10-25T19:28:58.415119Z",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "severity": "Info",
+          "status": "True",
+          "type": "BaseImageValidated"
+        },
+        {
+          "lastTransitionTime": "2025-10-25T19:28:52.554368Z",
+          "status": "True",
+          "type": "ConfigurationsReady"
+        },
+        {
+          "lastTransitionTime": "2025-10-25T19:28:58.376784Z",
+          "status": "True",
+          "type": "RoutesReady"
+        }
+      ],
+      "latestCreatedRevisionName": "natachaspeak-00013-b4b",
+      "latestReadyRevisionName": "natachaspeak-00013-b4b",
+      "observedGeneration": 13,
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100,
+          "revisionName": "natachaspeak-00013-b4b"
+        }
+      ],
+      "url": "https://natachaspeak-mkwskljrhq-uc.a.run.app"
+    }
+  },
+  {
+    "apiVersion": "serving.knative.dev/v1",
+    "kind": "Service",
+    "metadata": {
+      "annotations": {
+        "cloudfunctions.googleapis.com/function-id": "stop-natacha-vm",
+        "run.googleapis.com/build-base-image": "us-central1-docker.pkg.dev/serverless-runtimes/google-22-full/runtimes/python311",
+        "run.googleapis.com/build-enable-automatic-updates": "true",
+        "run.googleapis.com/build-function-target": "stop_vm",
+        "run.googleapis.com/build-image-uri": "us-central1-docker.pkg.dev/asistente-sebastian/gcf-artifacts/asistente--sebastian__us--central1__stop--natacha--vm:version_1",
+        "run.googleapis.com/build-name": "projects/422255208682/locations/us-central1/builds/8b33413b-20ef-4471-8bb7-26d102ccd3a0",
+        "run.googleapis.com/build-service-account": "projects/asistente-sebastian/serviceAccounts/422255208682-compute@developer.gserviceaccount.com",
+        "run.googleapis.com/build-source-location": "gs://gcf-v2-sources-422255208682-us-central1/stop-natacha-vm/function-source.zip#1760733037705939",
+        "run.googleapis.com/client-name": "cloudfunctions",
+        "run.googleapis.com/custom-audiences": "[\"https://us-central1-asistente-sebastian.cloudfunctions.net/stop-natacha-vm\"]",
+        "run.googleapis.com/ingress": "all",
+        "run.googleapis.com/ingress-status": "all",
+        "run.googleapis.com/operation-id": "1093da8b-c32f-4a00-8bff-cc1667c8ee06",
+        "run.googleapis.com/urls": "[\"https://stop-natacha-vm-422255208682.us-central1.run.app\",\"https://us-central1-asistente-sebastian.cloudfunctions.net/stop-natacha-vm\",\"https://stop-natacha-vm-mkwskljrhq-uc.a.run.app\"]",
+        "serving.knative.dev/creator": "service-422255208682@gcf-admin-robot.iam.gserviceaccount.com",
+        "serving.knative.dev/lastModifier": "service-422255208682@gcf-admin-robot.iam.gserviceaccount.com"
+      },
+      "creationTimestamp": "2025-10-17T20:31:20.127556Z",
+      "generation": 1,
+      "labels": {
+        "cloud.googleapis.com/location": "us-central1",
+        "goog-cloudfunctions-runtime": "python311",
+        "goog-drz-cloudfunctions-id": "stop-natacha-vm",
+        "goog-drz-cloudfunctions-location": "us-central1",
+        "goog-managed-by": "cloudfunctions"
+      },
+      "name": "stop-natacha-vm",
+      "namespace": "422255208682",
+      "resourceVersion": "AAZBYJ4rl2c",
+      "selfLink": "/apis/serving.knative.dev/v1/namespaces/422255208682/services/stop-natacha-vm",
+      "uid": "8c66920f-1e69-409a-a31a-fb9d765d2753"
+    },
+    "spec": {
+      "template": {
+        "metadata": {
+          "annotations": {
+            "autoscaling.knative.dev/maxScale": "100",
+            "cloudfunctions.googleapis.com/trigger-type": "HTTP_TRIGGER",
+            "run.googleapis.com/base-images": "{\"worker\":\"us-central1-docker.pkg.dev/serverless-runtimes/google-22-full/runtimes/python311\"}",
+            "run.googleapis.com/client-name": "cloudfunctions",
+            "run.googleapis.com/startup-cpu-boost": "true"
+          },
+          "labels": {
+            "run.googleapis.com/startupProbeType": "Default"
+          },
+          "name": "stop-natacha-vm-00001-faz"
+        },
+        "spec": {
+          "containerConcurrency": 1,
+          "containers": [
+            {
+              "env": [
+                {
+                  "name": "LOG_EXECUTION_ID",
+                  "value": "true"
+                }
+              ],
+              "image": "us-central1-docker.pkg.dev/asistente-sebastian/gcf-artifacts/asistente--sebastian__us--central1__stop--natacha--vm:version_1",
+              "name": "worker",
+              "ports": [
+                {
+                  "containerPort": 8080,
+                  "name": "http1"
+                }
+              ],
+              "resources": {
+                "limits": {
+                  "cpu": "0.1666",
+                  "memory": "256M"
+                }
+              },
+              "startupProbe": {
+                "failureThreshold": 1,
+                "periodSeconds": 240,
+                "tcpSocket": {
+                  "port": 8080
+                },
+                "timeoutSeconds": 240
+              }
+            }
+          ],
+          "runtimeClassName": "run.googleapis.com/linux-base-image-update",
+          "serviceAccountName": "natacha-cloud-executor@asistente-sebastian.iam.gserviceaccount.com",
+          "timeoutSeconds": 60
+        }
+      },
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100
+        }
+      ]
+    },
+    "status": {
+      "address": {
+        "url": "https://stop-natacha-vm-mkwskljrhq-uc.a.run.app"
+      },
+      "conditions": [
+        {
+          "lastTransitionTime": "2025-10-17T20:31:26.586727Z",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2025-10-17T20:31:22.420846Z",
+          "status": "True",
+          "type": "ConfigurationsReady"
+        },
+        {
+          "lastTransitionTime": "2025-10-17T20:31:26.545887Z",
+          "status": "True",
+          "type": "RoutesReady"
+        }
+      ],
+      "latestCreatedRevisionName": "stop-natacha-vm-00001-faz",
+      "latestReadyRevisionName": "stop-natacha-vm-00001-faz",
+      "observedGeneration": 1,
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100,
+          "revisionName": "stop-natacha-vm-00001-faz"
+        }
+      ],
+      "url": "https://stop-natacha-vm-mkwskljrhq-uc.a.run.app"
+    }
+  },
+  {
+    "apiVersion": "serving.knative.dev/v1",
+    "kind": "Service",
+    "metadata": {
+      "annotations": {
+        "cloudfunctions.googleapis.com/function-id": "vm-proxy",
+        "run.googleapis.com/build-base-image": "us-central1-docker.pkg.dev/serverless-runtimes/google-22-full/runtimes/python311",
+        "run.googleapis.com/build-enable-automatic-updates": "true",
+        "run.googleapis.com/build-function-target": "proxy_request",
+        "run.googleapis.com/build-image-uri": "us-central1-docker.pkg.dev/asistente-sebastian/gcf-artifacts/asistente--sebastian__us--central1__vm--proxy:version_1",
+        "run.googleapis.com/build-name": "projects/422255208682/locations/us-central1/builds/a9635ef3-665a-486d-af84-7d33ccbb1d74",
+        "run.googleapis.com/build-service-account": "projects/asistente-sebastian/serviceAccounts/422255208682-compute@developer.gserviceaccount.com",
+        "run.googleapis.com/build-source-location": "gs://gcf-v2-sources-422255208682-us-central1/vm-proxy/function-source.zip#1760738144809820",
+        "run.googleapis.com/client-name": "cloudfunctions",
+        "run.googleapis.com/custom-audiences": "[\"https://us-central1-asistente-sebastian.cloudfunctions.net/vm-proxy\"]",
+        "run.googleapis.com/ingress": "all",
+        "run.googleapis.com/ingress-status": "all",
+        "run.googleapis.com/operation-id": "f2eff9d3-b7ce-44ad-a0aa-0efb4c6948f0",
+        "run.googleapis.com/urls": "[\"https://vm-proxy-422255208682.us-central1.run.app\",\"https://us-central1-asistente-sebastian.cloudfunctions.net/vm-proxy\",\"https://vm-proxy-mkwskljrhq-uc.a.run.app\"]",
+        "serving.knative.dev/creator": "service-422255208682@gcf-admin-robot.iam.gserviceaccount.com",
+        "serving.knative.dev/lastModifier": "service-422255208682@gcf-admin-robot.iam.gserviceaccount.com"
+      },
+      "creationTimestamp": "2025-10-17T21:44:33.926445Z",
+      "generation": 2,
+      "labels": {
+        "cloud.googleapis.com/location": "us-central1",
+        "goog-cloudfunctions-runtime": "python311",
+        "goog-drz-cloudfunctions-id": "vm-proxy",
+        "goog-drz-cloudfunctions-location": "us-central1",
+        "goog-managed-by": "cloudfunctions"
+      },
+      "name": "vm-proxy",
+      "namespace": "422255208682",
+      "resourceVersion": "AAZBYc7/kOM",
+      "selfLink": "/apis/serving.knative.dev/v1/namespaces/422255208682/services/vm-proxy",
+      "uid": "ebd31e84-6a1a-41c8-958b-904603667370"
+    },
+    "spec": {
+      "template": {
+        "metadata": {
+          "annotations": {
+            "autoscaling.knative.dev/maxScale": "100",
+            "cloudfunctions.googleapis.com/trigger-type": "HTTP_TRIGGER",
+            "run.googleapis.com/base-images": "{\"worker\":\"us-central1-docker.pkg.dev/serverless-runtimes/google-22-full/runtimes/python311\"}",
+            "run.googleapis.com/client-name": "cloudfunctions",
+            "run.googleapis.com/startup-cpu-boost": "true"
+          },
+          "labels": {
+            "goog-drz-cloudfunctions-id": "vm-proxy",
+            "goog-drz-cloudfunctions-location": "us-central1",
+            "run.googleapis.com/startupProbeType": "Default"
+          },
+          "name": "vm-proxy-00002-lef"
+        },
+        "spec": {
+          "containerConcurrency": 1,
+          "containers": [
+            {
+              "env": [
+                {
+                  "name": "LOG_EXECUTION_ID",
+                  "value": "true"
+                }
+              ],
+              "image": "us-central1-docker.pkg.dev/asistente-sebastian/gcf-artifacts/asistente--sebastian__us--central1__vm--proxy:version_1",
+              "name": "worker",
+              "ports": [
+                {
+                  "containerPort": 8080,
+                  "name": "http1"
+                }
+              ],
+              "resources": {
+                "limits": {
+                  "cpu": "0.1666",
+                  "memory": "256M"
+                }
+              },
+              "startupProbe": {
+                "failureThreshold": 1,
+                "periodSeconds": 240,
+                "tcpSocket": {
+                  "port": 8080
+                },
+                "timeoutSeconds": 240
+              }
+            }
+          ],
+          "runtimeClassName": "run.googleapis.com/linux-base-image-update",
+          "serviceAccountName": "natacha-cloud-executor@asistente-sebastian.iam.gserviceaccount.com",
+          "timeoutSeconds": 300
+        }
+      },
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100
+        }
+      ]
+    },
+    "status": {
+      "address": {
+        "url": "https://vm-proxy-mkwskljrhq-uc.a.run.app"
+      },
+      "conditions": [
+        {
+          "lastTransitionTime": "2025-10-17T21:56:40.752355Z",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2025-10-17T21:56:36.442244Z",
+          "status": "True",
+          "type": "ConfigurationsReady"
+        },
+        {
+          "lastTransitionTime": "2025-10-17T21:56:40.714008Z",
+          "status": "True",
+          "type": "RoutesReady"
+        }
+      ],
+      "latestCreatedRevisionName": "vm-proxy-00002-lef",
+      "latestReadyRevisionName": "vm-proxy-00002-lef",
+      "observedGeneration": 2,
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100,
+          "revisionName": "vm-proxy-00002-lef"
+        }
+      ],
+      "url": "https://vm-proxy-mkwskljrhq-uc.a.run.app"
+    }
+  }
+]

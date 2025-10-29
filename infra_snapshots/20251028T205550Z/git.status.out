@@ -1,0 +1,12 @@
+ M dashboard/dashboard.py
+ M dashboard/infra_control/infra_audit.py
+ M dashboard/system_health.py
+?? Dockerfile.dashboard
+?? dashboard/dashboard_prod.py
+?? dashboard/infra_control/auto_healer_panel.py
+?? health_monitor/auto_scheduler.py
+?? infra_snapshots/
+?? policy-autohealer.json
+?? policy-latency.json
+?? policy-uptime.json
+?? tools/

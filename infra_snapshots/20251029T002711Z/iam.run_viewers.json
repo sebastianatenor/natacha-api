@@ -1,0 +1,13 @@
+[
+  {
+    "bindings": {
+      "members": [
+        "serviceAccount:422255208682-compute@developer.gserviceaccount.com",
+        "serviceAccount:natacha-cloud-executor@asistente-sebastian.iam.gserviceaccount.com"
+      ],
+      "role": "roles/run.viewer"
+    },
+    "etag": "BwZCPaHYeGk=",
+    "version": 1
+  }
+]

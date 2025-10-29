@@ -1,0 +1,405 @@
+[
+  {
+    "attemptDeadline": "180s",
+    "httpTarget": {
+      "headers": {
+        "User-Agent": "Google-Cloud-Scheduler"
+      },
+      "httpMethod": "POST",
+      "oidcToken": {
+        "audience": "https://natacha-health-monitor-422255208682.us-central1.run.app",
+        "serviceAccountEmail": "natacha-cloud-executor@asistente-sebastian.iam.gserviceaccount.com"
+      },
+      "uri": "https://natacha-health-monitor-422255208682.us-central1.run.app/run_auto_infra_check"
+    },
+    "lastAttemptTime": "2025-10-28T21:00:00.942405Z",
+    "name": "projects/asistente-sebastian/locations/us-central1/jobs/auto-heal-monitor-job",
+    "retryConfig": {
+      "maxBackoffDuration": "3600s",
+      "maxDoublings": 5,
+      "maxRetryDuration": "0s",
+      "minBackoffDuration": "5s"
+    },
+    "schedule": "*/15 * * * *",
+    "scheduleTime": "2025-10-28T21:15:00.396622Z",
+    "state": "ENABLED",
+    "status": {},
+    "timeZone": "America/Argentina/Buenos_Aires",
+    "userUpdateTime": "2025-10-28T17:50:49Z"
+  },
+  {
+    "attemptDeadline": "180s",
+    "httpTarget": {
+      "headers": {
+        "User-Agent": "Google-Cloud-Scheduler",
+        "x-api-key": "1dc4887f0e71476d249134ed7823a3f9"
+      },
+      "httpMethod": "GET",
+      "uri": "https://meta-campaigns-mkwskljrhq-rj.a.run.app/?kind=health&format=txt&notify=slack&upcoming_days=7&min_daily_budget=2000000"
+    },
+    "lastAttemptTime": "2025-10-28T12:00:00.148155Z",
+    "name": "projects/asistente-sebastian/locations/us-central1/jobs/health-daily",
+    "retryConfig": {
+      "maxBackoffDuration": "3600s",
+      "maxDoublings": 5,
+      "maxRetryDuration": "0s",
+      "minBackoffDuration": "5s"
+    },
+    "schedule": "0 9 * * *",
+    "scheduleTime": "2025-10-29T12:00:00.476653Z",
+    "state": "ENABLED",
+    "status": {
+      "code": 16
+    },
+    "timeZone": "America/Argentina/Buenos_Aires",
+    "userUpdateTime": "2025-09-27T01:38:23Z"
+  },
+  {
+    "description": "Backup diario completo LLVC Global",
+    "lastAttemptTime": "2025-10-28T02:00:00.241275Z",
+    "name": "projects/asistente-sebastian/locations/us-central1/jobs/llvc-backup-daily",
+    "pubsubTarget": {
+      "data": "eyJjb21tYW5kIjoibGx2Yy1iYWNrdXAgLS1mdWxsIn0=",
+      "topicName": "projects/asistente-sebastian/topics/llvc-automation"
+    },
+    "retryConfig": {
+      "maxBackoffDuration": "3600s",
+      "maxDoublings": 5,
+      "maxRetryDuration": "0s",
+      "minBackoffDuration": "5s"
+    },
+    "schedule": "0 2 * * *",
+    "scheduleTime": "2025-10-29T02:00:00.791267Z",
+    "state": "ENABLED",
+    "status": {
+      "code": 5
+    },
+    "timeZone": "UTC",
+    "userUpdateTime": "2025-10-16T00:07:12Z"
+  },
+  {
+    "attemptDeadline": "180s",
+    "httpTarget": {
+      "headers": {
+        "User-Agent": "Google-Cloud-Scheduler"
+      },
+      "httpMethod": "POST",
+      "oidcToken": {
+        "audience": "https://natacha-health-monitor-mkwskljrhq-uc.a.run.app/run_auto_infra_check",
+        "serviceAccountEmail": "natacha-cloud-executor@asistente-sebastian.iam.gserviceaccount.com"
+      },
+      "uri": "https://natacha-health-monitor-mkwskljrhq-uc.a.run.app/run_auto_infra_check"
+    },
+    "lastAttemptTime": "2025-10-28T20:00:00.202361Z",
+    "name": "projects/asistente-sebastian/locations/us-central1/jobs/natacha-auto-infra-check",
+    "retryConfig": {
+      "maxBackoffDuration": "3600s",
+      "maxDoublings": 5,
+      "maxRetryDuration": "0s",
+      "minBackoffDuration": "5s"
+    },
+    "schedule": "0 */2 * * *",
+    "scheduleTime": "2025-10-28T22:00:00.484103Z",
+    "state": "ENABLED",
+    "status": {},
+    "timeZone": "Etc/UTC",
+    "userUpdateTime": "2025-10-28T00:52:32Z"
+  },
+  {
+    "attemptDeadline": "180s",
+    "httpTarget": {
+      "headers": {
+        "User-Agent": "Google-Cloud-Scheduler"
+      },
+      "httpMethod": "POST",
+      "oidcToken": {
+        "audience": "https://natacha-core-422255208682.us-central1.run.app/ops/check_health",
+        "serviceAccountEmail": "422255208682-compute@developer.gserviceaccount.com"
+      },
+      "uri": "https://natacha-core-422255208682.us-central1.run.app/ops/check_health"
+    },
+    "lastAttemptTime": "2025-10-28T20:30:00.897847Z",
+    "name": "projects/asistente-sebastian/locations/us-central1/jobs/natacha-health-check-hourly",
+    "retryConfig": {
+      "maxBackoffDuration": "3600s",
+      "maxDoublings": 5,
+      "maxRetryDuration": "0s",
+      "minBackoffDuration": "5s"
+    },
+    "schedule": "30 * * * *",
+    "scheduleTime": "2025-10-28T21:30:00.951681Z",
+    "state": "ENABLED",
+    "status": {
+      "code": 5
+    },
+    "timeZone": "America/Argentina/Buenos_Aires",
+    "userUpdateTime": "2025-10-22T01:29:27Z"
+  },
+  {
+    "attemptDeadline": "180s",
+    "httpTarget": {
+      "headers": {
+        "User-Agent": "Google-Cloud-Scheduler"
+      },
+      "httpMethod": "POST",
+      "oidcToken": {
+        "audience": "https://natacha-core-422255208682.us-central1.run.app/ops/self_heal",
+        "serviceAccountEmail": "422255208682-compute@developer.gserviceaccount.com"
+      },
+      "uri": "https://natacha-core-422255208682.us-central1.run.app/ops/self_heal"
+    },
+    "lastAttemptTime": "2025-10-28T21:00:00.560893Z",
+    "name": "projects/asistente-sebastian/locations/us-central1/jobs/natacha-self-heal-6h",
+    "retryConfig": {
+      "maxBackoffDuration": "3600s",
+      "maxDoublings": 5,
+      "maxRetryDuration": "0s",
+      "minBackoffDuration": "5s"
+    },
+    "schedule": "0 */6 * * *",
+    "scheduleTime": "2025-10-29T03:00:00.162020Z",
+    "state": "ENABLED",
+    "status": {
+      "code": 5
+    },
+    "timeZone": "America/Argentina/Buenos_Aires",
+    "userUpdateTime": "2025-10-22T01:40:25Z"
+  },
+  {
+    "attemptDeadline": "180s",
+    "httpTarget": {
+      "headers": {
+        "Content-Type": "application/json",
+        "User-Agent": "Google-Cloud-Scheduler",
+        "X-Auth-Token": "token-ultra-seguro-12345"
+      },
+      "httpMethod": "POST",
+      "oidcToken": {
+        "audience": "https://natacha-api-422255208682.us-central1.run.app/ops/smart_health",
+        "serviceAccountEmail": "asistente-sebastian@appspot.gserviceaccount.com"
+      },
+      "uri": "https://natacha-api-422255208682.us-central1.run.app/ops/smart_health"
+    },
+    "lastAttemptTime": "2025-10-28T21:00:00.458687Z",
+    "name": "projects/asistente-sebastian/locations/us-central1/jobs/natacha-smart-health",
+    "retryConfig": {
+      "maxBackoffDuration": "3600s",
+      "maxDoublings": 5,
+      "maxRetryDuration": "0s",
+      "minBackoffDuration": "5s"
+    },
+    "schedule": "*/5 * * * *",
+    "scheduleTime": "2025-10-28T21:05:00.503777Z",
+    "state": "ENABLED",
+    "status": {
+      "code": 5
+    },
+    "timeZone": "Etc/UTC",
+    "userUpdateTime": "2025-10-24T14:08:04Z"
+  },
+  {
+    "attemptDeadline": "180s",
+    "httpTarget": {
+      "headers": {
+        "User-Agent": "Google-Cloud-Scheduler"
+      },
+      "httpMethod": "POST",
+      "oidcToken": {
+        "audience": "https://natacha-core-422255208682.us-central1.run.app/ops/store_snapshot",
+        "serviceAccountEmail": "422255208682-compute@developer.gserviceaccount.com"
+      },
+      "uri": "https://natacha-core-422255208682.us-central1.run.app/ops/store_snapshot"
+    },
+    "lastAttemptTime": "2025-10-28T21:00:00.703437Z",
+    "name": "projects/asistente-sebastian/locations/us-central1/jobs/natacha-snapshot-hourly",
+    "retryConfig": {
+      "maxBackoffDuration": "3600s",
+      "maxDoublings": 5,
+      "maxRetryDuration": "0s",
+      "minBackoffDuration": "5s"
+    },
+    "schedule": "0 * * * *",
+    "scheduleTime": "2025-10-28T22:00:00.765555Z",
+    "state": "ENABLED",
+    "status": {
+      "code": 5
+    },
+    "timeZone": "America/Argentina/Buenos_Aires",
+    "userUpdateTime": "2025-10-22T01:13:14Z"
+  },
+  {
+    "attemptDeadline": "180s",
+    "httpTarget": {
+      "headers": {
+        "User-Agent": "Google-Cloud-Scheduler"
+      },
+      "httpMethod": "POST",
+      "oidcToken": {
+        "audience": "https://natacha-core-422255208682.us-central1.run.app/ops/verify_ops",
+        "serviceAccountEmail": "422255208682-compute@developer.gserviceaccount.com"
+      },
+      "uri": "https://natacha-core-422255208682.us-central1.run.app/ops/verify_ops"
+    },
+    "lastAttemptTime": "2025-10-28T20:15:00.248672Z",
+    "name": "projects/asistente-sebastian/locations/us-central1/jobs/natacha-verifyops-hourly",
+    "retryConfig": {
+      "maxBackoffDuration": "3600s",
+      "maxDoublings": 5,
+      "maxRetryDuration": "0s",
+      "minBackoffDuration": "5s"
+    },
+    "schedule": "15 * * * *",
+    "scheduleTime": "2025-10-28T21:15:00.310010Z",
+    "state": "ENABLED",
+    "status": {
+      "code": 5
+    },
+    "timeZone": "America/Argentina/Buenos_Aires",
+    "userUpdateTime": "2025-10-22T02:11:01Z"
+  },
+  {
+    "attemptDeadline": "180s",
+    "httpTarget": {
+      "headers": {
+        "User-Agent": "Google-Cloud-Scheduler"
+      },
+      "httpMethod": "POST",
+      "oauthToken": {
+        "scope": "https://www.googleapis.com/auth/cloud-platform",
+        "serviceAccountEmail": "natacha-cloud-executor@asistente-sebastian.iam.gserviceaccount.com"
+      },
+      "uri": "https://us-central1-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/asistente-sebastian/jobs/renew-meta-token:run"
+    },
+    "lastAttemptTime": "2025-10-28T03:00:00.632046Z",
+    "name": "projects/asistente-sebastian/locations/us-central1/jobs/renew-meta-token-job",
+    "retryConfig": {
+      "maxBackoffDuration": "3600s",
+      "maxDoublings": 5,
+      "maxRetryDuration": "0s",
+      "minBackoffDuration": "5s"
+    },
+    "schedule": "0 3 * * *",
+    "scheduleTime": "2025-10-29T03:00:00.866330Z",
+    "state": "ENABLED",
+    "status": {},
+    "timeZone": "Etc/UTC",
+    "userUpdateTime": "2025-10-16T21:17:33Z"
+  },
+  {
+    "attemptDeadline": "180s",
+    "httpTarget": {
+      "headers": {
+        "User-Agent": "Google-Cloud-Scheduler"
+      },
+      "httpMethod": "POST",
+      "oidcToken": {
+        "audience": "https://natacha-health-monitor-mkwskljrhq-uc.a.run.app",
+        "serviceAccountEmail": "scheduler-invoker@asistente-sebastian.iam.gserviceaccount.com"
+      },
+      "uri": "https://natacha-health-monitor-mkwskljrhq-uc.a.run.app/auto_heal"
+    },
+    "lastAttemptTime": "2025-10-28T21:00:00.124342Z",
+    "name": "projects/asistente-sebastian/locations/us-central1/jobs/run-auto-heal",
+    "retryConfig": {
+      "maxBackoffDuration": "3600s",
+      "maxDoublings": 5,
+      "maxRetryDuration": "0s",
+      "minBackoffDuration": "5s"
+    },
+    "schedule": "*/15 * * * *",
+    "scheduleTime": "2025-10-28T21:15:00.427848Z",
+    "state": "ENABLED",
+    "status": {},
+    "timeZone": "America/Argentina/Buenos_Aires",
+    "userUpdateTime": "2025-10-28T19:59:57Z"
+  },
+  {
+    "lastAttemptTime": "2025-10-28T18:00:00.245749Z",
+    "name": "projects/asistente-sebastian/locations/us-central1/jobs/scheduler-health-check",
+    "pubsubTarget": {
+      "data": "8J-UjSBFamVjdWNpw7NuIGF1dG9tw6F0aWNhIGRlbCB2ZXJpZmljYWRvciBkZWwgU2NoZWR1bGVy",
+      "topicName": "projects/asistente-sebastian/topics/natacha-daily-report"
+    },
+    "retryConfig": {
+      "maxBackoffDuration": "3600s",
+      "maxDoublings": 5,
+      "maxRetryDuration": "0s",
+      "minBackoffDuration": "5s"
+    },
+    "schedule": "0 */6 * * *",
+    "scheduleTime": "2025-10-29T00:00:00.322246Z",
+    "state": "ENABLED",
+    "status": {},
+    "timeZone": "UTC",
+    "userUpdateTime": "2025-10-23T18:21:21Z"
+  },
+  {
+    "attemptDeadline": "180s",
+    "httpTarget": {
+      "body": "eyJtb2RlIjoiY2hlY2tfb25seSIsIm9uX2ZhaWwiOnsibnVtZXJvIjoiNTQzODc0MTIwODU5IiwibWVuc2FqZSI6IuKaoO-4jyBGYWxsYSBkZXRlY3RhZGEgZW4gTmF0YWNoYSBBUEkg4oCUIHJldmlzYXIgbG9ncyBkZSBzZXJ2aWNpbyBwcmluY2lwYWwuIn19",
+      "headers": {
+        "Content-Type": "application/json",
+        "User-Agent": "Google-Cloud-Scheduler",
+        "X-Auth-Token": "token-ultra-seguro-12345"
+      },
+      "httpMethod": "POST",
+      "uri": "https://natacha-api-422255208682.us-central1.run.app/test_plugin"
+    },
+    "lastAttemptTime": "2025-10-28T18:00:00.503507Z",
+    "name": "projects/asistente-sebastian/locations/us-central1/jobs/test-natacha-api",
+    "retryConfig": {
+      "maxBackoffDuration": "3600s",
+      "maxDoublings": 5,
+      "maxRetryDuration": "0s",
+      "minBackoffDuration": "5s"
+    },
+    "schedule": "0 */6 * * *",
+    "scheduleTime": "2025-10-29T00:00:00.548763Z",
+    "state": "ENABLED",
+    "status": {
+      "code": 5
+    },
+    "timeZone": "Etc/UTC",
+    "userUpdateTime": "2025-10-24T13:10:02Z"
+  },
+  {
+    "lastAttemptTime": "2025-10-28T18:30:00.025318Z",
+    "name": "projects/asistente-sebastian/locations/us-central1/jobs/verify-daily-flow",
+    "pubsubTarget": {
+      "data": "8J-UgSBFamVjdWNpw7NuIGRpYXJpYSBkZSB2ZXJpZmljYWNpw7NuIGRlbCBmbHVqbyBQdWIvU3ViIOKGkiBDbG91ZCBSdW4=",
+      "topicName": "projects/asistente-sebastian/topics/natacha-daily-report"
+    },
+    "retryConfig": {
+      "maxBackoffDuration": "3600s",
+      "maxDoublings": 5,
+      "maxRetryDuration": "0s",
+      "minBackoffDuration": "5s"
+    },
+    "schedule": "30 18 * * *",
+    "scheduleTime": "2025-10-29T18:30:00.757638Z",
+    "state": "ENABLED",
+    "status": {},
+    "timeZone": "UTC",
+    "userUpdateTime": "2025-10-23T18:09:02Z"
+  },
+  {
+    "lastAttemptTime": "2025-10-28T18:45:00.150258Z",
+    "name": "projects/asistente-sebastian/locations/us-central1/jobs/verify-pubsub-flow-daily",
+    "pubsubTarget": {
+      "data": "8J-noCBFamVjdWNpw7NuIGF1dG9tw6F0aWNhIGRlbCB2ZXJpZmljYWRvciBkZSBmbHVqbyBQdWIvU3ViIOKGkiBDbG91ZCBSdW4=",
+      "topicName": "projects/asistente-sebastian/topics/natacha-daily-report"
+    },
+    "retryConfig": {
+      "maxBackoffDuration": "3600s",
+      "maxDoublings": 5,
+      "maxRetryDuration": "0s",
+      "minBackoffDuration": "5s"
+    },
+    "schedule": "45 18 * * *",
+    "scheduleTime": "2025-10-29T18:45:00.204585Z",
+    "state": "ENABLED",
+    "status": {},
+    "timeZone": "UTC",
+    "userUpdateTime": "2025-10-23T18:11:48Z"
+  }
+]

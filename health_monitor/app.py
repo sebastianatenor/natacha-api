@@ -1,21 +1,19 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-import os
-import json
+import os, json
 from datetime import datetime, timezone
 
-# 🔹 Módulos internos
-from health_monitor.infra_local_history import save_entry, get_history
-from health_monitor.infra_sync import sync_local_to_firestore, pull_from_firestore
-from health_monitor.auto_scheduler import start_scheduler
-from health_monitor.cloud_services_scan import get_cloud_run_services
-from health_monitor.auto_healer import auto_heal
+# Imports internos (sin fallbacks)
+from .infra_local_history import save_entry, get_history, clear_history
+from .infra_sync import sync_local_to_firestore, pull_from_firestore
+from health_monitor.auto_healer import auto_heal as auto_heal_fn
+from .cloud_services_scan import get_cloud_run_services
+from .auto_scheduler import start_scheduler
 
-# ☁️ Firestore
+# Firestore (opcional, lo usamos en algunos endpoints)
 from google.cloud import firestore
 
 app = FastAPI(title="Natacha Health Monitor")
-
 def utc_now_str():
     return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S%z")
 
@@ -30,13 +28,13 @@ def root():
 # 🛠️ AUTO-HEALER POR HTTP (nuevo)
 # =====================================================
 @app.post("/auto_heal")
-def run_auto_heal():
+def trigger_auto_heal_fn():
     """
     Ejecuta escaneo + autocuración de servicios Cloud Run.
     Devuelve el resumen y lo registra en Firestore.
     """
     try:
-        summary = auto_heal()
+        summary = auto_heal_fn()
         # Guarda un snapshot del resumen (con TS de servidor)
         try:
             db = firestore.Client()
@@ -90,7 +88,7 @@ def run_auto_infra_check():
 
         # 🔹 Intentar autocuración
         try:
-            auto_heal()
+            auto_heal_fn()
         except Exception as ae:
             print("⚠️ Error en auto-heal:", str(ae))
 
@@ -128,7 +126,6 @@ def infra_history():
 def infra_clear():
     """Limpia el historial local de infraestructura."""
     try:
-        from health_monitor.infra_local_history import clear_history
         clear_history()
         return {"status": "ok", "message": "Historial local eliminado correctamente"}
     except Exception as e:
@@ -168,3 +165,12 @@ def startup_event():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("health_monitor.app:app", host="0.0.0.0", port=8085, reload=True)
+# --- std health endpoint (no side effects) ---
+try:
+    app  # ensure 'app' exists
+    @app.get("/health", include_in_schema=False)
+    def health():
+        return {"status": "ok"}
+except NameError:
+    # If 'app' isn't available in this module, don't break imports
+    pass

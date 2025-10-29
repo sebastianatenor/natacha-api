@@ -1,0 +1,66 @@
+[
+  {
+    "density": "SPARSE_ALL",
+    "fields": [
+      {
+        "fieldPath": "service",
+        "order": "ASCENDING"
+      },
+      {
+        "fieldPath": "timestamp",
+        "order": "DESCENDING"
+      },
+      {
+        "fieldPath": "__name__",
+        "order": "DESCENDING"
+      }
+    ],
+    "name": "projects/asistente-sebastian/databases/(default)/collectionGroups/system_health/indexes/CICAgJim14AK",
+    "queryScope": "COLLECTION",
+    "state": "READY"
+  },
+  {
+    "density": "SPARSE_ALL",
+    "fields": [
+      {
+        "fieldPath": "level",
+        "order": "ASCENDING"
+      },
+      {
+        "fieldPath": "timestamp",
+        "order": "DESCENDING"
+      },
+      {
+        "fieldPath": "__name__",
+        "order": "DESCENDING"
+      }
+    ],
+    "name": "projects/asistente-sebastian/databases/(default)/collectionGroups/alerts/indexes/CICAgOjXh4EK",
+    "queryScope": "COLLECTION",
+    "state": "READY"
+  },
+  {
+    "density": "SPARSE_ALL",
+    "fields": [
+      {
+        "fieldPath": "level",
+        "order": "ASCENDING"
+      },
+      {
+        "fieldPath": "source",
+        "order": "ASCENDING"
+      },
+      {
+        "fieldPath": "timestamp",
+        "order": "DESCENDING"
+      },
+      {
+        "fieldPath": "__name__",
+        "order": "DESCENDING"
+      }
+    ],
+    "name": "projects/asistente-sebastian/databases/(default)/collectionGroups/alerts/indexes/CICAgJiUpoMK",
+    "queryScope": "COLLECTION",
+    "state": "READY"
+  }
+]

@@ -1,0 +1,29 @@
+[
+  {
+    "labels": {
+      "goog-managed-by": "artifact-analysis"
+    },
+    "name": "projects/asistente-sebastian/topics/container-analysis-occurrences-v1beta1"
+  },
+  {
+    "labels": {
+      "goog-managed-by": "artifact-analysis"
+    },
+    "name": "projects/asistente-sebastian/topics/container-analysis-notes-v1beta1"
+  },
+  {
+    "labels": {
+      "goog-managed-by": "artifact-analysis"
+    },
+    "name": "projects/asistente-sebastian/topics/container-analysis-notes-v1"
+  },
+  {
+    "labels": {
+      "goog-managed-by": "artifact-analysis"
+    },
+    "name": "projects/asistente-sebastian/topics/container-analysis-occurrences-v1"
+  },
+  {
+    "name": "projects/asistente-sebastian/topics/natacha-daily-report"
+  }
+]

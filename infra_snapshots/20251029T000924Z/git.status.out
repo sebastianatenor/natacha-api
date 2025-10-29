@@ -1,0 +1,35 @@
+ M dashboard/dashboard.py
+ M dashboard/infra_control/infra_audit.py
+ M dashboard/system_health.py
+ M infra_snapshots/latest.md
+ M tools/infra_snapshot.sh
+?? Dockerfile.dashboard
+?? dashboard/dashboard_prod.py
+?? dashboard/infra_control/auto_healer_panel.py
+?? health_monitor/auto_scheduler.py
+?? infra_snapshots/20251028T203701Z/
+?? infra_snapshots/20251028T204232Z/
+?? infra_snapshots/20251028T205550Z.tar.gz
+?? infra_snapshots/20251028T205550Z/
+?? infra_snapshots/20251028T205914Z.tar.gz
+?? infra_snapshots/20251028T205914Z/
+?? infra_snapshots/20251028T210220Z.tar.gz
+?? infra_snapshots/20251028T210220Z/
+?? infra_snapshots/20251028T210226Z.tar.gz
+?? infra_snapshots/20251028T210226Z/
+?? infra_snapshots/20251028T234916Z.tar.gz
+?? infra_snapshots/20251028T234916Z/
+?? infra_snapshots/20251028T235257Z.tar.gz
+?? infra_snapshots/20251028T235257Z/
+?? infra_snapshots/20251029T000102Z.tar.gz
+?? infra_snapshots/20251029T000102Z/
+?? infra_snapshots/20251029T000346Z.tar.gz
+?? infra_snapshots/20251029T000346Z/
+?? infra_snapshots/20251029T000651Z.tar.gz
+?? infra_snapshots/20251029T000651Z/
+?? infra_snapshots/20251029T000924Z/
+?? policy-autohealer.json
+?? policy-latency.json
+?? policy-uptime.json
+?? tools/check_snapshot.sh
+?? tools/daily_digest.sh

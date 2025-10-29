@@ -1,0 +1,162 @@
+[
+  {
+    "combiner": "OR",
+    "conditions": [
+      {
+        "conditionThreshold": {
+          "aggregations": [
+            {
+              "alignmentPeriod": "60s",
+              "perSeriesAligner": "ALIGN_PERCENTILE_95"
+            }
+          ],
+          "comparison": "COMPARISON_GT",
+          "duration": "300s",
+          "filter": "resource.type=\"cloud_run_revision\" AND resource.label.\"service_name\"=\"natacha-health-monitor\" AND metric.type=\"run.googleapis.com/request_latencies\"",
+          "thresholdValue": 900.0,
+          "trigger": {
+            "count": 1
+          }
+        },
+        "displayName": "run.googleapis.com/request_latencies P95 > 900ms",
+        "name": "projects/asistente-sebastian/alertPolicies/14725801559423143307/conditions/14725801559423142772"
+      }
+    ],
+    "creationRecord": {
+      "mutateTime": "2025-10-28T20:17:44.040367713Z",
+      "mutatedBy": "sebastianatenor@gmail.com"
+    },
+    "displayName": "Cloud Run: P95 latency > 900ms (natacha-health-monitor)",
+    "documentation": {
+      "content": "La latencia P95 superó 900 ms por 5 minutos consecutivos.",
+      "mimeType": "text/markdown"
+    },
+    "enabled": true,
+    "mutationRecord": {
+      "mutateTime": "2025-10-28T20:17:44.040367713Z",
+      "mutatedBy": "sebastianatenor@gmail.com"
+    },
+    "name": "projects/asistente-sebastian/alertPolicies/14725801559423143307",
+    "notificationChannels": [
+      "projects/asistente-sebastian/notificationChannels/16131789610057042414"
+    ]
+  },
+  {
+    "combiner": "OR",
+    "conditions": [
+      {
+        "conditionThreshold": {
+          "aggregations": [
+            {
+              "alignmentPeriod": "60s",
+              "perSeriesAligner": "ALIGN_RATE"
+            }
+          ],
+          "comparison": "COMPARISON_GT",
+          "duration": "60s",
+          "filter": "resource.type=\"cloud_run_revision\" AND metric.type=\"run.googleapis.com/request_count\" AND metric.label.\"response_code_class\"=\"5xx\" AND resource.labels.service_name=\"natacha-command-endpoint\"",
+          "thresholdValue": 0.05,
+          "trigger": {
+            "count": 1
+          }
+        },
+        "displayName": "Error rate mayor al 5%",
+        "name": "projects/asistente-sebastian/alertPolicies/17001662952917223737/conditions/17001662952917223216"
+      }
+    ],
+    "creationRecord": {
+      "mutateTime": "2025-10-16T04:13:32.085317215Z",
+      "mutatedBy": "sebastianatenor@gmail.com"
+    },
+    "displayName": "Errores críticos - Natacha Endpoint",
+    "enabled": true,
+    "mutationRecord": {
+      "mutateTime": "2025-10-16T04:13:32.085317215Z",
+      "mutatedBy": "sebastianatenor@gmail.com"
+    },
+    "name": "projects/asistente-sebastian/alertPolicies/17001662952917223737",
+    "notificationChannels": [
+      "projects/asistente-sebastian/notificationChannels/17012733904319805436"
+    ]
+  },
+  {
+    "combiner": "OR",
+    "conditions": [
+      {
+        "conditionThreshold": {
+          "aggregations": [
+            {
+              "alignmentPeriod": "60s",
+              "crossSeriesReducer": "REDUCE_MEAN",
+              "perSeriesAligner": "ALIGN_PERCENTILE_50"
+            }
+          ],
+          "comparison": "COMPARISON_GT",
+          "duration": "60s",
+          "filter": "resource.type=\"cloud_run_revision\" AND metric.type=\"run.googleapis.com/request_latencies\" AND resource.labels.service_name=\"natacha-command-endpoint\"",
+          "thresholdValue": 3000.0,
+          "trigger": {
+            "count": 1
+          }
+        },
+        "displayName": "Latencia promedio mayor a 3s",
+        "name": "projects/asistente-sebastian/alertPolicies/2766300233084202721/conditions/2766300233084202556"
+      }
+    ],
+    "creationRecord": {
+      "mutateTime": "2025-10-16T04:17:57.316381432Z",
+      "mutatedBy": "sebastianatenor@gmail.com"
+    },
+    "displayName": "Latencia alta - Natacha Endpoint",
+    "enabled": true,
+    "mutationRecord": {
+      "mutateTime": "2025-10-16T04:17:57.316381432Z",
+      "mutatedBy": "sebastianatenor@gmail.com"
+    },
+    "name": "projects/asistente-sebastian/alertPolicies/2766300233084202721",
+    "notificationChannels": [
+      "projects/asistente-sebastian/notificationChannels/17012733904319805436"
+    ]
+  },
+  {
+    "combiner": "OR",
+    "conditions": [
+      {
+        "conditionThreshold": {
+          "aggregations": [
+            {
+              "alignmentPeriod": "60s",
+              "perSeriesAligner": "ALIGN_DELTA"
+            }
+          ],
+          "comparison": "COMPARISON_GT",
+          "duration": "0s",
+          "filter": "resource.type=\"cloud_run_job\" AND metric.type=\"logging.googleapis.com/user/meta_token_failures\"",
+          "trigger": {
+            "count": 1
+          }
+        },
+        "displayName": "Error en ejecución de renew-meta-token",
+        "name": "projects/asistente-sebastian/alertPolicies/8549282222260801922/conditions/13940724053183032864"
+      }
+    ],
+    "creationRecord": {
+      "mutateTime": "2025-10-16T21:42:24.157287242Z",
+      "mutatedBy": "sebastianatenor@gmail.com"
+    },
+    "displayName": "Falla renovación token de Meta",
+    "documentation": {
+      "content": "🚨 *Error en renovación automática del token de Meta*\n\nEl job `renew-meta-token` falló al intentar renovar el token de Meta.\n\n🔍 **Posibles causas:**\n- El token actual expiró o fue revocado.\n- Las credenciales (App ID / Secret) son inválidas.\n- Meta API respondió con error temporal.\n\n🧭 **Acciones recomendadas:**\n1. Revisá los logs de Cloud Run Job:\n   👉 https://console.cloud.google.com/run/jobs/details/us-central1/renew-meta-token?project=422255208682\n2. Si el token expiró, generá uno nuevo en Meta Developer y actualizá el Secret `META_WHATSAPP_TOKEN`.\n\n📅 Este job corre diariamente vía Cloud Scheduler.\n\n_Sistema de alerta automática Natacha Cloud_",
+      "mimeType": "text/markdown"
+    },
+    "enabled": true,
+    "mutationRecord": {
+      "mutateTime": "2025-10-16T21:47:19.261897310Z",
+      "mutatedBy": "sebastianatenor@gmail.com"
+    },
+    "name": "projects/asistente-sebastian/alertPolicies/8549282222260801922",
+    "notificationChannels": [
+      "projects/asistente-sebastian/notificationChannels/16131789610057042414"
+    ]
+  }
+]

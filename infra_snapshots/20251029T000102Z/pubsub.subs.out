@@ -1,0 +1,21 @@
+[
+  {
+    "ackDeadlineSeconds": 10,
+    "expirationPolicy": {
+      "ttl": "2678400s"
+    },
+    "messageRetentionDuration": "604800s",
+    "name": "projects/asistente-sebastian/subscriptions/natacha-daily-report-sub",
+    "pushConfig": {
+      "attributes": {
+        "x-goog-version": "v1"
+      },
+      "oidcToken": {
+        "serviceAccountEmail": "422255208682-compute@developer.gserviceaccount.com"
+      },
+      "pushEndpoint": "https://natacha-api-422255208682.us-central1.run.app/ops/daily_report"
+    },
+    "state": "ACTIVE",
+    "topic": "_deleted-topic_"
+  }
+]

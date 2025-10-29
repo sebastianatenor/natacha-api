@@ -1,0 +1,5 @@
+commit 5aa4e64ddc6e7496af4b13fb06a390b7a2261d74
+Author: AlvaroTenor <alvarosebastianatenor@gmail.com>
+Date:   Tue Oct 28 21:29:41 2025 -0300
+
+    ops: http codes, robust IAM parsing, readable logs in digest

@@ -78,3 +78,9 @@
 - Último intento: 2025-10-29T01:15:03.870443Z
 - Resultado: HTTP 200
 - Próximo intento: 2025-10-29T01:30:00.760466Z
+
+### Scheduler history (run-auto-heal, last 3)
+TIME                         HTTP  METHOD
+2025-10-29T01:15:03.870443Z  200   POST
+2025-10-29T01:15:01.490621Z  200   POST
+2025-10-29T01:12:02.400889Z  200   POST

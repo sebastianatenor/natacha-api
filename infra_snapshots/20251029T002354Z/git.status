@@ -1,0 +1,53 @@
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   dashboard/dashboard.py
+	modified:   dashboard/infra_control/infra_audit.py
+	modified:   dashboard/system_health.py
+	modified:   infra_snapshots/latest.md
+	modified:   tools/infra_snapshot.sh
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	Dockerfile.dashboard
+	dashboard/dashboard_prod.py
+	dashboard/infra_control/auto_healer_panel.py
+	health_monitor/auto_scheduler.py
+	infra_snapshots/20251028T203701Z/
+	infra_snapshots/20251028T204232Z/
+	infra_snapshots/20251028T205550Z.tar.gz
+	infra_snapshots/20251028T205550Z/
+	infra_snapshots/20251028T205914Z.tar.gz
+	infra_snapshots/20251028T205914Z/
+	infra_snapshots/20251028T210220Z.tar.gz
+	infra_snapshots/20251028T210220Z/
+	infra_snapshots/20251028T210226Z.tar.gz
+	infra_snapshots/20251028T210226Z/
+	infra_snapshots/20251028T234916Z.tar.gz
+	infra_snapshots/20251028T234916Z/
+	infra_snapshots/20251028T235257Z.tar.gz
+	infra_snapshots/20251028T235257Z/
+	infra_snapshots/20251029T000102Z.tar.gz
+	infra_snapshots/20251029T000102Z/
+	infra_snapshots/20251029T000346Z.tar.gz
+	infra_snapshots/20251029T000346Z/
+	infra_snapshots/20251029T000651Z.tar.gz
+	infra_snapshots/20251029T000651Z/
+	infra_snapshots/20251029T000924Z.tar.gz
+	infra_snapshots/20251029T000924Z/
+	infra_snapshots/20251029T001254Z/
+	infra_snapshots/20251029T001518Z/
+	infra_snapshots/20251029T001818Z/
+	infra_snapshots/20251029T002100Z/
+	infra_snapshots/20251029T002214Z/
+	infra_snapshots/20251029T002354Z/
+	policy-autohealer.json
+	policy-latency.json
+	policy-uptime.json
+	tools/check_snapshot.sh
+	tools/daily_digest.sh
+
+no changes added to commit (use "git add" and/or "git commit -a")

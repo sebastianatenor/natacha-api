@@ -1,0 +1,25 @@
+{
+  "displayName": "Auto-Healer: reinicios detectados",
+  "documentation": {
+    "content": "Se detectó al menos 1 reinicio por el Auto-Healer en la última hora.",
+    "mimeType": "text/markdown"
+  },
+  "conditions": [
+    {
+      "displayName": "auto_healer_restarts > 0 (1h)",
+      "conditionThreshold": {
+        "filter": "resource.type=\"global\" AND metric.type=\"logging.googleapis.com/user/auto_healer_restarts\"",
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 0,
+        "duration": "0s",
+        "aggregations": [
+          { "alignmentPeriod": "3600s", "perSeriesAligner": "ALIGN_SUM" }
+        ],
+        "trigger": { "count": 1 }
+      }
+    }
+  ],
+  "notificationChannels": ["projects/asistente-sebastian/notificationChannels/17012733904319805436"],
+  "combiner": "OR",
+  "enabled": true
+}

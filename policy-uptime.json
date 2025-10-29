@@ -1,0 +1,17 @@
+{
+  "displayName": "Uptime Natacha Health – DOWN",
+  "documentation": { "content": "El endpoint /health no responde", "mimeType": "text/markdown" },
+  "conditions": [{
+    "displayName": "Uptime check failed (5 min)",
+    "conditionThreshold": {
+      "filter": "metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" AND resource.type=\"uptime_url\"",
+      "comparison": "COMPARISON_LT",
+      "thresholdValue": 1,
+      "duration": "300s",
+      "aggregations": [{ "alignmentPeriod": "60s", "perSeriesAligner": "ALIGN_MEAN" }]
+    }
+  }],
+  "notificationChannels": ["projects/asistente-sebastian/notificationChannels/17012733904319805436"],
+  "combiner": "OR",
+  "enabled": true
+}

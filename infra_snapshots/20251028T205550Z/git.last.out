@@ -1,0 +1,6 @@
+* db813af (HEAD -> main, origin/main, origin/HEAD) fix(health): fix typo + use Cloud Run API v2 with ADC
+* 08ea6b7 feat(health): Cloud Run API v2 scan (ADC) instead of gcloud subprocess
+* ecc8b4d feat(health): expose /auto_heal endpoint + UTC-aware timestamps
+* 5b22e37 fix(health): UTC timezone-aware timestamps + server TS; safer logging to Firestore
+* ce8c882 🚀 Initial full commit with project structure and fixes
+* 5481f18 Primer commit del proyecto Natacha API

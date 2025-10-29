@@ -1,0 +1,30 @@
+2025-10-28T23:50:01.225803Z	natacha-api		INFO:     169.254.169.126:51152 - "POST /ops/smart_health HTTP/1.1" 404 Not Found
+2025-10-28T23:50:01.214033Z	natacha-api	WARNING	
+2025-10-28T23:49:42.692212Z	natacha-health-monitor	WARNING	The request was not authenticated. Either allow unauthenticated invocations or set the proper Authorization header. Read more at https://cloud.google.com/run/docs/securing/authenticating Additional troubleshooting documentation can be found at: https://cloud.google.com/run/docs/troubleshooting#unauthorized-client
+2025-10-28T23:49:42.387195Z	natacha-health-monitor	WARNING	The request was not authenticated. Either allow unauthenticated invocations or set the proper Authorization header. Read more at https://cloud.google.com/run/docs/securing/authenticating Additional troubleshooting documentation can be found at: https://cloud.google.com/run/docs/troubleshooting#unauthorized-client
+2025-10-28T23:45:02.208827Z	natacha-health-monitor		INFO:     169.254.169.126:40746 - "POST /auto_heal HTTP/1.1" 200 OK
+2025-10-28T23:45:02.128824Z	natacha-health-monitor		📋 Resumen final registrado: {'timestamp': '2025-10-28 23:45:01+0000', 'checked': 14, 'restarted': [], 'healthy': ['natacha-health-monitor', 'natacha-whatsapp', 'natacha-plugin-registry', 'natacha-memory-console', 'natacha-dashboard', 'natacha-core', 'log-natacha-activity', 'auto-stop-vm', 'vm-proxy', 'autostart-vm', 'stop-natacha-vm', 'natacha-command-endpoint', 'natacha-api', 'natachaspeak'], 'errors': []}
+2025-10-28T23:45:02.051430Z	natacha-health-monitor		✅ Servicio saludable: natachaspeak (routesready: unknown (n/a))
+2025-10-28T23:45:02.051380Z	natacha-health-monitor		✅ Servicio saludable: natacha-api (routesready: unknown (n/a))
+2025-10-28T23:45:02.051352Z	natacha-health-monitor		✅ Servicio saludable: natacha-command-endpoint (routesready: unknown (n/a))
+2025-10-28T23:45:02.051322Z	natacha-health-monitor		✅ Servicio saludable: stop-natacha-vm (routesready: unknown (n/a))
+2025-10-28T23:45:02.051303Z	natacha-health-monitor		✅ Servicio saludable: autostart-vm (routesready: unknown (n/a))
+2025-10-28T23:45:02.051299Z	natacha-health-monitor		✅ Servicio saludable: vm-proxy (routesready: unknown (n/a))
+2025-10-28T23:45:02.051228Z	natacha-health-monitor		✅ Servicio saludable: auto-stop-vm (routesready: unknown (n/a))
+2025-10-28T23:45:02.051201Z	natacha-health-monitor		✅ Servicio saludable: log-natacha-activity (routesready: unknown (n/a))
+2025-10-28T23:45:02.051164Z	natacha-health-monitor		✅ Servicio saludable: natacha-core (routesready: unknown (n/a))
+2025-10-28T23:45:02.051133Z	natacha-health-monitor		✅ Servicio saludable: natacha-dashboard (routesready: unknown (n/a))
+2025-10-28T23:45:02.051102Z	natacha-health-monitor		✅ Servicio saludable: natacha-memory-console (routesready: unknown (n/a))
+2025-10-28T23:45:02.051071Z	natacha-health-monitor		✅ Servicio saludable: natacha-plugin-registry (routesready: unknown (n/a))
+2025-10-28T23:45:02.051034Z	natacha-health-monitor		✅ Servicio saludable: natacha-whatsapp (routesready: unknown (n/a))
+2025-10-28T23:45:02.051003Z	natacha-health-monitor		✅ Servicio saludable: natacha-health-monitor (routesready: unknown (n/a))
+2025-10-28T23:45:02.050919Z	natacha-health-monitor		✅ 14 servicios activos encontrados.
+2025-10-28T23:45:01.968026Z	natacha-health-monitor		🚀 Ejecutando Auto-Healer Natacha...
+2025-10-28T23:45:01.949677Z	natacha-health-monitor	INFO	
+2025-10-28T23:45:01.899931Z	natacha-health-monitor		INFO:     169.254.169.126:40732 - "POST /run_auto_infra_check HTTP/1.1" 200 OK
+2025-10-28T23:45:01.898928Z	natacha-health-monitor		📋 Resumen final registrado: {'timestamp': '2025-10-28 23:45:01+0000', 'checked': 14, 'restarted': [], 'healthy': ['natacha-health-monitor', 'natacha-whatsapp', 'natacha-plugin-registry', 'natacha-memory-console', 'natacha-dashboard', 'natacha-core', 'log-natacha-activity', 'auto-stop-vm', 'vm-proxy', 'autostart-vm', 'stop-natacha-vm', 'natacha-command-endpoint', 'natacha-api', 'natachaspeak'], 'errors': []}
+2025-10-28T23:45:01.837487Z	natacha-health-monitor		✅ Servicio saludable: natachaspeak (routesready: unknown (n/a))
+2025-10-28T23:45:01.837478Z	natacha-health-monitor		✅ Servicio saludable: natacha-api (routesready: unknown (n/a))
+2025-10-28T23:45:01.837397Z	natacha-health-monitor		✅ Servicio saludable: natacha-command-endpoint (routesready: unknown (n/a))
+2025-10-28T23:45:01.837363Z	natacha-health-monitor		✅ Servicio saludable: stop-natacha-vm (routesready: unknown (n/a))
+2025-10-28T23:45:01.837333Z	natacha-health-monitor		✅ Servicio saludable: autostart-vm (routesready: unknown (n/a))

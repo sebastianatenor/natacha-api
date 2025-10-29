@@ -1,0 +1,7 @@
+commit db813af622f5e49a1d1ff15e692bed808f4defbb
+Author:     AlvaroTenor <alvarosebastianatenor@gmail.com>
+AuthorDate: Tue Oct 28 17:05:34 2025 -0300
+Commit:     AlvaroTenor <alvarosebastianatenor@gmail.com>
+CommitDate: Tue Oct 28 17:05:34 2025 -0300
+
+    fix(health): fix typo + use Cloud Run API v2 with ADC

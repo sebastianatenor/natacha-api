@@ -149,3 +149,14 @@ else
   echo "- Próximo intento: _Sin datos_ (cron: ${CRON:-n/a}, tz: ${TZID:-n/a})"
 fi
 } >> "$OUT_MD"
+
+# ===== Scheduler history (last 3 /auto_heal requests) =====
+{
+  echo
+  echo "### Scheduler history (run-auto-heal, last 3)"
+  gcloud logging read \
+    'resource.type="cloud_run_revision" AND resource.labels.service_name="natacha-health-monitor" AND httpRequest.requestUrl:"/auto_heal"' \
+    --project="${PROJECT}" --limit=3 --order=desc \
+    --format='table(timestamp:label=TIME, httpRequest.status:label=HTTP, httpRequest.requestMethod:label=METHOD)' \
+    2>/dev/null || true
+} >> "$OUT_MD"

@@ -1,0 +1,2186 @@
+[
+  {
+    "insertId": "6901557e00032fbb226cee0c",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:02.327372029Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "INFO:     169.254.169.126:40746 - \"POST /auto_heal HTTP/1.1\" 200 OK",
+    "timestamp": "2025-10-28T23:45:02.208827Z"
+  },
+  {
+    "insertId": "6901557e0001f73849a32064",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:02.327372029Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "📋 Resumen final registrado: {'timestamp': '2025-10-28 23:45:01+0000', 'checked': 14, 'restarted': [], 'healthy': ['natacha-health-monitor', 'natacha-whatsapp', 'natacha-plugin-registry', 'natacha-memory-console', 'natacha-dashboard', 'natacha-core', 'log-natacha-activity', 'auto-stop-vm', 'vm-proxy', 'autostart-vm', 'stop-natacha-vm', 'natacha-command-endpoint', 'natacha-api', 'natachaspeak'], 'errors': []}",
+    "timestamp": "2025-10-28T23:45:02.128824Z"
+  },
+  {
+    "insertId": "6901557e0000c8e6816db037",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:02.327372029Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natachaspeak (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:02.051430Z"
+  },
+  {
+    "insertId": "6901557e0000c8b41ca2644b",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:02.327372029Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-api (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:02.051380Z"
+  },
+  {
+    "insertId": "6901557e0000c898af335e68",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:02.327372029Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-command-endpoint (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:02.051352Z"
+  },
+  {
+    "insertId": "6901557e0000c87a39c5eed9",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:02.327372029Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: stop-natacha-vm (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:02.051322Z"
+  },
+  {
+    "insertId": "6901557e0000c8670db122af",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:02.327372029Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: autostart-vm (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:02.051303Z"
+  },
+  {
+    "insertId": "6901557e0000c8638ec76bb8",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:02.327372029Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: vm-proxy (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:02.051299Z"
+  },
+  {
+    "insertId": "6901557e0000c81cc7a5cbe9",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:02.327372029Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: auto-stop-vm (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:02.051228Z"
+  },
+  {
+    "insertId": "6901557e0000c8015fe00a81",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:02.327372029Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: log-natacha-activity (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:02.051201Z"
+  },
+  {
+    "insertId": "6901557e0000c7dca9e618cb",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:02.327372029Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-core (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:02.051164Z"
+  },
+  {
+    "insertId": "6901557e0000c7bd3dc12b35",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:02.327372029Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-dashboard (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:02.051133Z"
+  },
+  {
+    "insertId": "6901557e0000c79e8a06f826",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:02.327372029Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-memory-console (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:02.051102Z"
+  },
+  {
+    "insertId": "6901557e0000c77f9ae6a79b",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:02.327372029Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-plugin-registry (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:02.051071Z"
+  },
+  {
+    "insertId": "6901557e0000c75ab7a5d9d1",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:02.327372029Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-whatsapp (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:02.051034Z"
+  },
+  {
+    "insertId": "6901557e0000c73b3e79798f",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:02.327372029Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-health-monitor (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:02.051003Z"
+  },
+  {
+    "insertId": "6901557e0000c6e76114c0b7",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:02.327372029Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ 14 servicios activos encontrados.",
+    "timestamp": "2025-10-28T23:45:02.050919Z"
+  },
+  {
+    "insertId": "6901557d000ec55a569f8bd9",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "🚀 Ejecutando Auto-Healer Natacha...",
+    "timestamp": "2025-10-28T23:45:01.968026Z"
+  },
+  {
+    "httpRequest": {
+      "latency": "0.243677721s",
+      "protocol": "HTTP/1.1",
+      "remoteIp": "35.187.132.1",
+      "requestMethod": "POST",
+      "requestSize": "1289",
+      "requestUrl": "https://natacha-health-monitor-mkwskljrhq-uc.a.run.app/auto_heal",
+      "responseSize": "484",
+      "serverIp": "34.143.73.2",
+      "status": 200,
+      "userAgent": "Google-Cloud-Scheduler"
+    },
+    "insertId": "6901557e0003345a309d8680",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Frequests",
+    "receiveTimestamp": "2025-10-28T23:45:02.239785783Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "severity": "INFO",
+    "spanId": "85e491f3b4d37063",
+    "timestamp": "2025-10-28T23:45:01.949677Z",
+    "trace": "projects/asistente-sebastian/traces/e595ebdf75938572c271288b41034371"
+  },
+  {
+    "insertId": "6901557d000dbb5ba6f6a7b8",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "INFO:     169.254.169.126:40732 - \"POST /run_auto_infra_check HTTP/1.1\" 200 OK",
+    "timestamp": "2025-10-28T23:45:01.899931Z"
+  },
+  {
+    "insertId": "6901557d000db77078acdb21",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "📋 Resumen final registrado: {'timestamp': '2025-10-28 23:45:01+0000', 'checked': 14, 'restarted': [], 'healthy': ['natacha-health-monitor', 'natacha-whatsapp', 'natacha-plugin-registry', 'natacha-memory-console', 'natacha-dashboard', 'natacha-core', 'log-natacha-activity', 'auto-stop-vm', 'vm-proxy', 'autostart-vm', 'stop-natacha-vm', 'natacha-command-endpoint', 'natacha-api', 'natachaspeak'], 'errors': []}",
+    "timestamp": "2025-10-28T23:45:01.898928Z"
+  },
+  {
+    "insertId": "6901557d000cc76f52c81843",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natachaspeak (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:01.837487Z"
+  },
+  {
+    "insertId": "6901557d000cc76696833f5e",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-api (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:01.837478Z"
+  },
+  {
+    "insertId": "6901557d000cc715b79d6ab5",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-command-endpoint (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:01.837397Z"
+  },
+  {
+    "insertId": "6901557d000cc6f3350afaee",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: stop-natacha-vm (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:01.837363Z"
+  },
+  {
+    "insertId": "6901557d000cc6d5342a7db8",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: autostart-vm (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:01.837333Z"
+  },
+  {
+    "insertId": "6901557d000cc6b8890d8a2e",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: vm-proxy (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:01.837304Z"
+  },
+  {
+    "insertId": "6901557d000cc69ab526cbbd",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: auto-stop-vm (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:01.837274Z"
+  },
+  {
+    "insertId": "6901557d000cc67cfe14b961",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: log-natacha-activity (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:01.837244Z"
+  },
+  {
+    "insertId": "6901557d000cc661b2b0f59f",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-core (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:01.837217Z"
+  },
+  {
+    "insertId": "6901557d000cc63bc2b3eaea",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-dashboard (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:01.837179Z"
+  },
+  {
+    "insertId": "6901557d000cc61ffbdad4b0",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-memory-console (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:01.837151Z"
+  },
+  {
+    "insertId": "6901557d000cc5ff4ba8a7d5",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-plugin-registry (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:01.837119Z"
+  },
+  {
+    "insertId": "6901557d000cc5e24decf108",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-whatsapp (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:01.837090Z"
+  },
+  {
+    "insertId": "6901557d000cc5c22b96c5ad",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-health-monitor (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:45:01.837058Z"
+  },
+  {
+    "insertId": "6901557d000cc57733fff168",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ 14 servicios activos encontrados.",
+    "timestamp": "2025-10-28T23:45:01.836983Z"
+  },
+  {
+    "insertId": "6901557d000b947786893a40",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "🚀 Ejecutando Auto-Healer Natacha...",
+    "timestamp": "2025-10-28T23:45:01.758903Z"
+  },
+  {
+    "insertId": "6901557d000b93e6e0552751",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.996121699Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Datos guardados en Firestore: 2025-10-28 23:45:01+0000",
+    "timestamp": "2025-10-28T23:45:01.758758Z"
+  },
+  {
+    "insertId": "6901557d000a3c58d266fa8c",
+    "labels": {
+      "instanceId": "0014778296949a65a6f2874379e9a073403a54c45295c284bc7f91d2f3768288c183b971c773d4f9ff2ded1cd72ce122b17b77bd249518dc8200dcb79cbd1fba5de6e69e94de06116f401fae93d6"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.676036950Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-api",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-api-00164-vtv",
+        "service_name": "natacha-api"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "INFO:     169.254.169.126:31550 - \"POST /ops/smart_health HTTP/1.1\" 404 Not Found",
+    "timestamp": "2025-10-28T23:45:01.670808Z"
+  },
+  {
+    "httpRequest": {
+      "latency": "0.003168750s",
+      "protocol": "HTTP/1.1",
+      "remoteIp": "107.178.194.132",
+      "requestMethod": "POST",
+      "requestSize": "1373",
+      "requestUrl": "https://natacha-api-422255208682.us-central1.run.app/ops/smart_health",
+      "responseSize": "122",
+      "serverIp": "34.143.77.2",
+      "status": 404,
+      "userAgent": "Google-Cloud-Scheduler"
+    },
+    "insertId": "6901557d000a3ed5131cdb86",
+    "labels": {
+      "instanceId": "0014778296949a65a6f2874379e9a073403a54c45295c284bc7f91d2f3768288c183b971c773d4f9ff2ded1cd72ce122b17b77bd249518dc8200dcb79cbd1fba5de6e69e94de06116f401fae93d6"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Frequests",
+    "receiveTimestamp": "2025-10-28T23:45:01.675922917Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-api",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-api-00164-vtv",
+        "service_name": "natacha-api"
+      },
+      "type": "cloud_run_revision"
+    },
+    "severity": "WARNING",
+    "spanId": "a55db397efd2f48a",
+    "timestamp": "2025-10-28T23:45:01.657103Z",
+    "trace": "projects/asistente-sebastian/traces/0787e2be8a405240dc40d1350acadd02",
+    "traceSampled": true
+  },
+  {
+    "insertId": "6901557d000a057d3314f483",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:45:01.661617901Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ 14 servicios activos encontrados.",
+    "timestamp": "2025-10-28T23:45:01.656765Z"
+  },
+  {
+    "httpRequest": {
+      "latency": "0.365942968s",
+      "protocol": "HTTP/1.1",
+      "remoteIp": "107.178.194.166",
+      "requestMethod": "POST",
+      "requestSize": "1345",
+      "requestUrl": "https://natacha-health-monitor-422255208682.us-central1.run.app/run_auto_infra_check",
+      "responseSize": "3402",
+      "serverIp": "34.143.74.2",
+      "status": 200,
+      "userAgent": "Google-Cloud-Scheduler"
+    },
+    "insertId": "6901557d000dc109b87cc6a9",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Frequests",
+    "receiveTimestamp": "2025-10-28T23:45:01.906924959Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "severity": "INFO",
+    "spanId": "99b64210b0b43c3e",
+    "timestamp": "2025-10-28T23:45:01.517652Z",
+    "trace": "projects/asistente-sebastian/traces/ff41f8861ed48f6f67a7c8e64a2e539d",
+    "traceSampled": true
+  },
+  {
+    "insertId": "690154c70008ea1eae724038",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:41:59.656245395Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "⚠️ Error al ejecutar diagnóstico automático: 403",
+    "timestamp": "2025-10-28T23:41:59.584222Z"
+  },
+  {
+    "httpRequest": {
+      "latency": "0s",
+      "protocol": "HTTP/1.1",
+      "remoteIp": "2600:1900:0:2d07::1900",
+      "requestMethod": "POST",
+      "requestSize": "354",
+      "requestUrl": "https://natacha-health-monitor-422255208682.us-central1.run.app/run_auto_infra_check",
+      "serverIp": "2600:1900:4240:200::",
+      "status": 403,
+      "userAgent": "python-requests/2.32.3"
+    },
+    "insertId": "690154c70004c04c00a312a0",
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Frequests",
+    "receiveTimestamp": "2025-10-28T23:41:59.316874394Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "severity": "WARNING",
+    "spanId": "31d31f8c7bef2391",
+    "textPayload": "The request was not authenticated. Either allow unauthenticated invocations or set the proper Authorization header. Read more at https://cloud.google.com/run/docs/securing/authenticating Additional troubleshooting documentation can be found at: https://cloud.google.com/run/docs/troubleshooting#unauthorized-client",
+    "timestamp": "2025-10-28T23:41:59.288935Z",
+    "trace": "projects/asistente-sebastian/traces/c5d198618b908f829e9db8e770d2ba80",
+    "traceSampled": true
+  },
+  {
+    "insertId": "690154c6000f0bd69241685b",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:41:58.989468801Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "🕒 Ejecutando chequeo automático: 2025-10-28 23:41:58",
+    "timestamp": "2025-10-28T23:41:58.986070Z"
+  },
+  {
+    "insertId": "6901545100097f5583193e4a",
+    "labels": {
+      "instanceId": "0014778296949a65a6f2874379e9a073403a54c45295c284bc7f91d2f3768288c183b971c773d4f9ff2ded1cd72ce122b17b77bd249518dc8200dcb79cbd1fba5de6e69e94de06116f401fae93d6"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:40:01.627991494Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-api",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-api-00164-vtv",
+        "service_name": "natacha-api"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "INFO:     169.254.169.126:20162 - \"POST /ops/smart_health HTTP/1.1\" 404 Not Found",
+    "timestamp": "2025-10-28T23:40:01.622421Z"
+  },
+  {
+    "httpRequest": {
+      "latency": "0.002883309s",
+      "protocol": "HTTP/1.1",
+      "remoteIp": "35.187.132.76",
+      "requestMethod": "POST",
+      "requestSize": "1372",
+      "requestUrl": "https://natacha-api-422255208682.us-central1.run.app/ops/smart_health",
+      "responseSize": "122",
+      "serverIp": "34.143.73.2",
+      "status": 404,
+      "userAgent": "Google-Cloud-Scheduler"
+    },
+    "insertId": "69015451000982a210086579",
+    "labels": {
+      "instanceId": "0014778296949a65a6f2874379e9a073403a54c45295c284bc7f91d2f3768288c183b971c773d4f9ff2ded1cd72ce122b17b77bd249518dc8200dcb79cbd1fba5de6e69e94de06116f401fae93d6"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Frequests",
+    "receiveTimestamp": "2025-10-28T23:40:01.628604638Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-api",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-api-00164-vtv",
+        "service_name": "natacha-api"
+      },
+      "type": "cloud_run_revision"
+    },
+    "severity": "WARNING",
+    "spanId": "a436eec20122b36f",
+    "timestamp": "2025-10-28T23:40:01.608971Z",
+    "trace": "projects/asistente-sebastian/traces/b982a45a85804865060ad0c1f99927d0",
+    "traceSampled": true
+  },
+  {
+    "insertId": "690153250009fb9ec9556a57",
+    "labels": {
+      "instanceId": "0014778296949a65a6f2874379e9a073403a54c45295c284bc7f91d2f3768288c183b971c773d4f9ff2ded1cd72ce122b17b77bd249518dc8200dcb79cbd1fba5de6e69e94de06116f401fae93d6"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:35:01.667849179Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-api",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-api-00164-vtv",
+        "service_name": "natacha-api"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "INFO:     169.254.169.126:44774 - \"POST /ops/smart_health HTTP/1.1\" 404 Not Found",
+    "timestamp": "2025-10-28T23:35:01.654238Z"
+  },
+  {
+    "httpRequest": {
+      "latency": "0.002707849s",
+      "protocol": "HTTP/1.1",
+      "remoteIp": "34.98.143.226",
+      "requestMethod": "POST",
+      "requestSize": "1374",
+      "requestUrl": "https://natacha-api-422255208682.us-central1.run.app/ops/smart_health",
+      "responseSize": "122",
+      "serverIp": "34.143.74.2",
+      "status": 404,
+      "userAgent": "Google-Cloud-Scheduler"
+    },
+    "insertId": "690153250008a82462eb416a",
+    "labels": {
+      "instanceId": "0014778296949a65a6f2874379e9a073403a54c45295c284bc7f91d2f3768288c183b971c773d4f9ff2ded1cd72ce122b17b77bd249518dc8200dcb79cbd1fba5de6e69e94de06116f401fae93d6"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Frequests",
+    "receiveTimestamp": "2025-10-28T23:35:01.574372991Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-api",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-api-00164-vtv",
+        "service_name": "natacha-api"
+      },
+      "type": "cloud_run_revision"
+    },
+    "severity": "WARNING",
+    "spanId": "daa9ddbf8d1882b8",
+    "timestamp": "2025-10-28T23:35:01.557559Z",
+    "trace": "projects/asistente-sebastian/traces/84a654fc2d061343edd0b5713f4ee731",
+    "traceSampled": true
+  },
+  {
+    "httpRequest": {
+      "latency": "0s",
+      "protocol": "HTTP/1.1",
+      "remoteIp": "2800:810:52a:1bc:f9a9:b455:9404:ad91",
+      "requestMethod": "POST",
+      "requestSize": "354",
+      "requestUrl": "https://natacha-health-monitor-422255208682.us-central1.run.app/run_auto_infra_check",
+      "serverIp": "2600:1900:4241:200::",
+      "status": 403,
+      "userAgent": "python-requests/2.32.5"
+    },
+    "insertId": "690153070004c807280ed590",
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Frequests",
+    "receiveTimestamp": "2025-10-28T23:34:31.318260527Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "severity": "WARNING",
+    "spanId": "ffd51562b0ebf367",
+    "textPayload": "The request was not authenticated. Either allow unauthenticated invocations or set the proper Authorization header. Read more at https://cloud.google.com/run/docs/securing/authenticating Additional troubleshooting documentation can be found at: https://cloud.google.com/run/docs/troubleshooting#unauthorized-client",
+    "timestamp": "2025-10-28T23:34:31.248691Z",
+    "trace": "projects/asistente-sebastian/traces/9c1e15d8d7f21332915fe560f7923252",
+    "traceSampled": true
+  },
+  {
+    "insertId": "690151fd000134d9f9842e86",
+    "labels": {
+      "instanceId": "0069c7a988e0a314b97074a78fae0d4c31e3a1459744d3496feebbc1423f76b24c417e79d0bb578270e671256cb91331e693c3a5f6f904f15fed72ef19d3d8af95a3e669aecdd1685030a45a5f5e"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:05.083738227Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-core",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-core-00042-lgr",
+        "service_name": "natacha-core"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "INFO:     169.254.169.126:27800 - \"POST /ops/check_health HTTP/1.1\" 404 Not Found",
+    "timestamp": "2025-10-28T23:30:05.079065Z"
+  },
+  {
+    "httpRequest": {
+      "latency": "0.003224554s",
+      "protocol": "HTTP/1.1",
+      "remoteIp": "35.243.23.203",
+      "requestMethod": "POST",
+      "requestSize": "1315",
+      "requestUrl": "https://natacha-core-422255208682.us-central1.run.app/ops/check_health",
+      "responseSize": "122",
+      "serverIp": "34.143.78.2",
+      "status": 404,
+      "userAgent": "Google-Cloud-Scheduler"
+    },
+    "insertId": "690151fd00013869a250121b",
+    "labels": {
+      "instanceId": "0069c7a988e0a314b97074a78fae0d4c31e3a1459744d3496feebbc1423f76b24c417e79d0bb578270e671256cb91331e693c3a5f6f904f15fed72ef19d3d8af95a3e669aecdd1685030a45a5f5e"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Frequests",
+    "receiveTimestamp": "2025-10-28T23:30:05.085171818Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-core",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-core-00042-lgr",
+        "service_name": "natacha-core"
+      },
+      "type": "cloud_run_revision"
+    },
+    "severity": "WARNING",
+    "spanId": "0cbea1f46cde7320",
+    "timestamp": "2025-10-28T23:30:05.068127Z",
+    "trace": "projects/asistente-sebastian/traces/70a180dce41fcc2c31e72fec13239c94",
+    "traceSampled": true
+  },
+  {
+    "insertId": "690151f9000e152bd72ec5ea",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:02.201583232Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "INFO:     169.254.169.126:55956 - \"POST /auto_heal HTTP/1.1\" 200 OK",
+    "timestamp": "2025-10-28T23:30:01.922923Z"
+  },
+  {
+    "insertId": "690151f9000d780159b99294",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:02.201583232Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "📋 Resumen final registrado: {'timestamp': '2025-10-28 23:30:01+0000', 'checked': 14, 'restarted': [], 'healthy': ['natacha-health-monitor', 'natacha-whatsapp', 'natacha-plugin-registry', 'natacha-memory-console', 'natacha-dashboard', 'natacha-core', 'log-natacha-activity', 'auto-stop-vm', 'vm-proxy', 'autostart-vm', 'stop-natacha-vm', 'natacha-command-endpoint', 'natacha-api', 'natachaspeak'], 'errors': []}",
+    "timestamp": "2025-10-28T23:30:01.882689Z"
+  },
+  {
+    "insertId": "690151f9000c542ae7375872",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.870098747Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natachaspeak (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.807978Z"
+  },
+  {
+    "insertId": "690151f9000c540c0fc1dd43",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.870098747Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-api (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.807948Z"
+  },
+  {
+    "insertId": "690151f9000c53ef6586fc8a",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.870098747Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-command-endpoint (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.807919Z"
+  },
+  {
+    "insertId": "690151f9000c53d296e8f059",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.870098747Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: stop-natacha-vm (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.807890Z"
+  },
+  {
+    "insertId": "690151f9000c53b3761bc027",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.870098747Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: autostart-vm (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.807859Z"
+  },
+  {
+    "insertId": "690151f9000c5395c0a4dcc3",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.870098747Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: vm-proxy (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.807829Z"
+  },
+  {
+    "insertId": "690151f9000c5377527ed6c1",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.870098747Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: auto-stop-vm (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.807799Z"
+  },
+  {
+    "insertId": "690151f9000c5352e66f4fd5",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.870098747Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: log-natacha-activity (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.807762Z"
+  },
+  {
+    "insertId": "690151f9000c53347a7697ff",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.870098747Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-core (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.807732Z"
+  },
+  {
+    "insertId": "690151f9000c531c02938dde",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.870098747Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-dashboard (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.807708Z"
+  },
+  {
+    "insertId": "690151f9000c52f6e8371302",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.870098747Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-memory-console (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.807670Z"
+  },
+  {
+    "insertId": "690151f9000c52a90908af29",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.870098747Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-plugin-registry (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.807593Z"
+  },
+  {
+    "insertId": "690151f9000c527982f13adb",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.870098747Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-whatsapp (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.807545Z"
+  },
+  {
+    "insertId": "690151f9000c5273bb6bca3d",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.870098747Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-health-monitor (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.807539Z"
+  },
+  {
+    "insertId": "690151f9000c526518874ef3",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.870098747Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ 14 servicios activos encontrados.",
+    "timestamp": "2025-10-28T23:30:01.807525Z"
+  },
+  {
+    "insertId": "690151f9000b45e112f5fc64",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.870098747Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "🚀 Ejecutando Auto-Healer Natacha...",
+    "timestamp": "2025-10-28T23:30:01.738785Z"
+  },
+  {
+    "httpRequest": {
+      "latency": "0.187022697s",
+      "protocol": "HTTP/1.1",
+      "remoteIp": "34.98.143.129",
+      "requestMethod": "POST",
+      "requestSize": "1289",
+      "requestUrl": "https://natacha-health-monitor-mkwskljrhq-uc.a.run.app/auto_heal",
+      "responseSize": "484",
+      "serverIp": "34.143.78.2",
+      "status": 200,
+      "userAgent": "Google-Cloud-Scheduler"
+    },
+    "insertId": "690151f9000e19ea889f6a0c",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Frequests",
+    "receiveTimestamp": "2025-10-28T23:30:02.149633536Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "severity": "INFO",
+    "spanId": "9303e58dc38d4bb9",
+    "timestamp": "2025-10-28T23:30:01.723916Z",
+    "trace": "projects/asistente-sebastian/traces/eb1b7cabc79a9e6e10e0eb4bca590475"
+  },
+  {
+    "insertId": "690151f90007ab060ae12062",
+    "labels": {
+      "instanceId": "0014778296949a65a6f2874379e9a073403a54c45295c284bc7f91d2f3768288c183b971c773d4f9ff2ded1cd72ce122b17b77bd249518dc8200dcb79cbd1fba5de6e69e94de06116f401fae93d6"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.508137921Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-api",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-api-00164-vtv",
+        "service_name": "natacha-api"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "INFO:     169.254.169.126:10212 - \"POST /ops/smart_health HTTP/1.1\" 404 Not Found",
+    "timestamp": "2025-10-28T23:30:01.502534Z"
+  },
+  {
+    "httpRequest": {
+      "latency": "0.004007939s",
+      "protocol": "HTTP/1.1",
+      "remoteIp": "35.243.23.192",
+      "requestMethod": "POST",
+      "requestSize": "1374",
+      "requestUrl": "https://natacha-api-422255208682.us-central1.run.app/ops/smart_health",
+      "responseSize": "122",
+      "serverIp": "34.143.76.2",
+      "status": 404,
+      "userAgent": "Google-Cloud-Scheduler"
+    },
+    "insertId": "690151f90007ad66db96ca20",
+    "labels": {
+      "instanceId": "0014778296949a65a6f2874379e9a073403a54c45295c284bc7f91d2f3768288c183b971c773d4f9ff2ded1cd72ce122b17b77bd249518dc8200dcb79cbd1fba5de6e69e94de06116f401fae93d6"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Frequests",
+    "receiveTimestamp": "2025-10-28T23:30:01.514450791Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-api",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-api-00164-vtv",
+        "service_name": "natacha-api"
+      },
+      "type": "cloud_run_revision"
+    },
+    "severity": "WARNING",
+    "spanId": "3af075b09f1112cf",
+    "timestamp": "2025-10-28T23:30:01.490029Z",
+    "trace": "projects/asistente-sebastian/traces/6a35bb363c13f7049e4b09f539121e0d",
+    "traceSampled": true
+  },
+  {
+    "insertId": "690151f9000743147e0a63cf",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.537236253Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "INFO:     169.254.169.126:55940 - \"POST /run_auto_infra_check HTTP/1.1\" 200 OK",
+    "timestamp": "2025-10-28T23:30:01.475924Z"
+  },
+  {
+    "insertId": "690151f900073e9307e4d838",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.537236253Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "📋 Resumen final registrado: {'timestamp': '2025-10-28 23:30:01+0000', 'checked': 14, 'restarted': [], 'healthy': ['natacha-health-monitor', 'natacha-whatsapp', 'natacha-plugin-registry', 'natacha-memory-console', 'natacha-dashboard', 'natacha-core', 'log-natacha-activity', 'auto-stop-vm', 'vm-proxy', 'autostart-vm', 'stop-natacha-vm', 'natacha-command-endpoint', 'natacha-api', 'natachaspeak'], 'errors': []}",
+    "timestamp": "2025-10-28T23:30:01.474771Z"
+  },
+  {
+    "insertId": "690151f9000617359846cf39",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.537236253Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natachaspeak (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.399157Z"
+  },
+  {
+    "insertId": "690151f90006171b88b11dff",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.537236253Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-api (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.399131Z"
+  },
+  {
+    "insertId": "690151f9000616fbfbe06e6b",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.537236253Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-command-endpoint (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.399099Z"
+  },
+  {
+    "insertId": "690151f9000616da6fa87d26",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.537236253Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: stop-natacha-vm (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.399066Z"
+  },
+  {
+    "insertId": "690151f9000616bc76a72ad3",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.537236253Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: autostart-vm (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.399036Z"
+  },
+  {
+    "insertId": "690151f90006169ef7216e7f",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.537236253Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: vm-proxy (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.399006Z"
+  },
+  {
+    "insertId": "690151f9000616822f9de532",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.537236253Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: auto-stop-vm (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.398978Z"
+  },
+  {
+    "insertId": "690151f900061662711462b6",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.537236253Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: log-natacha-activity (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.398946Z"
+  },
+  {
+    "insertId": "690151f9000616438145310f",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.537236253Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-core (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.398915Z"
+  },
+  {
+    "insertId": "690151f90006162632308057",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.537236253Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-dashboard (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.398886Z"
+  },
+  {
+    "insertId": "690151f9000616086cf4ebfe",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.537236253Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-memory-console (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.398856Z"
+  },
+  {
+    "insertId": "690151f9000615ece8154896",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.537236253Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-plugin-registry (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.398828Z"
+  },
+  {
+    "insertId": "690151f9000615d4b641758b",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.537236253Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-whatsapp (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.398804Z"
+  },
+  {
+    "insertId": "690151f9000615cb12044829",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.537236253Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Servicio saludable: natacha-health-monitor (routesready: unknown (n/a))",
+    "timestamp": "2025-10-28T23:30:01.398795Z"
+  },
+  {
+    "insertId": "690151f90006156254d8712a",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.537236253Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ 14 servicios activos encontrados.",
+    "timestamp": "2025-10-28T23:30:01.398690Z"
+  },
+  {
+    "insertId": "690151f90004aae6b9a2ef8f",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.537236253Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "🚀 Ejecutando Auto-Healer Natacha...",
+    "timestamp": "2025-10-28T23:30:01.305894Z"
+  },
+  {
+    "insertId": "690151f90004aa6a59e6a540",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.537236253Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ Datos guardados en Firestore: 2025-10-28 23:30:01+0000",
+    "timestamp": "2025-10-28T23:30:01.305770Z"
+  },
+  {
+    "insertId": "690151f9000306de8385524c",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:30:01.204984989Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "✅ 14 servicios activos encontrados.",
+    "timestamp": "2025-10-28T23:30:01.198366Z"
+  },
+  {
+    "httpRequest": {
+      "latency": "0.368014699s",
+      "protocol": "HTTP/1.1",
+      "remoteIp": "34.98.143.6",
+      "requestMethod": "POST",
+      "requestSize": "1346",
+      "requestUrl": "https://natacha-health-monitor-422255208682.us-central1.run.app/run_auto_infra_check",
+      "responseSize": "3402",
+      "serverIp": "34.143.74.2",
+      "status": 200,
+      "userAgent": "Google-Cloud-Scheduler"
+    },
+    "insertId": "690151f90007498a6c42f60f",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Frequests",
+    "receiveTimestamp": "2025-10-28T23:30:01.483558528Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "severity": "INFO",
+    "spanId": "126df2ec3b817c3a",
+    "timestamp": "2025-10-28T23:30:01.090997Z",
+    "trace": "projects/asistente-sebastian/traces/a0657a1b2e504e89f40cb2dbb3da9953",
+    "traceSampled": true
+  },
+  {
+    "insertId": "69015142000f044c931c6357",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:26:59.159906628Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "⚠️ Error al ejecutar diagnóstico automático: 403",
+    "timestamp": "2025-10-28T23:26:58.984140Z"
+  },
+  {
+    "httpRequest": {
+      "latency": "0s",
+      "protocol": "HTTP/1.1",
+      "remoteIp": "2600:1900:0:2d07::1900",
+      "requestMethod": "POST",
+      "requestSize": "355",
+      "requestUrl": "https://natacha-health-monitor-422255208682.us-central1.run.app/run_auto_infra_check",
+      "serverIp": "2600:1900:4240:200::",
+      "status": 403,
+      "userAgent": "python-requests/2.32.3"
+    },
+    "insertId": "690151420006417c1cc91df2",
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Frequests",
+    "receiveTimestamp": "2025-10-28T23:26:58.416213076Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "severity": "WARNING",
+    "spanId": "4fd0d3caad458ef9",
+    "textPayload": "The request was not authenticated. Either allow unauthenticated invocations or set the proper Authorization header. Read more at https://cloud.google.com/run/docs/securing/authenticating Additional troubleshooting documentation can be found at: https://cloud.google.com/run/docs/troubleshooting#unauthorized-client",
+    "timestamp": "2025-10-28T23:26:58.305623Z",
+    "trace": "projects/asistente-sebastian/traces/9b6bc168b811d645422e2a1cb528de1c",
+    "traceSampled": true
+  },
+  {
+    "insertId": "6901514100076db8ccc54904",
+    "labels": {
+      "instanceId": "0014778296d0bc036f4d75147a8ee1d856b35d01d88e29a2d02c8b357503c42f25a59835d219e660d594a9c82e7c17ea54972ed819db3e12ceace5c2d7b7c96dd89ac4734af63509437259efc07840"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:26:57.492085653Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-health-monitor",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-health-monitor-00017-thc",
+        "service_name": "natacha-health-monitor"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "🕒 Ejecutando chequeo automático: 2025-10-28 23:26:57",
+    "timestamp": "2025-10-28T23:26:57.486840Z"
+  },
+  {
+    "insertId": "690150cd00071005f386ab93",
+    "labels": {
+      "instanceId": "0014778296949a65a6f2874379e9a073403a54c45295c284bc7f91d2f3768288c183b971c773d4f9ff2ded1cd72ce122b17b77bd249518dc8200dcb79cbd1fba5de6e69e94de06116f401fae93d6"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:25:01.467989331Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-api",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-api-00164-vtv",
+        "service_name": "natacha-api"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "INFO:     169.254.169.126:45034 - \"POST /ops/smart_health HTTP/1.1\" 404 Not Found",
+    "timestamp": "2025-10-28T23:25:01.462853Z"
+  },
+  {
+    "httpRequest": {
+      "latency": "0.002880720s",
+      "protocol": "HTTP/1.1",
+      "remoteIp": "34.116.39.37",
+      "requestMethod": "POST",
+      "requestSize": "1374",
+      "requestUrl": "https://natacha-api-422255208682.us-central1.run.app/ops/smart_health",
+      "responseSize": "122",
+      "serverIp": "34.143.78.2",
+      "status": 404,
+      "userAgent": "Google-Cloud-Scheduler"
+    },
+    "insertId": "690150cd0007129e87ceed01",
+    "labels": {
+      "instanceId": "0014778296949a65a6f2874379e9a073403a54c45295c284bc7f91d2f3768288c183b971c773d4f9ff2ded1cd72ce122b17b77bd249518dc8200dcb79cbd1fba5de6e69e94de06116f401fae93d6"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Frequests",
+    "receiveTimestamp": "2025-10-28T23:25:01.470473957Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-api",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-api-00164-vtv",
+        "service_name": "natacha-api"
+      },
+      "type": "cloud_run_revision"
+    },
+    "severity": "WARNING",
+    "spanId": "8e15534bb349f964",
+    "timestamp": "2025-10-28T23:25:01.451430Z",
+    "trace": "projects/asistente-sebastian/traces/7690c8e7e4b8021e82337f81341f213e",
+    "traceSampled": true
+  },
+  {
+    "insertId": "69014fa1000617062727df24",
+    "labels": {
+      "instanceId": "0014778296949a65a6f2874379e9a073403a54c45295c284bc7f91d2f3768288c183b971c773d4f9ff2ded1cd72ce122b17b77bd249518dc8200dcb79cbd1fba5de6e69e94de06116f401fae93d6"
+    },
+    "logName": "projects/asistente-sebastian/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2025-10-28T23:20:01.404696363Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "natacha-api",
+        "location": "us-central1",
+        "project_id": "asistente-sebastian",
+        "revision_name": "natacha-api-00164-vtv",
+        "service_name": "natacha-api"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "INFO:     169.254.169.126:58758 - \"POST /ops/smart_health HTTP/1.1\" 404 Not Found",
+    "timestamp": "2025-10-28T23:20:01.399110Z"
+  }
+]

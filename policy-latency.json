@@ -1,0 +1,25 @@
+{
+  "displayName": "Cloud Run: P95 latency > 900ms (natacha-health-monitor)",
+  "documentation": {
+    "content": "La latencia P95 superó 900 ms por 5 minutos consecutivos.",
+    "mimeType": "text/markdown"
+  },
+  "conditions": [
+    {
+      "displayName": "run.googleapis.com/request_latencies P95 > 900ms",
+      "conditionThreshold": {
+        "filter": "resource.type=\"cloud_run_revision\" AND resource.label.\"service_name\"=\"natacha-health-monitor\" AND metric.type=\"run.googleapis.com/request_latencies\"",
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 900,
+        "duration": "300s",
+        "aggregations": [
+          { "alignmentPeriod": "60s", "perSeriesAligner": "ALIGN_PERCENTILE_95" }
+        ],
+        "trigger": { "count": 1 }
+      }
+    }
+  ],
+  "notificationChannels": ["projects/asistente-sebastian/notificationChannels/16131789610057042414"],
+  "combiner": "OR",
+  "enabled": true
+}

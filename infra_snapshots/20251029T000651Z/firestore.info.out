@@ -1,0 +1,18 @@
+{
+  "appEngineIntegrationMode": "DISABLED",
+  "concurrencyMode": "PESSIMISTIC",
+  "createTime": "2025-10-20T22:32:24.323635Z",
+  "databaseEdition": "STANDARD",
+  "deleteProtectionState": "DELETE_PROTECTION_DISABLED",
+  "earliestVersionTime": "2025-10-28T23:07:06.709569Z",
+  "etag": "IKef3c2OyJADMKzYwM7qs5AD",
+  "freeTier": true,
+  "locationId": "us-central1",
+  "name": "projects/asistente-sebastian/databases/(default)",
+  "pointInTimeRecoveryEnablement": "POINT_IN_TIME_RECOVERY_DISABLED",
+  "realtimeUpdatesMode": "REALTIME_UPDATES_MODE_ENABLED",
+  "type": "FIRESTORE_NATIVE",
+  "uid": "f1a98869-f1d6-45a4-95c1-9008cbab307c",
+  "updateTime": "2025-10-20T22:32:24.323635Z",
+  "versionRetentionPeriod": "3600s"
+}

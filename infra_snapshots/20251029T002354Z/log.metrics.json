@@ -1,0 +1,34 @@
+[
+  {
+    "createTime": "2025-10-28T20:14:12.326498670Z",
+    "description": "Servicios reiniciados por Auto-Healer",
+    "filter": "resource.type=\"cloud_run_revision\" AND (\"status\\\": \\\"restarted\\\"\" OR textPayload=~\"reiniciado correctamente\")",
+    "metricDescriptor": {
+      "description": "Servicios reiniciados por Auto-Healer",
+      "metricKind": "DELTA",
+      "name": "projects/asistente-sebastian/metricDescriptors/logging.googleapis.com/user/auto_healer_restarts",
+      "type": "logging.googleapis.com/user/auto_healer_restarts",
+      "unit": "1",
+      "valueType": "INT64"
+    },
+    "name": "auto_healer_restarts",
+    "resourceName": "projects/asistente-sebastian/metrics/auto_healer_restarts",
+    "updateTime": "2025-10-28T20:14:12.326498670Z"
+  },
+  {
+    "createTime": "2025-10-16T21:27:16.563436253Z",
+    "description": "Errores en la renovación del token de Meta",
+    "filter": "resource.type=\"cloud_run_job\" AND textPayload:\"❌ Error\" AND resource.labels.job_name=\"renew-meta-token\"",
+    "metricDescriptor": {
+      "description": "Errores en la renovación del token de Meta",
+      "metricKind": "DELTA",
+      "name": "projects/asistente-sebastian/metricDescriptors/logging.googleapis.com/user/meta_token_failures",
+      "type": "logging.googleapis.com/user/meta_token_failures",
+      "unit": "1",
+      "valueType": "INT64"
+    },
+    "name": "meta_token_failures",
+    "resourceName": "projects/asistente-sebastian/metrics/meta_token_failures",
+    "updateTime": "2025-10-16T21:27:16.563436253Z"
+  }
+]

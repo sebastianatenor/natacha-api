@@ -1,0 +1,2 @@
+ROLE               MEMBERS
+roles/run.invoker  serviceAccount:scheduler-invoker@asistente-sebastian.iam.gserviceaccount.com

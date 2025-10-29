@@ -1,0 +1,71 @@
+[
+  {
+    "creationRecord": {
+      "mutateTime": "2025-10-16T21:23:54.093219965Z"
+    },
+    "displayName": "Notificaciones Meta Token",
+    "enabled": true,
+    "labels": {
+      "email_address": "sebastianatenor@gmail.com"
+    },
+    "mutationRecords": [
+      {
+        "mutateTime": "2025-10-16T21:23:54.093219965Z"
+      }
+    ],
+    "name": "projects/asistente-sebastian/notificationChannels/16131789610057042414",
+    "type": "email"
+  },
+  {
+    "creationRecord": {
+      "mutateTime": "2025-10-16T03:56:03.470400257Z"
+    },
+    "displayName": "Alertas LLVC Global - Natacha",
+    "enabled": true,
+    "labels": {
+      "email_address": "sebastianatenor@gmail.com"
+    },
+    "mutationRecords": [
+      {
+        "mutateTime": "2025-10-16T03:56:03.470400257Z"
+      }
+    ],
+    "name": "projects/asistente-sebastian/notificationChannels/17012733904319805436",
+    "type": "email",
+    "verificationStatus": "VERIFIED"
+  },
+  {
+    "creationRecord": {
+      "mutateTime": "2025-10-28T20:16:01.931564904Z"
+    },
+    "displayName": "Seba Email",
+    "enabled": true,
+    "labels": {
+      "email_address": "sebastianatenor@gmail.com"
+    },
+    "mutationRecords": [
+      {
+        "mutateTime": "2025-10-28T20:16:01.931564904Z"
+      }
+    ],
+    "name": "projects/asistente-sebastian/notificationChannels/306082373074028591",
+    "type": "email"
+  },
+  {
+    "creationRecord": {
+      "mutateTime": "2025-10-16T21:23:16.970972213Z"
+    },
+    "displayName": "Notificaciones Meta Token",
+    "enabled": true,
+    "labels": {
+      "email_address": "tu_correo@gmail.com"
+    },
+    "mutationRecords": [
+      {
+        "mutateTime": "2025-10-16T21:23:16.970972213Z"
+      }
+    ],
+    "name": "projects/asistente-sebastian/notificationChannels/8185103255800230550",
+    "type": "email"
+  }
+]

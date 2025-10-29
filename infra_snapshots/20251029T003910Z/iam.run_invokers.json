@@ -1,0 +1,12 @@
+[
+  {
+    "bindings": {
+      "members": [
+        "serviceAccount:scheduler-invoker@asistente-sebastian.iam.gserviceaccount.com"
+      ],
+      "role": "roles/run.invoker"
+    },
+    "etag": "BwZCPaHYeGk=",
+    "version": 1
+  }
+]

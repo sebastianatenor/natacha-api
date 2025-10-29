@@ -1,0 +1,43 @@
+Name: google-auth
+Version: 2.41.1
+Summary: Google Authentication Library
+Home-page: https://github.com/googleapis/google-auth-library-python
+Author: Google Cloud Platform
+Author-email: googleapis-packages@google.com
+License: Apache 2.0
+Location: /Users/alvarosebastianatenor/Projects/natacha-api/venv/lib/python3.13/site-packages
+Requires: cachetools, pyasn1-modules, rsa
+Required-by: google-api-core, google-auth-oauthlib, google-cloud-core, google-cloud-firestore
+---
+Name: google-cloud-firestore
+Version: 2.21.0
+Summary: Google Cloud Firestore API client library
+Home-page: https://github.com/googleapis/python-firestore
+Author: Google LLC
+Author-email: googleapis-packages@google.com
+License: Apache 2.0
+Location: /Users/alvarosebastianatenor/Projects/natacha-api/venv/lib/python3.13/site-packages
+Requires: google-api-core, google-auth, google-cloud-core, proto-plus, protobuf
+Required-by: 
+---
+Name: fastapi
+Version: 0.120.0
+Summary: FastAPI framework, high performance, easy to learn, fast to code, ready for production
+Home-page: https://github.com/fastapi/fastapi
+Author: 
+Author-email: =?utf-8?q?Sebasti=C3=A1n_Ram=C3=ADrez?= <tiangolo@gmail.com>
+License: 
+Location: /Users/alvarosebastianatenor/Projects/natacha-api/venv/lib/python3.13/site-packages
+Requires: annotated-doc, pydantic, starlette, typing-extensions
+Required-by: 
+---
+Name: uvicorn
+Version: 0.38.0
+Summary: The lightning-fast ASGI server.
+Home-page: https://uvicorn.dev/
+Author: 
+Author-email: Tom Christie <tom@tomchristie.com>
+License-Expression: BSD-3-Clause
+Location: /Users/alvarosebastianatenor/Projects/natacha-api/venv/lib/python3.13/site-packages
+Requires: click, h11
+Required-by: 
