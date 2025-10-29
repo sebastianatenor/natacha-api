@@ -1,0 +1,19 @@
+{
+  "displayName": "CRun | HealthMonitor | Uptime / down",
+  "combiner": "OR",
+  "conditions": [{
+    "displayName": "Uptime down (2m)",
+    "conditionThreshold": {
+      "filter": "metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" AND resource.type=\"uptime_url\" AND resource.label.\"host\"=\"natacha-health-monitor-422255208682.us-central1.run.app\"",
+      "comparison": "COMPARISON_LT",
+      "thresholdValue": 1,
+      "duration": "120s",
+      "aggregations": [
+        { "alignmentPeriod": "60s", "perSeriesAligner": "ALIGN_NEXT_OLDER" }
+      ],
+      "evaluationMissingData": "EVALUATION_MISSING_DATA_INACTIVE"
+    }
+  }],
+  "notificationChannels": ["projects/asistente-sebastian/notificationChannels/17012733904319805436"],
+  "enabled": true
+}

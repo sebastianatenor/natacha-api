@@ -1,0 +1,31 @@
+{
+  "combiner": "OR",
+  "conditions": [
+    {
+      "conditionMonitoringQueryLanguage": {
+        "duration": "60s",
+        "query": "fetch global\n| metric 'logging.googleapis.com/user/health-monitor-5xx'\n| align rate(1m)\n| group_by [], sum(value)\n| every 1m\n| condition val() > 0"
+      },
+      "displayName": "Logs 5xx > 0 en 1m",
+      "name": "projects/asistente-sebastian/alertPolicies/6323746048274976644/conditions/6323746048274974695"
+    }
+  ],
+  "creationRecord": {
+    "mutateTime": "2025-10-29T18:21:24.421099982Z",
+    "mutatedBy": "sebastianatenor@gmail.com"
+  },
+  "displayName": "CRun | natacha-health-monitor | 5xx (sin /debug/boom)",
+  "enabled": true,
+  "mutationRecord": {
+    "mutateTime": "2025-10-29T18:33:30.968399405Z",
+    "mutatedBy": "sebastianatenor@gmail.com"
+  },
+  "name": "projects/asistente-sebastian/alertPolicies/6323746048274976644",
+  "notificationChannels": [
+    "projects/asistente-sebastian/notificationChannels/17012733904319805436"
+  ],
+  "documentation": {
+    "mimeType": "text/markdown",
+    "content": "# Runbook\n1. Check Cloud Run *Requests* and *Application* logs\n2. Inspect latest deploys & revisions\n3. Hit `/` `/run_auto_infra_check` `/auto_heal` `/debug/sleep`\n4. If repeated 5xx: roll back last revision\n\n**Owner:** @Seba"
+  }
+}

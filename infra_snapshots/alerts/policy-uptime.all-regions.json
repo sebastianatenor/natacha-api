@@ -1,0 +1,20 @@
+{
+  "displayName": "CRun | HealthMonitor | Uptime / all regions down",
+  "combiner": "OR",
+  "conditions": [{
+    "displayName": "All regions failing (2m)",
+    "conditionThreshold": {
+      "filter": "metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" AND resource.type=\"uptime_url\" AND resource.label.\"host\"=\"natacha-health-monitor-422255208682.us-central1.run.app\"",
+      "comparison": "COMPARISON_LT",
+      "thresholdValue": 0,
+      "duration": "120s",
+      "aggregations": [
+        { "alignmentPeriod": "60s", "perSeriesAligner": "ALIGN_NEXT_OLDER" },
+        { "alignmentPeriod": "60s", "crossSeriesReducer": "REDUCE_COUNT_TRUE", "groupByFields": [] }
+      ],
+      "evaluationMissingData": "EVALUATION_MISSING_DATA_INACTIVE"
+    }
+  }],
+  "notificationChannels": ["projects/asistente-sebastian/notificationChannels/17012733904319805436"],
+  "enabled": true
+}

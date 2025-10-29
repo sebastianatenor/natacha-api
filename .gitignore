@@ -24,3 +24,8 @@ infra_status*.json
 *.tgz
 .deploy_cache/
 .deploy_temp/
+policy-*.tpl.json
+policy-*.tmp.json
+*-update.json
+*evaluated.json
+policy-*-test.json
