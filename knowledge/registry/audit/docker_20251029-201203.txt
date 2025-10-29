@@ -1,0 +1,24 @@
+== Docker Inventory @ Wed Oct 29 20:12:03 -03 2025 ==
+NAMES                     IMAGE                                 STATUS          CREATED        PORTS
+keen_heyrovsky            natacha-health-monitor-test           Up 30 minutes   45 hours ago   0.0.0.0:8085->8080/tcp, [::]:8085->8080/tcp
+natacha-service-checker   natacha-api-natacha-service-checker   Up 2 days       2 days ago     
+natacha-health-monitor    natacha-api-natacha-health-monitor    Up 2 days       2 days ago     
+natacha-core              natacha-api-natacha-core              Up 2 days       2 days ago     0.0.0.0:8081->8080/tcp, [::]:8081->8080/tcp
+natacha-api               natacha-api-natacha-api               Up 2 days       2 days ago     0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+natacha-memory-console    natacha-api-natacha-memory-console    Up 2 days       2 days ago     0.0.0.0:8082->8080/tcp, [::]:8082->8080/tcp
+
+== Stats (running) ==
+CONTAINER ID   NAME                      CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O        PIDS
+a69c4c47b047   keen_heyrovsky            0.27%     35.23MiB / 3.828GiB   0.90%     1.47kB / 126B     6.29MB / 0B      1
+399866fc63d3   natacha-service-checker   0.07%     40.06MiB / 3.828GiB   1.02%     6.86MB / 14.8MB   733kB / 0B       12
+2046e8a11efe   natacha-health-monitor    0.24%     54.63MiB / 3.828GiB   1.39%     11.7MB / 1.12MB   9MB / 33.4MB     3
+2b6a40389e28   natacha-core              0.24%     51.71MiB / 3.828GiB   1.32%     1.2MB / 1.05MB    5.46MB / 180kB   2
+d7c9f6e05b83   natacha-api               0.30%     50.81MiB / 3.828GiB   1.30%     1.21MB / 1.06MB   5.05MB / 180kB   2
+3b6a7c29af59   natacha-memory-console    0.27%     50.66MiB / 3.828GiB   1.29%     3.32kB / 1.08kB   15.8MB / 168kB   1
+
+== Disk usage ==
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          6         6         4.045GB   1.765GB (43%)
+Containers      6         6         25.12MB   0B (0%)
+Local Volumes   1         0         0B        0B
+Build Cache     21        0         1.124GB   1.124GB
