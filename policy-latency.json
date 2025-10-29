@@ -1,25 +1,28 @@
 {
-  "displayName": "Cloud Run: P95 latency > 900ms (natacha-health-monitor)",
-  "documentation": {
-    "content": "La latencia P95 superó 900 ms por 5 minutos consecutivos.",
-    "mimeType": "text/markdown"
-  },
+  "displayName": "Cloud Run Latency p95 > 1s – natacha-health-monitor",
+  "combiner": "OR",
+  "enabled": true,
   "conditions": [
     {
-      "displayName": "run.googleapis.com/request_latencies P95 > 900ms",
-      "conditionThreshold": {
-        "filter": "resource.type=\"cloud_run_revision\" AND resource.label.\"service_name\"=\"natacha-health-monitor\" AND metric.type=\"run.googleapis.com/request_latencies\"",
-        "comparison": "COMPARISON_GT",
-        "thresholdValue": 900,
-        "duration": "300s",
-        "aggregations": [
-          { "alignmentPeriod": "60s", "perSeriesAligner": "ALIGN_PERCENTILE_95" }
-        ],
+      "displayName": "p95 > 1s por 2m (NHM)",
+      "conditionMonitoringQueryLanguage": {
+        "query": "fetch cloud_run_revision
+| metric 'run.googleapis.com/request_latencies'
+| filter (resource.service_name == 'natacha-health-monitor')
+| group_by 1m, [p95: percentile(value.request_latencies, 95)]
+| every 1m
+| condition p95 > 1000 \"ms\"",
+        "duration": "120s",
         "trigger": { "count": 1 }
       }
     }
   ],
-  "notificationChannels": ["projects/asistente-sebastian/notificationChannels/16131789610057042414"],
-  "combiner": "OR",
-  "enabled": true
+  "notificationChannels": [
+    "projects/asistente-sebastian/notificationChannels/5941256893092102238"
+  ],
+  "severity": "WARNING",
+  "documentation": {
+    "content": "La latencia p95 supera 1s en Cloud Run para el servicio natacha-health-monitor.",
+    "mimeType": "text/markdown"
+  }
 }

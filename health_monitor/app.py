@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from app.debug_endpoints import router as debug_router
 from fastapi.responses import JSONResponse
 import os, json
 from datetime import datetime, timezone
@@ -14,6 +15,7 @@ from .auto_scheduler import start_scheduler
 from google.cloud import firestore
 
 app = FastAPI(title="Natacha Health Monitor")
+app.include_router(debug_router)
 def utc_now_str():
     return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S%z")
 
