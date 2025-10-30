@@ -1,0 +1,24 @@
+== Docker Inventory @ Wed Oct 29 21:11:23 -03 2025 ==
+NAMES                                   IMAGE                                 STATUS                          CREATED         PORTS
+natacha-api-natacha-memory-console-1    natacha-api-natacha-memory-console    Up 6 minutes (healthy)          6 minutes ago   0.0.0.0:8082->8080/tcp, [::]:8082->8080/tcp
+natacha-api-natacha-service-checker-1   natacha-api-natacha-service-checker   Restarting (1) 43 seconds ago   6 minutes ago   
+natacha-api-natacha-core-1              natacha-api-natacha-core              Up 6 minutes (healthy)          6 minutes ago   0.0.0.0:8081->8080/tcp, [::]:8081->8080/tcp
+natacha-api-natacha-health-monitor-1    natacha-api-natacha-health-monitor    Up 6 minutes (healthy)          6 minutes ago   
+natacha-api-keen_heyrovsky-1            natacha-health-monitor-test           Up 6 minutes (unhealthy)        6 minutes ago   0.0.0.0:8085->8080/tcp, [::]:8085->8080/tcp
+natacha-api-natacha-api-1               natacha-api-natacha-api               Up 6 minutes (healthy)          6 minutes ago   0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+
+== Stats (running) ==
+CONTAINER ID   NAME                                    CPU %     MEM USAGE / LIMIT     MEM %     NET I/O         BLOCK I/O    PIDS
+179243c5556b   natacha-api-natacha-memory-console-1    0.27%     51.45MiB / 3.828GiB   1.31%     4.92kB / 168B   0B / 168kB   2
+3e53f2160e4c   natacha-api-natacha-service-checker-1   0.00%     0B / 0B               0.00%     0B / 0B         0B / 0B      0
+89b9c4f4d134   natacha-api-natacha-core-1              0.38%     50.49MiB / 3.828GiB   1.29%     4.95kB / 126B   0B / 180kB   2
+8c48b990e419   natacha-api-natacha-health-monitor-1    0.25%     50.98MiB / 3.828GiB   1.30%     4.99kB / 126B   0B / 180kB   2
+d40431c30a90   natacha-api-keen_heyrovsky-1            0.29%     35.42MiB / 3.828GiB   0.90%     5.95kB / 126B   0B / 168kB   1
+88029b6097f5   natacha-api-natacha-api-1               0.30%     50.36MiB / 3.828GiB   1.28%     6.13kB / 126B   0B / 180kB   2
+
+== Disk usage ==
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          6         6         3.039GB   759.3MB (24%)
+Containers      6         6         2.159MB   0B (0%)
+Local Volumes   1         0         0B        0B
+Build Cache     11        0         0B        0B

@@ -1,59 +1,83 @@
+
 services:
   natacha-api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: natacha-api
-    restart: always
+    image: ${NATACHA_API_IMAGE:-natacha-api-natacha-api}
+    restart: unless-stopped
     ports:
       - "8080:8080"
-    networks:
-      - natacha-net
+    environment:
+      - GCP_PROJECT=${GCP_PROJECT:-asistente-sebastian}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://127.0.0.1:8080/health').getcode()==200 else sys.exit(1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   natacha-core:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: natacha-core
-    restart: always
+    image: ${NATACHA_CORE_IMAGE:-natacha-api-natacha-core}
+    restart: unless-stopped
     ports:
       - "8081:8080"
-    networks:
-      - natacha-net
-
-  natacha-health-monitor:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: natacha-health-monitor
-    restart: always
-    environment:
-      GOOGLE_APPLICATION_CREDENTIALS: /app/firestore-key.json
-      GOOGLE_CLOUD_PROJECT: asistente-sebastian
-    volumes:
-      - .:/app
-    networks:
-      - natacha-net
-
-  natacha-service-checker:
-    build:
-      context: .
-      dockerfile: Dockerfile.service_checker
-    container_name: natacha-service-checker
-    restart: always
-    environment:
-      GOOGLE_APPLICATION_CREDENTIALS: /app/firestore-key.json
-      GOOGLE_CLOUD_PROJECT: asistente-sebastian
-    volumes:
-      - .:/app
     depends_on:
       natacha-api:
-        condition: service_started
-      natacha-core:
-        condition: service_started
-    networks:
-      - natacha-net
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://127.0.0.1:8080/health').getcode()==200 else sys.exit(1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
-networks:
-  natacha-net:
-    driver: bridge
+  natacha-memory-console:
+    image: ${NATACHA_MEMORY_CONSOLE_IMAGE:-natacha-api-natacha-memory-console}
+    restart: unless-stopped
+    ports:
+      - "8082:8080"
+    depends_on:
+      natacha-core:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://127.0.0.1:8080/health').getcode()==200 else sys.exit(1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  natacha-health-monitor:
+    image: ${NATACHA_HEALTH_MONITOR_IMAGE:-natacha-api-natacha-health-monitor}
+    restart: unless-stopped
+    depends_on:
+      natacha-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://127.0.0.1:8080/health').getcode()==200 else sys.exit(1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  natacha-service-checker:
+    image: ${NATACHA_SERVICE_CHECKER_IMAGE:-natacha-api-natacha-service-checker}
+    restart: unless-stopped
+    depends_on:
+      natacha-health-monitor:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://127.0.0.1:8080/health').getcode()==200 else sys.exit(1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  keen_heyrovsky:
+    image: ${NATACHA_TEST_IMAGE:-natacha-health-monitor-test}
+    restart: unless-stopped
+    ports:
+      - "8085:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://127.0.0.1:8080/health').getcode()==200 else sys.exit(1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
