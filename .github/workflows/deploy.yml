@@ -21,6 +21,12 @@ jobs:
       # 1. Checkout
       - name: "🧩 Checkout repo"
         uses: actions/checkout@v4
+      - name: "🛑 Fail if secret is empty"
+        run: |
+          if [ -z "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" ]; then
+            echo "❌ GCP_SERVICE_ACCOUNT_KEY is empty. Set it in GitHub → Settings → Secrets → Actions."
+            exit 1
+          fi
 
       # 2. Guardar secret como archivo JSON
       - name: "🔐 Write GCP key from secret"
