@@ -30,3 +30,9 @@ policy-*.tmp.json
 *evaluated.json
 policy-*-test.json
 infra_snapshots/archive/
+*.bak
+*.tar.gz
+infra_snapshots/
+.config/
+.compose.help.txt
+.env.bak.*
