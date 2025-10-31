@@ -27,11 +27,25 @@ jobs:
       - name: 🧩 Checkout repo
         uses: actions/checkout@v4
 
+      # === Debug: Verificar que el secret exista ===
+      - name: 🧪 Test GCP secret (debug)
+        run: |
+          echo "🔍 Probando si el secret GCP_SERVICE_ACCOUNT_KEY llega desde GitHub..."
+          if [ -z "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" ]; then
+            echo "❌ El secret GCP_SERVICE_ACCOUNT_KEY está VACÍO o no está definido."
+            exit 1
+          else
+            echo "✅ El secret GCP_SERVICE_ACCOUNT_KEY está presente."
+          fi
+
+      # === Autenticación con Google Cloud ===
       - name: 🔐 Auth with Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          project_id: asistente-sebastian
 
+      # === Docker ===
       - name: 🐳 Setup Docker
         uses: docker/setup-buildx-action@v3
 
@@ -44,22 +58,19 @@ jobs:
             docker push gcr.io/$PROJECT_ID/$SERVICE:latest
           done
 
+      # === Deploy ===
       - name: 🚀 Deploy to Cloud Run
         run: |
           echo "Deploying services to Cloud Run..."
-          gcloud run deploy $MEMORY_SERVICE \
-            --image gcr.io/$PROJECT_ID/$MEMORY_SERVICE:latest \
-            --region $REGION --platform managed --allow-unauthenticated
+          for SERVICE in $MEMORY_SERVICE $CORE_SERVICE $API_SERVICE; do
+            echo "📦 Deploying $SERVICE..."
+            gcloud run deploy $SERVICE \
+              --image gcr.io/$PROJECT_ID/$SERVICE:latest \
+              --region $REGION --platform managed --allow-unauthenticated
+          done
 
-          gcloud run deploy $CORE_SERVICE \
-            --image gcr.io/$PROJECT_ID/$CORE_SERVICE:latest \
-            --region $REGION --platform managed --allow-unauthenticated
-
-          gcloud run deploy $API_SERVICE \
-            --image gcr.io/$PROJECT_ID/$API_SERVICE:latest \
-            --region $REGION --platform managed --allow-unauthenticated
-
+      # === Health check final ===
       - name: ✅ Health Check
         run: |
           echo "Checking services..."
-          curl -f https://${{ env.API_SERVICE }}-${{ env.REGION }}.a.run.app/health
+          curl -f https://${{ env.API_SERVICE }}-${{ env.REGION }}.a.run.app/health || exit 1
