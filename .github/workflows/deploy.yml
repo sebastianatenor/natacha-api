@@ -1,90 +1,64 @@
-name: 🚀 Natacha CI/CD
+name: "🚀 Natacha CI/CD"
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - "memory_console/**"
-      - "natacha_core/**"
-      - "app.py"
-      - "Dockerfile"
-      - ".github/workflows/deploy.yml"
+    branches: [ main ]
   workflow_dispatch:
+
+env:
+  PROJECT_ID: asistente-sebastian
+  REGION: us-central1
+  AR_REPO: natacha-repo
+  MEMORY_SERVICE: natacha-memory-console
+  CORE_SERVICE: natacha-core
+  API_SERVICE: natacha-api
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    env:
-      PROJECT_ID: asistente-sebastian
-      REGION: us-central1
-      AR_REPO: natacha-repo
-      MEMORY_SERVICE: memory_console
-      CORE_SERVICE: natacha_core
-      API_SERVICE: natacha-api
 
     steps:
-      - name: 🧩 Checkout repo
+      # 1. Checkout
+      - name: "🧩 Checkout repo"
         uses: actions/checkout@v4
 
-      - name: 🔐 Auth with Google Cloud
+      # 2. Guardar secret como archivo JSON
+      - name: "🔐 Write GCP key from secret"
+        run: |
+          echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > $HOME/gcp-key.json
+
+      # 3. Autenticarse en Google Cloud
+      - name: "🔐 Auth with Google Cloud"
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-          create_credentials_file: true
-          export_environment_variables: true
+          credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}'
 
-      - name: 🐳 Setup Docker
-        uses: docker/setup-buildx-action@v3
-
-      - name: 🧪 Test GCP secret (debug)
+      # 4. Configurar gcloud
+      - name: "⚙️ Configure gcloud"
         run: |
-          echo "🔍 Probando secret..."
-          if [ -z "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" ]; then
-            echo "❌ Secret vacío"
-            exit 1
-          else
-            echo "✅ Secret presente"
-          fi
+          gcloud config set project $PROJECT_ID
+          gcloud config set artifacts/location $REGION
+          gcloud config set artifacts/repository $AR_REPO
 
-      # 1) memory_console
-      - name: 🏗️ Build & Push memory_console
+      # 5. Configurar Docker para Artifact Registry
+      - name: "🐳 Auth Docker to Artifact Registry"
         run: |
-          docker build -t us-central1-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/memory_console:latest \
+          gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+
+      # 6. Build & Push memory_console
+      - name: "🏗️ Build & Push memory_console"
+        run: |
+          docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/memory_console:latest \
             -f memory_console/Dockerfile \
             memory_console
-          docker push us-central1-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/memory_console:latest
 
-      # 2) core
-      - name: 🏗️ Build & Push natacha_core
+          docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/memory_console:latest
+
+      # 7. Deploy to Cloud Run
+      - name: "🚀 Deploy memory_console"
         run: |
-          docker build -t us-central1-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/natacha_core:latest \
-            -f natacha_core/Dockerfile \
-            natacha_core
-          docker push us-central1-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/natacha_core:latest
-
-      # 3) api (Dockerfile raíz)
-      - name: 🏗️ Build & Push API (root Dockerfile)
-        run: |
-          docker build -t us-central1-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/natacha-api:latest \
-            -f Dockerfile \
-            .
-          docker push us-central1-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/natacha-api:latest
-
-      - name: 🚀 Deploy to Cloud Run
-        run: |
-          gcloud run deploy natacha-memory-console \
-            --image us-central1-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/memory_console:latest \
-            --region ${REGION} --platform managed --allow-unauthenticated
-
-          gcloud run deploy natacha-core \
-            --image us-central1-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/natacha_core:latest \
-            --region ${REGION} --platform managed --allow-unauthenticated
-
-          gcloud run deploy natacha-api \
-            --image us-central1-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/natacha-api:latest \
-            --region ${REGION} --platform managed --allow-unauthenticated
-
-      - name: ✅ Health Check
-        run: |
-          curl -f https://natacha-api-${REGION}.a.run.app/health
+          gcloud run deploy $MEMORY_SERVICE \
+            --image ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/memory_console:latest \
+            --region $REGION \
+            --platform managed \
+            --allow-unauthenticated
