@@ -1,15 +1,15 @@
-name: 🚀 Natacha CI/CD
+name: "🚀 Natacha CI/CD"
 
 on:
   push:
     branches:
       - main
     paths:
-      - "app/**"
-      - "core/**"
       - "memory_console/**"
-      - "natacha_core/**"
+      - "core/**"
+      - "app/**"
       - "Dockerfile"
+      - "docker-compose.yml"
       - ".github/workflows/deploy.yml"
   workflow_dispatch:
 
@@ -19,9 +19,10 @@ jobs:
     env:
       PROJECT_ID: asistente-sebastian
       REGION: us-central1
-      API_IMAGE: natacha-api
-      CORE_DIR: natacha_core
-      MEM_DIR: memory_console
+      # nombres REALMENTE presentes en tu repo local
+      MEMORY_DIR: memory_console
+      CORE_DIR: core
+      API_DOCKERFILE: Dockerfile
 
     steps:
       - name: 🧩 Checkout repo
@@ -35,7 +36,6 @@ jobs:
       - name: 🐳 Setup Docker
         uses: docker/setup-buildx-action@v3
 
-      # solo para debug rápido en el futuro
       - name: 🧪 Test GCP secret (debug)
         run: |
           echo "🔍 Probando si el secret GCP_SERVICE_ACCOUNT_KEY llega desde GitHub..."
@@ -46,40 +46,67 @@ jobs:
             echo "✅ El secret GCP_SERVICE_ACCOUNT_KEY está presente."
           fi
 
-      - name: 🏗️ Build & Push memory_console
+      # 1) memory_console (EXISTE)
+      - name: "🏗️ Build & Push memory_console"
         run: |
-          if [ -d "${{ env.MEM_DIR }}" ]; then
-            echo "🧱 Building memory_console..."
-            docker build -t gcr.io/${{ env.PROJECT_ID }}/memory-console:latest -f ${{ env.MEM_DIR }}/Dockerfile .
-            gcloud auth configure-docker gcr.io --quiet
-            docker push gcr.io/${{ env.PROJECT_ID }}/memory-console:latest
+          if [ -d "${{ env.MEMORY_DIR }}" ]; then
+            echo "✅ Encontrado ${{ env.MEMORY_DIR }} — build..."
+            docker build -t gcr.io/${{ env.PROJECT_ID }}/natacha-memory-console:latest -f ${{ env.MEMORY_DIR }}/Dockerfile .
+            docker push gcr.io/${{ env.PROJECT_ID }}/natacha-memory-console:latest
           else
-            echo "⚠️ No existe carpeta ${{ env.MEM_DIR }}, se salta este build."
+            echo "⚠️ No existe ${{ env.MEMORY_DIR }}, se salta este build."
           fi
 
-      - name: 🏗️ Build & Push natacha_core
+      # 2) core (AHORA validamos que la carpeta se llame core)
+      - name: "🏗️ Build & Push natacha_core"
         run: |
           if [ -d "${{ env.CORE_DIR }}" ]; then
-            echo "🧱 Building natacha_core..."
+            echo "✅ Encontrado ${{ env.CORE_DIR }} — build..."
             docker build -t gcr.io/${{ env.PROJECT_ID }}/natacha-core:latest -f ${{ env.CORE_DIR }}/Dockerfile .
-            gcloud auth configure-docker gcr.io --quiet
             docker push gcr.io/${{ env.PROJECT_ID }}/natacha-core:latest
           else
-            echo "⚠️ No existe carpeta ${{ env.CORE_DIR }}, se salta este build."
+            echo "⚠️ No existe la carpeta ${{ env.CORE_DIR }} (antes intentábamos 'natacha_core'). Se salta."
           fi
 
-      - name: 🏗️ Build & Push API (Dockerfile raíz)
+      # 3) API raíz (tu Dockerfile del repo)
+      - name: "🏗️ Build & Push API (Dockerfile raíz)"
         run: |
-          echo "🧱 Building API (root Dockerfile)..."
-          docker build -t gcr.io/${{ env.PROJECT_ID }}/${{ env.API_IMAGE }}:latest -f Dockerfile .
-          gcloud auth configure-docker gcr.io --quiet
-          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.API_IMAGE }}:latest
+          if [ -f "${{ env.API_DOCKERFILE }}" ]; then
+            echo "✅ Encontrado Dockerfile raíz — build..."
+            docker build -t gcr.io/${{ env.PROJECT_ID }}/natacha-api:latest -f ${{ env.API_DOCKERFILE }} .
+            docker push gcr.io/${{ env.PROJECT_ID }}/natacha-api:latest
+          else
+            echo "❌ No se encontró Dockerfile en el root."
+            exit 1
+          fi
 
-      - name: 🚀 Deploy to Cloud Run
+      - name: "🚀 Deploy to Cloud Run"
         run: |
-          echo "🚀 Deploying API to Cloud Run..."
+          echo "Deploying to Cloud Run..."
+
+          # 1) memory_console si existe imagen
+          gcloud run deploy natacha-memory-console \
+            --image gcr.io/${{ env.PROJECT_ID }}/natacha-memory-console:latest \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated || echo "⚠️ No se pudo desplegar memory_console (quizás no existe)."
+
+          # 2) core si existe imagen
+          gcloud run deploy natacha-core \
+            --image gcr.io/${{ env.PROJECT_ID }}/natacha-core:latest \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated || echo "⚠️ No se pudo desplegar core (quizás no existe)."
+
+          # 3) API raíz
           gcloud run deploy natacha-api \
-            --image gcr.io/${{ env.PROJECT_ID }}/${{ env.API_IMAGE }}:latest \
+            --image gcr.io/${{ env.PROJECT_ID }}/natacha-api:latest \
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated
+
+      - name: "✅ Health Check"
+        run: |
+          echo "Checking services..."
+          curl -f https://natacha-api-${{ env.REGION }}.a.run.app/health || true
+
