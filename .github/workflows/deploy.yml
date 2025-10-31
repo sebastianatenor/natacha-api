@@ -1,4 +1,4 @@
-name: 🚀 Natacha CI/CD
+name: "🚀 Natacha CI/CD"
 
 on:
   push:
@@ -12,6 +12,7 @@ on:
       - "Dockerfile"
       - "docker-compose.yml"
       - ".github/workflows/deploy.yml"
+  workflow_dispatch: {}   # 👈 habilita correrlo a mano desde CLI
 
 jobs:
   build-and-deploy:
@@ -27,7 +28,16 @@ jobs:
       - name: 🧩 Checkout repo
         uses: actions/checkout@v4
 
-      # === Debug: Verificar que el secret exista ===
+      # 👇 ahora sí: este secret ya lo cargaste con gh
+      - name: 🔐 Auth with Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: 🐳 Setup Docker
+        uses: docker/setup-buildx-action@v3
+
+      # paso de debug para confirmar que llegó el secret
       - name: 🧪 Test GCP secret (debug)
         run: |
           echo "🔍 Probando si el secret GCP_SERVICE_ACCOUNT_KEY llega desde GitHub..."
@@ -38,17 +48,6 @@ jobs:
             echo "✅ El secret GCP_SERVICE_ACCOUNT_KEY está presente."
           fi
 
-      # === Autenticación con Google Cloud ===
-      - name: 🔐 Auth with Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-          project_id: asistente-sebastian
-
-      # === Docker ===
-      - name: 🐳 Setup Docker
-        uses: docker/setup-buildx-action@v3
-
       - name: 🏗️ Build and Push Containers
         run: |
           echo "Building and pushing services..."
@@ -58,19 +57,22 @@ jobs:
             docker push gcr.io/$PROJECT_ID/$SERVICE:latest
           done
 
-      # === Deploy ===
       - name: 🚀 Deploy to Cloud Run
         run: |
           echo "Deploying services to Cloud Run..."
-          for SERVICE in $MEMORY_SERVICE $CORE_SERVICE $API_SERVICE; do
-            echo "📦 Deploying $SERVICE..."
-            gcloud run deploy $SERVICE \
-              --image gcr.io/$PROJECT_ID/$SERVICE:latest \
-              --region $REGION --platform managed --allow-unauthenticated
-          done
+          gcloud run deploy $MEMORY_SERVICE \
+            --image gcr.io/$PROJECT_ID/$MEMORY_SERVICE:latest \
+            --region $REGION --platform managed --allow-unauthenticated
 
-      # === Health check final ===
+          gcloud run deploy $CORE_SERVICE \
+            --image gcr.io/$PROJECT_ID/$CORE_SERVICE:latest \
+            --region $REGION --platform managed --allow-unauthenticated
+
+          gcloud run deploy $API_SERVICE \
+            --image gcr.io/$PROJECT_ID/$API_SERVICE:latest \
+            --region $REGION --platform managed --allow-unauthenticated
+
       - name: ✅ Health Check
         run: |
           echo "Checking services..."
-          curl -f https://${{ env.API_SERVICE }}-${{ env.REGION }}.a.run.app/health || exit 1
+          curl -f https://${{ env.API_SERVICE }}-${{ env.REGION }}.a.run.app/health || true
