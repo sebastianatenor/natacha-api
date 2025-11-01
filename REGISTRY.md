@@ -71,3 +71,11 @@
 - Verificado en local:
   - `curl -s "http://127.0.0.1:8002/ops/summary?limit=5"`
   - `curl -s "http://127.0.0.1:8002/ops/insights?limit=20"`
+
+### 2025-11-01 – Arranque con contexto operativo
+- Cambio: se creó `intelligence/startup.py` para leer `/ops/insights` y guardar `last_context.json`.
+- Cambio: se enganchó el startup en `natacha_app.py` (bloque try/except, no rompe si falla).
+- Motivo: que el agente tenga a mano memorias, tareas y proyectos sin hacer 3 requests.
+- Verificado en local:
+  - `python3 - << 'PYCODE' ... load_operational_context(...) ...`
+  - `curl -s "http://127.0.0.1:8002/ops/insights?limit=20"`
