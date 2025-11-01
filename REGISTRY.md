@@ -62,3 +62,12 @@
   - `python3 - << 'PYCODE' ... import app ...`
   - `uvicorn app:app --reload --port 8002`
 - Estado: ✅ corregido y estable
+
+### 2025-11-01 – Limpieza de ops_routes y agregado de /ops/insights
+- Cambio: se unificó `/ops/summary` en un solo handler dentro de `routes/ops_routes.py` (había dos).
+- Cambio: se agregó `/ops/insights` para entregar memorias + tareas + alertas + duplicados.
+- Motivo: evitar conflictos de rutas y darle al agente una vista más inteligente sin tocar endpoints ya usados por integraciones.
+- Código modificado: `routes/ops_routes.py`
+- Verificado en local:
+  - `curl -s "http://127.0.0.1:8002/ops/summary?limit=5"`
+  - `curl -s "http://127.0.0.1:8002/ops/insights?limit=20"`
