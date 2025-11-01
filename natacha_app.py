@@ -1,10 +1,12 @@
 import os
 from fastapi import FastAPI
+
 from routes.memory_routes import router as memory_router
 from routes.tasks_routes import router as tasks_router
 from routes.semantic_routes import router as semantic_router
 from routes.embeddings_routes import router as embeddings_router
-from routes import ops_routes
+from routes.ops_routes import router as ops_router
+from routes.core_routes import router as core_router  # 👈 NUEVO
 
 app = FastAPI()
 
@@ -25,7 +27,10 @@ app.include_router(semantic_router)
 app.include_router(embeddings_router)
 
 # ops
-app.include_router(ops_routes.router)
+app.include_router(ops_router)
+
+# core / dashboard
+app.include_router(core_router)  # 👈 NUEVO
 
 # === startup: cargar contexto operativo de Natacha ===
 try:
