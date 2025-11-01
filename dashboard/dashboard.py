@@ -1,8 +1,12 @@
 import streamlit as st
+from dashboard import auth
+auth.check_login()
+
 from datetime import datetime, timezone
 import os, sys
 import requests
 import pandas as pd
+from PIL import Image
 
 # === Fix para ejecutar desde run_dashboard.py o streamlit directo ===
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -16,11 +20,34 @@ from dashboard.infra_control import docker_monitor, cloud_monitor, system, infra
 # ==========================
 # 🎨 CONFIGURACIÓN INICIAL
 # ==========================
-import os
-from PIL import Image
-import streamlit as st
-
 st.set_page_config(page_title="Natacha Dashboard", layout="wide")
+
+# ==========================
+# 🔐 AUTH SÚPER SIMPLE
+# ==========================
+DASH_USER = os.getenv("DASH_USER", "llvc")
+DASH_PASS = os.getenv("DASH_PASS", "natacha2025")
+
+def check_password():
+    if "auth_ok" not in st.session_state:
+        st.session_state["auth_ok"] = False
+
+    if st.session_state["auth_ok"]:
+        return True
+
+    with st.sidebar.form("login", clear_on_submit=False):
+        user = st.text_input("User", value="", key="__user")
+        pwd = st.text_input("Password", value="", type="password", key="__pwd")
+        ok = st.form_submit_button("Login")
+
+    if ok and user == DASH_USER and pwd == DASH_PASS:
+        st.session_state["auth_ok"] = True
+        return True
+
+    st.stop()
+
+# 👇 esto fuerza que haya login antes de mostrar el resto
+check_password()
 
 # --- sidebar brand image ---
 local_img = os.path.join(os.path.dirname(__file__), "static", "natacha-llvc.png")
@@ -112,7 +139,6 @@ def get_auto_healer_status():
         if not history:
             return "⚪", "Sin registros de intervención"
         
-        # Filtrar diagnósticos con más de 24 h
         latest = sorted(history, key=lambda x: x["timestamp"], reverse=True)[0]
         ts = pd.to_datetime(latest.get("timestamp"), errors="coerce")
         if pd.isna(ts):
@@ -185,7 +211,7 @@ if page == "🌍 Estado General":
                 env = latest.get("environment", "desconocido")
                 ts = latest.get("timestamp")
 
-                st.markdown(f"### 🕒 Último diagnóstico: {ts.strftime('%Y-%m-%d %H:%M:%S')}")
+                st.markdown(f"### 🕒 Último diagnóstico: {ts}")
                 st.markdown(f"**🌤️ Entorno:** `{env}` | **💽 Uso de disco:** `{disk}`")
 
                 disk_num = float(str(disk).replace('%', '')) if "%" in str(disk) else 0
@@ -243,44 +269,6 @@ elif page == "📈 Histórico de Rendimiento":
                 df = df.sort_values("timestamp", ascending=False)
                 st.success(f"✅ {len(df)} registros cargados desde Firestore")
 
-                latest = df.iloc[0]
-                disk_usage = latest.get("disk_usage", "0%")
-                env = latest.get("environment", "desconocido")
-                ts = latest.get("timestamp")
-
-                alerts = []
-                try:
-                    usage_num = float(str(disk_usage).replace("%", "").strip())
-                    if usage_num > 80:
-                        alerts.append(f"⚠️ Uso de disco alto: {usage_num}%")
-                    elif usage_num > 60:
-                        alerts.append(f"🟡 Uso de disco moderado: {usage_num}%")
-                    else:
-                        alerts.append(f"✅ Uso de disco saludable: {usage_num}%")
-                except Exception:
-                    alerts.append("⚠️ No se pudo analizar el uso de disco")
-
-                if ts and (datetime.now(timezone.utc) - ts.tz_localize("UTC")).total_seconds() > 86400:
-                    alerts.append("⚠️ Último diagnóstico tiene más de 24 h")
-
-                if env == "cloudrun":
-                    alerts.append("☁️ Diagnóstico desde entorno Cloud Run")
-                else:
-                    alerts.append("💻 Diagnóstico desde entorno local")
-
-                st.markdown("### 🔔 Estado actual del sistema")
-                for a in alerts:
-                    if "⚠️" in a:
-                        st.warning(a)
-                    elif "🟡" in a:
-                        st.info(a)
-                    else:
-                        st.success(a)
-
-                st.markdown("---")
-                st.subheader("📋 Registros históricos de infraestructura")
-                st.dataframe(df, use_container_width=True)
-
                 if "disk_usage" in df.columns:
                     df["disk_usage_pct"] = df["disk_usage"].astype(str).str.replace("%", "").astype(float)
                     st.line_chart(df.set_index("timestamp")["disk_usage_pct"], height=300)
@@ -318,11 +306,8 @@ elif page == "🧩 Auto-Healing & Control Inteligente":
 
 elif page == "⚙️ Configuración":
     st.header("⚙️ Configuración del Dashboard y Variables del Sistema")
-    st.text("Aquí podrás ajustar parámetros globales y credenciales (en desarrollo).")
-
-# ==========================
-# 🕓 PIE DE PÁGINA
-# ==========================
-st.sidebar.markdown("---")
-st.sidebar.caption(f"🕒 Última actualización: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}")
-st.sidebar.caption("Desarrollado con ❤️ para Natacha Cloud Infrastructure v2")
+    st.code({
+        "BACKEND_URL": BACKEND_URL,
+        "DASH_USER": DASH_USER,
+        "DASH_PASS": "***"
+    })
