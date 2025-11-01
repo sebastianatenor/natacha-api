@@ -1,27 +1,18 @@
-# =========================================
-# 🐳 Natacha Dashboard - Dockerfile
-# =========================================
 FROM python:3.11-slim
 
-# Directorio de trabajo
 WORKDIR /app
 
-# Copiamos solo lo necesario
-COPY requirements.txt .
+# 1. Copiamos todo el proyecto
+COPY . /app
+
+# 2. Instalamos dependencias (incluye health_monitor)
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Streamlit y dependencias principales
-RUN pip install --no-cache-dir streamlit pandas requests google-cloud-firestore
-
-# Copiamos todo el proyecto
-COPY . .
-
-# Configuraciones Streamlit para modo producción
-ENV STREAMLIT_SERVER_PORT=8080
-ENV STREAMLIT_SERVER_ENABLECORS=false
-ENV STREAMLIT_SERVER_ENABLEXSRSFPROTECTION=false
-ENV STREAMLIT_SERVER_HEADLESS=true
+# 3. Configuración de entorno para Cloud Run
 ENV PORT=8080
 
-# Comando de inicio
-CMD ["streamlit", "run", "dashboard/dashboard_prod.py", "--server.port=8080", "--server.address=0.0.0.0"]
+# 4. Exponemos el puerto esperado
+EXPOSE 8080
+
+# 5. Comando de inicio: Streamlit Dashboard
+CMD ["streamlit", "run", "dashboard/dashboard.py", "--server.port=8080", "--server.address=0.0.0.0"]

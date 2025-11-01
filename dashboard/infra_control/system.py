@@ -1,68 +1,60 @@
-import streamlit as st
-import psutil
-import platform
-import socket
 import os
-import subprocess
-from datetime import datetime
+import platform
+import psutil
+import streamlit as st
 import pandas as pd
 
-def show():
-    st.title("🖥️ Sistema Local — Estado del Host")
-    st.caption("Información del entorno y recursos físicos")
-
-    # --- Información del sistema
-    uname = platform.uname()
-    st.subheader("📦 Información del sistema operativo")
-    st.write({
-        "Sistema": uname.system,
-        "Versión": uname.version,
-        "Release": uname.release,
-        "Arquitectura": uname.machine,
-        "Procesador": uname.processor,
+def get_system_info():
+    return {
+        "Sistema": platform.system(),
+        "Versión": platform.version(),
+        "Release": platform.release(),
+        "Arquitectura": platform.machine(),
+        "Procesador": platform.processor(),
         "Python": platform.python_version(),
-        "Usuario": os.getenv("USER")
-    })
+        "Usuario": os.getenv("USER") or os.getenv("USERNAME") or "N/A",
+    }
 
-    # --- Recursos principales
-    st.subheader("⚙️ Recursos del sistema")
+def get_usage_info():
+    try:
+        cpu = psutil.cpu_percent(interval=1)
+        mem = psutil.virtual_memory().percent
+        disk = psutil.disk_usage('/').percent
+        return cpu, mem, disk
+    except Exception:
+        return 0, 0, 0
+
+def get_top_processes(limit=5):
+    rows = []
+    for p in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
+        try:
+            info = p.info
+            info['cpu_percent'] = info.get('cpu_percent') or 0.0
+            info['memory_percent'] = info.get('memory_percent') or 0.0
+            rows.append(info)
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    rows = sorted(rows, key=lambda x: x['cpu_percent'], reverse=True)
+    return rows[:limit]
+
+def show():
+    st.subheader("📦 Información del sistema operativo")
+
+    info = get_system_info()
+    cpu, mem, disk = get_usage_info()
+
     col1, col2, col3 = st.columns(3)
-    col1.metric("CPU", f"{psutil.cpu_percent()}%")
-    col2.metric("RAM", f"{psutil.virtual_memory().percent}%")
-    col3.metric("Disco", f"{psutil.disk_usage('/').percent}%")
+    col1.metric("⚙️ CPU %", f"{cpu:.1f}%")
+    col2.metric("💾 RAM usada", f"{mem:.1f}%")
+    col3.metric("📀 Disco usado", f"{disk:.1f}%")
 
-    # --- Red
-    st.subheader("🌐 Red")
-    try:
-        hostname = socket.gethostname()
-        local_ip = socket.gethostbyname(hostname)
-        st.write(f"🖧 Hostname: `{hostname}` — IP local: `{local_ip}`")
-    except Exception as e:
-        st.warning(f"No se pudo obtener la IP local: {e}")
+    st.markdown("### 🧠 Detalle del sistema")
+    st.table(pd.DataFrame(info.items(), columns=["Campo", "Valor"]))
 
-    st.write("### Interfaces de red")
-    net = psutil.net_if_addrs()
-    for iface, addrs in net.items():
-        for addr in addrs:
-            if addr.family == socket.AF_INET:
-                st.write(f"🔹 `{iface}` → {addr.address}")
-
-    # --- Procesos activos
-    st.subheader("🧩 Procesos activos")
-    procs = []
-    for p in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
-        procs.append(p.info)
-    df = pd.DataFrame(procs).sort_values("cpu_percent", ascending=False).head(10)
-    st.dataframe(df, use_container_width=True)
-
-    # --- Puertos abiertos
-    st.subheader("🔌 Puertos abiertos")
-    try:
-        cmd = ["lsof", "-i", "-P", "-n"]
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        lines = [l for l in result.stdout.splitlines() if ":" in l]
-        st.text_area("Puertos activos", "\n".join(lines[:30]), height=200)
-    except Exception as e:
-        st.warning(f"No se pudieron listar los puertos: {e}")
-
-    st.caption(f"Última actualización: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}")
+    st.markdown("---")
+    st.subheader("🔎 Procesos con mayor uso de CPU")
+    procs = get_top_processes()
+    if procs:
+        st.dataframe(pd.DataFrame(procs), use_container_width=True)
+    else:
+        st.info("No se pudieron obtener procesos activos.")

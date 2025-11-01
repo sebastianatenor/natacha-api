@@ -1,0 +1,53 @@
+import os
+import json
+import streamlit as st
+import pandas as pd
+
+AUDIT_DIR = "knowledge/registry/audit"
+
+def load_audits():
+    if not os.path.isdir(AUDIT_DIR):
+        return []
+    files = sorted(os.listdir(AUDIT_DIR), reverse=True)
+    audits = []
+    for f in files:
+        full = os.path.join(AUDIT_DIR, f)
+        try:
+            txt = open(full, "r").read()
+            # intento json
+            try:
+                data = json.loads(txt)
+            except Exception:
+                data = {"raw": txt}
+            audits.append({"file": f, "data": data})
+        except Exception:
+            continue
+    return audits
+
+def show():
+    st.subheader("🧩 Auditoría Global de Infraestructura")
+    st.caption("Últimas corridas de auditoría sobre REGISTRY / servicios / duplicados")
+
+    audits = load_audits()
+    if not audits:
+        st.info("No hay auditorías guardadas en knowledge/registry/audit")
+        return
+
+    # tabla simple de archivos
+    df = pd.DataFrame([{
+        "Archivo": a["file"],
+        "Tipo": "json" if isinstance(a["data"], dict) else "texto",
+        "Tamaño": len(json.dumps(a["data"])) if isinstance(a["data"], dict) else len(a["data"]),
+    } for a in audits])
+
+    st.dataframe(df, use_container_width=True)
+
+    pick = st.selectbox("Ver detalle de una auditoría", [a["file"] for a in audits])
+    if pick:
+        chosen = next(a for a in audits if a["file"] == pick)
+        st.markdown("#### Detalle")
+        # si es json, lo muestro lindo
+        if isinstance(chosen["data"], dict):
+            st.json(chosen["data"])
+        else:
+            st.code(chosen["data"])

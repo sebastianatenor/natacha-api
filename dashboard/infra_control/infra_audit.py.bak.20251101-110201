@@ -8,43 +8,40 @@ DOCKER_DIR = "logs"
 
 def _list_audit_files():
     files = []
+    # auditorías json
     if os.path.isdir(AUDIT_DIR):
         for f in os.listdir(AUDIT_DIR):
-            if f.endswith(".json") or f.endswith(".txt"):
+            if f.endswith(".json"):
                 path = os.path.join(AUDIT_DIR, f)
                 files.append({
                     "file": f,
                     "path": path,
-                    "type": "json" if f.endswith(".json") else "text",
+                    "type": "json",
                     "size": os.path.getsize(path),
                 })
+    # dumps de docker
     if os.path.isdir(DOCKER_DIR):
         for f in os.listdir(DOCKER_DIR):
-            if f.startswith("docker_"):
+            if f.startswith("docker_") and (f.endswith(".txt") or f.endswith(".log")):
                 path = os.path.join(DOCKER_DIR, f)
                 files.append({
                     "file": f,
                     "path": path,
-                    "type": "text",
+                    "type": "docker",
                     "size": os.path.getsize(path),
                 })
+    # ordenamos por fecha en el nombre (desc)
     files.sort(key=lambda x: x["file"], reverse=True)
     return files
 
 def _load_file(item: dict):
     path = item["path"]
-    # 1) intento json
     if item["type"] == "json":
-        try:
-            with open(path, "r") as f:
-                return {"mode": "json", "data": json.load(f)}
-        except Exception:
-            # no es json real → lo devuelvo como texto
-            with open(path, "r") as f:
-                return {"mode": "text", "raw": f.read()}
+        with open(path, "r") as f:
+            return json.load(f)
     else:
         with open(path, "r") as f:
-            return {"mode": "text", "raw": f.read()}
+            return {"raw": f.read()}
 
 def show():
     st.subheader("🧩 Auditoría Global de Infraestructura")
@@ -55,6 +52,7 @@ def show():
         st.info("No se encontraron auditorías en disco.")
         return
 
+    # listado resumido
     df = pd.DataFrame([{
         "Archivo": f["file"],
         "Tipo": f["type"],
@@ -62,35 +60,39 @@ def show():
     } for f in files])
     st.dataframe(df, use_container_width=True)
 
+    # selector
     pick_names = [f["file"] for f in files]
     picked = st.selectbox("Ver detalle de una auditoría", pick_names, index=0)
     current = next((f for f in files if f["file"] == picked), None)
+
     if not current:
         return
 
-    loaded = _load_file(current)
+    data = _load_file(current)
 
     st.markdown("#### Detalle")
-    if loaded["mode"] == "json":
-        data = loaded["data"]
-        if isinstance(data, dict):
-            main_keys = ["timestamp", "summary", "service", "result", "duplicates", "alerts"]
-            cols = st.columns(len(main_keys))
-            for i, k in enumerate(main_keys):
-                val = data.get(k)
-                if val is None:
-                    continue
-                if isinstance(val, (list, dict)):
-                    cols[i].metric(k, f"{len(val)} item(s)")
-                else:
-                    cols[i].metric(k, str(val))
-            with st.expander("📄 Ver JSON completo"):
-                st.json(data)
-        else:
-            # json pero no es dict
-            with st.expander("📄 Ver contenido JSON"):
-                st.write(data)
+    # 1) si es json "bien formado", mostrar claves importantes arriba
+    if current["type"] == "json" and isinstance(data, dict):
+        main_keys = ["timestamp", "summary", "service", "result", "duplicates", "alerts"]
+        cols = st.columns(len(main_keys))
+        for i, k in enumerate(main_keys):
+            val = data.get(k)
+            if val is None:
+                continue
+            # mostramos valores "amigables"
+            if isinstance(val, (list, dict)):
+                cols[i].metric(k, f"{len(val)} item(s)")
+            else:
+                cols[i].metric(k, str(val))
+
+        # mostrar el json completo en un expander
+        with st.expander("📄 Ver JSON completo"):
+            st.json(data)
     else:
-        # texto plano (lo que te estaba rompiendo)
-        with st.expander("📝 Salida completa del comando (raw)", expanded=True):
-            st.code(loaded["raw"])
+        st.info("Auditoría de tipo texto (docker / logs).")
+
+    # 2) si viene campo raw, lo mostramos aparte y colapsado
+    raw_text = data.get("raw") if isinstance(data, dict) else None
+    if raw_text:
+        with st.expander("📝 Salida completa del comando (raw)"):
+            st.code(raw_text)

@@ -1,249 +1,277 @@
-import os, json, subprocess, time
+import os, json, subprocess, shlex
 from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-# ── Config
-SERVICE = os.getenv("NATACHA_SERVICE", "natacha-health-monitor")
-REGION  = os.getenv("NATACHA_REGION",  "us-central1")
-PROJECT = os.getenv("GCP_PROJECT",     "asistente-sebastian")
-AR_PATH = os.getenv("AR_DOCKER_PATH",  "")  # ej: "us-central1-docker.pkg.dev/asistente-sebastian/natacha"
-CHECK   = os.getenv("NATACHA_UPTIME_CHECK",
-                    f"projects/{PROJECT}/uptimeCheckConfigs/healthmonitor-mertgzh6hJg")
-P_UP1   = os.getenv("NATACHA_POLICY_UP",
-                    f"projects/{PROJECT}/alertPolicies/5980311962589578804")
-P_UP2   = os.getenv("NATACHA_POLICY_ALL",
-                    f"projects/{PROJECT}/alertPolicies/13575294913821338865")
+# ─────────────────────────────────────────────────────────────
+# Config
+# ─────────────────────────────────────────────────────────────
+SERVICE_NAME = os.environ.get("NATACHA_SERVICE", "natacha-health-monitor")
+REGION       = os.environ.get("NATACHA_REGION",  "us-central1")
+PROJECT      = os.environ.get("GOOGLE_CLOUD_PROJECT", "asistente-sebastian")
+HOST         = os.environ.get("NATACHA_HOST", "natacha-health-monitor-422255208682.us-central1.run.app")
+AUDIT_DIR    = "knowledge/registry/audit"
 
-def badge(status:str, text:str=""):
-    color = {"green":"✅","yellow":"🟡","red":"🛑","grey":"⚪"}.get(status,"⚪")
-    return f"{color} {text or status.upper()}"
+# Alert policies de uptime ya creadas
+UPTIME_POLICY_NAMES = [
+    "CRun | HealthMonitor | Uptime / down",
+    "CRun | HealthMonitor | Uptime / all regions down",
+]
 
-def run(cmd:str, timeout=40):
+# ─────────────────────────────────────────────────────────────
+def run(cmd: str) -> tuple[bool, str]:
+    """Ejecuta un comando de shell y devuelve (ok, stdout). No levanta excepción."""
     try:
-        out = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, timeout=timeout, text=True)
-        return out.strip(), None
+        out = subprocess.check_output(shlex.split(cmd), stderr=subprocess.STDOUT, text=True)
+        return True, out
     except subprocess.CalledProcessError as e:
-        return e.output.strip(), e
-    except Exception as e:
-        return str(e), e
+        return False, e.output
 
-def safe_json(out:str):
+def gcloud_json(cmd: str):
+    ok, out = run(cmd + " --format=json")
+    if not ok or not out.strip():
+        return None
     try:
-        return json.loads(out) if out else None
+        return json.loads(out)
     except Exception:
         return None
 
-st.set_page_config(page_title="Natacha Ops", layout="wide")
-st.title("Natacha Ops — Dashboard único")
+# ─────────────────────────────────────────────────────────────
+# Data sources
+# ─────────────────────────────────────────────────────────────
+def get_service_summary():
+    # Última revisión y URL del servicio
+    data = gcloud_json(f"gcloud run services describe {SERVICE_NAME} --region {REGION} --project {PROJECT}")
+    if not data: 
+        return {}
+    status = data.get("status", {})
+    latest = status.get("latestReadyRevisionName")
+    url    = status.get("url")
+    return {
+        "service": SERVICE_NAME,
+        "region": REGION,
+        "project": PROJECT,
+        "latestReadyRevision": latest,
+        "url": url,
+    }
 
-section = st.sidebar.radio(
-    "Secciones",
-    ["General", "Infraestructura", "Contenedores", "Uptime & Alertas", "Cerebro", "APIs/Config", "Auditorías"]
-)
-st.sidebar.caption(f"Proyecto: **{PROJECT}** | Región: **{REGION}** | Servicio: **{SERVICE}**")
+def get_uptime_check():
+    # Tomo el primero que matchee con el host de Cloud Run
+    lst = gcloud_json(f"gcloud monitoring uptime list-configs --project {PROJECT}")
+    if not lst:
+        return {}
+    check = None
+    for item in lst:
+        labels = (((item.get("monitoredResource") or {}).get("labels")) or {})
+        if labels.get("host") == HOST:
+            check = item
+            break
+    if check is None:
+        # fallback: primero de la lista
+        check = lst[0]
+    # Describe para detalle
+    name = check.get("name")
+    desc = gcloud_json(f"gcloud monitoring uptime describe {name} --project {PROJECT}")
+    return desc or check or {}
 
-# ── General
-if section == "General":
-    col1, col2, col3 = st.columns(3)
+def get_uptime_policies():
+    # Listo policies y luego describo cada una
+    pols = gcloud_json(f"gcloud alpha monitoring policies list --project {PROJECT}")
+    if not pols: 
+        return []
+    picked = [p for p in pols if p.get("displayName") in UPTIME_POLICY_NAMES]
+    detailed = []
+    for p in picked:
+        name = p.get("name")
+        d = gcloud_json(f"gcloud alpha monitoring policies describe {name} --project {PROJECT}")
+        if d: detailed.append(d)
+    return detailed
 
-    out, _ = run(f"gcloud run services describe {SERVICE} --region {REGION} --format=json")
-    svc = safe_json(out) or {}
-    status = svc.get("status", {})
-    url = status.get("url", "")
-    ready = status.get("conditions", [{}])[-1].get("status", "False") == "True"
-    col1.metric("Cloud Run", "READY" if ready else "NOT READY")
-    col1.write(badge("green" if ready else "red", url or SERVICE))
+def get_open_uptime_alerts_df():
+    alerts = gcloud_json(f"gcloud alpha monitoring alerts list --project {PROJECT}")
+    rows = []
+    if alerts:
+        for a in alerts:
+            policy_name = a.get("policy_name") or a.get("policy") or ""
+            if policy_name in UPTIME_POLICY_NAMES:
+                rows.append({
+                    "policy": policy_name,
+                    "condition": a.get("condition_name") or a.get("condition") or "-",
+                    "state": a.get("state") or "-",
+                    "started_at": a.get("started_at") or "-",
+                    "ended_at": a.get("ended_at") or "-",
+                    "id": a.get("name") or "-",
+                })
+    df = pd.DataFrame(rows)
+    if not df.empty:
+        df = df.sort_values(["state","started_at"], ascending=[True, False])
+    return df
 
-    out, _ = run(f"gcloud run revisions list --service {SERVICE} --region {REGION} --format=json")
-    revs = safe_json(out) or []
-    df_revs = pd.DataFrame([{
-        "revision": r.get("metadata",{}).get("name",""),
-        "traffic%": next((t.get("percent") for t in (r.get("status",{}).get("traffic",[]) or []) if t.get("latestRevision",False)), None),
-        "created": r.get("metadata",{}).get("creationTimestamp","")
-    } for r in revs])
-    with col2:
-        st.metric("Revisiones", len(df_revs))
-        st.dataframe(df_revs, use_container_width=True)
-
-    q = (
-      'resource.type="cloud_run_revision" '
-      f'AND resource.labels.service_name="{SERVICE}" '
-      'AND logName:"run.googleapis.com%2Frequests"'
+def get_recent_requests_df(limit=50, freshness="10m"):
+    # Logs de Cloud Run (requests)
+    cmd = (
+        'gcloud logging read '
+        f'\'resource.type="cloud_run_revision" AND resource.labels.service_name="{SERVICE_NAME}" '
+        'AND logName:"run.googleapis.com%2Frequests"\' '
+        f'--project {PROJECT} --freshness={freshness} --limit={limit} --format=json'
     )
-    out, _ = run(f"gcloud logging read '{q}' --freshness=10m --limit=20 --format=json")
-    logs = safe_json(out) or []
-    errors = [l for l in logs if str(l.get("httpRequest",{}).get("status","")).startswith(("5","4"))]
-    col3.metric("Requests (10m)", len(logs), delta=f"{len(errors)} errores")
-    st.caption("Últimos requests")
-    df_logs = pd.DataFrame([{
-        "ts": l.get("timestamp",""),
-        "status": l.get("httpRequest",{}).get("status",""),
-        "url": l.get("httpRequest",{}).get("requestUrl","")
-    } for l in logs])
-    st.dataframe(df_logs, use_container_width=True)
+    entries = gcloud_json(cmd) or []
+    rows = []
+    for e in entries:
+        http = e.get("httpRequest") or {}
+        ts   = e.get("timestamp")
+        url  = http.get("requestUrl")
+        st   = http.get("status")
+        lat  = e.get("latency")
+        rows.append({
+            "timestamp": ts,
+            "status": st,
+            "url": url,
+            "latency": lat,
+        })
+    df = pd.DataFrame(rows)
+    if not df.empty:
+        # Orden cronológico descendente
+        df = df.sort_values("timestamp", ascending=False)
+    return df
 
-# ── Infraestructura
-elif section == "Infraestructura":
-    st.subheader("Compute Engine (VMs)")
-    out, _ = run(f"gcloud compute instances list --project {PROJECT} --format=json")
-    vms = safe_json(out) or []
-    if vms:
-        data = []
-        for vm in vms:
-            data.append({
-                "name": vm.get("name",""),
-                "zone": vm.get("zone","").split("/")[-1],
-                "status": vm.get("status",""),
-                "ip": vm.get("networkInterfaces",[{}])[0].get("networkIP","")
-            })
-        st.dataframe(pd.DataFrame(data), use_container_width=True)
-    else:
-        st.info("No se encontraron VMs o permisos insuficientes.")
-
-    st.subheader("Métricas de servicio (semáforo)")
-    out, _ = run("gcloud alpha monitoring alerts list --format=json")
-    alerts = safe_json(out) or []
-    open_alerts = [a for a in alerts if a.get("state")=="OPEN"]
-    p95_open = any("latency" in (a.get("policy_name","")+a.get("condition_name","")).lower() for a in open_alerts)
-    e5xx_open= any("5xx"    in (a.get("policy_name","")+a.get("condition_name","")).lower() for a in open_alerts)
-    st.write("Latencia P95:", badge("yellow" if p95_open else "green", "degradada" if p95_open else "OK"))
-    st.write("Errores 5xx:", badge("red" if e5xx_open else "green", "falla" if e5xx_open else "OK"))
-
-# ── Contenedores
-elif section == "Contenedores":
-    st.subheader("Revisiones de Cloud Run")
-    out, _ = run(f"gcloud run revisions list --service {SERVICE} --region {REGION} --format=json")
-    revs = safe_json(out) or []
-    st.dataframe(pd.DataFrame([{
-        "revision": r.get("metadata",{}).get("name",""),
-        "create": r.get("metadata",{}).get("creationTimestamp",""),
-        "image": (r.get("spec",{}).get("containers",[{}])[0].get("image","")),
-        "traffic%": next((t.get("percent") for t in (r.get("status",{}).get("traffic",[]) or []) if t.get("latestRevision",False)), None)
-    } for r in revs]), use_container_width=True)
-
-    st.subheader("Artifact Registry (imágenes)")
-    if AR_PATH:
-        out, _ = run(f"gcloud artifacts docker images list {AR_PATH} --include-tags --format=json")
-        imgs = safe_json(out) or []
-        if imgs:
-            st.dataframe(pd.DataFrame([{
-                "image": i.get("package",""),
-                "tag": i.get("tags",[None])[0],
-                "update": i.get("updateTime","")
-            } for i in imgs]), use_container_width=True)
-        else:
-            st.warning("No hay imágenes o falta AR_DOCKER_PATH.")
-    else:
-        st.info("Definí AR_DOCKER_PATH para listar imágenes de Artifact Registry.")
-
-# ── Uptime & Alertas
-elif section == "Uptime & Alertas":
-    left, right = st.columns(2)
-    with left:
-        st.subheader("Uptime Check")
-        out, _ = run(f"gcloud monitoring uptime describe {CHECK} --format=json")
-        up = safe_json(out) or {}
-        ok = (up.get("httpCheck",{}).get("useSsl", False) and True)
-        st.write(badge("green" if ok else "red", up.get("displayName","Uptime")))
-        st.json(up)
-
-    with right:
-        st.subheader("Policies")
-        for pid in (P_UP1, P_UP2):
-            out, _ = run(f"gcloud alpha monitoring policies describe {pid} --format=json")
-            pol = safe_json(out) or {}
-            st.write(f"**{pol.get('displayName','(policy)')}** — {badge('green' if pol.get('enabled') else 'red')}")
-            st.code(json.dumps(pol.get("conditions",[]), indent=2))
-
-    st.subheader("Alertas abiertas (solo uptime)")
-    out, _ = run("gcloud alpha monitoring alerts list --format=json")
-    alerts = safe_json(out) or []
-    aa = []
-    for a in alerts:
-        pn = a.get("policy_name","")
-        if pn in ("CRun | HealthMonitor | Uptime / down","CRun | HealthMonitor | Uptime / all regions down"):
-            aa.append({
-                "policy": pn,
-                "state": a.get("state",""),
-                "started": a.get("started_at","-"),
-                "ended": a.get("ended_at","-"),
-                "name": a.get("name","")
-            })
-    st.dataframe(pd.DataFrame(aa), use_container_width=True)
-
-# ── Cerebro
-elif section == "Cerebro":
-    st.subheader("REGISTRY & Strict Mode")
-    reg_ok = os.path.exists("knowledge/registry/REGISTRY.md")
-    strict_ok = os.path.exists("knowledge/registry/STRICT.yaml")
-    st.write("REGISTRY.md:", badge("green" if reg_ok else "red"))
-    st.write("STRICT.yaml:", badge("green" if strict_ok else "red"))
-
-    st.subheader("Scan duplicados / Strict check")
-    dup_out, _ = run("python3 scripts/dup_scan.py", timeout=60)
-    st.code(dup_out or "dup_scan no disponible")
-
-    strict_out, _ = run("scripts/natacha_strict_check.sh", timeout=60)
-    st.code(strict_out or "strict_check no disponible")
-
-    st.subheader("Audit logs")
-    out, _ = run("ls -1t knowledge/registry/audit | head -n 5")
-    if out:
-        files = [f"knowledge/registry/audit/{x}" for x in out.splitlines()]
-        st.write(files)
-        pick = st.selectbox("Ver audit", files)
-        if pick and os.path.exists(pick):
-            st.code(open(pick).read())
-    else:
-        st.info("No hay audit logs.")
-
-# ── APIs/Config
-elif section == "APIs/Config":
-    st.subheader("Endpoints & Env")
-    out, _ = run(f"gcloud run services describe {SERVICE} --region {REGION} --format=json")
-    svc = safe_json(out) or {}
-    url = svc.get("status",{}).get("url","")
-    st.write("URL:", url or "-")
-
-    containers = (svc.get("spec",{}).get("template",{}).get("spec",{}).get("containers",[]) or [])
-    envs = {}
-    if containers and containers[0].get("env"):
-        envs = {e.get("name"): e.get("value","") for e in containers[0]["env"]}
-    st.json(envs or {"info":"No env vars visibles en describe"})
-
-    st.subheader("Health checks rápidos")
-    if url:
-        import urllib.request
-        tests = [("/", "OK"), ("/run_auto_infra_check", "AutoCheck")]
-        rows = []
-        for path, label in tests:
+def get_audit_df():
+    audits = []
+    if os.path.isdir(AUDIT_DIR):
+        for fname in sorted(os.listdir(AUDIT_DIR)):
+            if not fname.endswith(".json"): 
+                continue
+            path = os.path.join(AUDIT_DIR, fname)
             try:
-                with urllib.request.urlopen(url + path, timeout=10) as r:
-                    rows.append({"endpoint": path, "label": label, "status": r.status})
-            except Exception as e:
-                rows.append({"endpoint": path, "label": label, "status": f"ERR: {e}"})
-        st.dataframe(pd.DataFrame(rows), use_container_width=True)
-    else:
-        st.info("No se detectó URL del servicio.")
+                with open(path, "r") as f:
+                    data = json.load(f)
+                audits.append({
+                    "timestamp": data.get("timestamp"),
+                    "commit_id": data.get("commit_id"),
+                    "branch": data.get("branch"),
+                    "status_raw": data.get("strict_check", ""),
+                })
+            except Exception:
+                pass
+    df = pd.DataFrame(audits)
+    if not df.empty:
+        # OK si el strict_check contiene el tilde
+        df["status"] = df["status_raw"].astype(str).apply(lambda s: "OK" if "✅" in s or "PASSED" in s else "REVIEW")
+        # Parseo para orden
+        try:
+            df["ts"] = pd.to_datetime(df["timestamp"])
+            df = df.sort_values("ts", ascending=False)
+        except Exception:
+            pass
+    return df
 
-# ── Auditorías
-elif section == "Auditorías":
-    st.subheader("Acciones rápidas")
-    colA, colB, colC = st.columns(3)
+# ─────────────────────────────────────────────────────────────
+# UI
+# ─────────────────────────────────────────────────────────────
+st.set_page_config(page_title="Natacha | Ops Dashboard", layout="wide")
+st.title("📊 Natacha — Ops Dashboard (único)")
 
-    if colA.button("Correr audit_log.sh"):
-        out, err = run("scripts/audit_log.sh")
-        st.code(out or err)
+# Header con metadata
+colA, colB, colC, colD = st.columns(4)
+svc = get_service_summary()
+colA.metric("Service", svc.get("service","-"))
+colB.metric("Region",  svc.get("region","-"))
+colC.metric("Project", svc.get("project","-"))
+colD.write(f"**URL**: {svc.get('url','-')}")
 
-    if colB.button("Forzar 404 (3.5 min)"):
-        cmd = f"gcloud monitoring uptime update {CHECK} --path='/no-existe-llvc' --port=443"
-        out, err = run(cmd)
-        st.code(out or err)
+st.divider()
 
-    if colC.button("Restaurar /"):
-        cmd = f"gcloud monitoring uptime update {CHECK} --path='/' --port=443"
-        out, err = run(cmd)
-        st.code(out or err)
+# ── Panel 1: Uptime Check
+st.subheader("⏱ Uptime Check")
+up = get_uptime_check()
+if not up:
+    st.warning("No se encontró uptime check.")
+else:
+    http = up.get("httpCheck") or {}
+    mon  = (up.get("monitoredResource") or {}).get("labels") or {}
+    g1, g2, g3, g4 = st.columns(4)
+    g1.write(f"**Path:** `{http.get('path','-')}`")
+    g2.write(f"**Port:** `{http.get('port','-')}`")
+    g3.write(f"**SSL:** `{http.get('useSsl','-')}`")
+    g4.write(f"**Host:** `{mon.get('host','-')}`")
 
-    st.caption("Tip: el semáforo de Uptime & Alertas refleja las policies que ya configuraste.")
+# ── Panel 2: Policies de Uptime
+st.subheader("📣 Policies (Uptime)")
+pols = get_uptime_policies()
+if not pols:
+    st.info("No se encontraron policies.")
+else:
+    rows = []
+    for p in pols:
+        conds = p.get("conditions") or []
+        for c in conds:
+            row = {
+                "policy": p.get("displayName"),
+                "enabled": p.get("enabled"),
+                "channel": (p.get("notificationChannels") or ["-"])[0],
+                "cond_name": c.get("displayName"),
+                "type": "MQL" if "conditionMonitoringQueryLanguage" in c else "Threshold",
+            }
+            th = c.get("conditionThreshold") or {}
+            if th:
+                row.update({
+                    "filter": th.get("filter"),
+                    "duration": th.get("duration"),
+                    "comparison": th.get("comparison"),
+                    "thresholdValue": th.get("thresholdValue"),
+                    "evaluationMissingData": th.get("evaluationMissingData"),
+                })
+            rows.append(row)
+    df = pd.DataFrame(rows)
+    st.dataframe(df, use_container_width=True)
+
+# ── Panel 3: Alertas abiertas (solo uptime)
+st.subheader("🚨 Alertas de Uptime (abiertas)")
+df_open = get_open_uptime_alerts_df()
+if df_open.empty:
+    st.success("Sin alertas de uptime abiertas.")
+else:
+    st.dataframe(df_open, use_container_width=True)
+
+# ── Panel 4: Últimos requests (Cloud Run)
+st.subheader("🧾 Últimos requests (10 min)")
+df_req = get_recent_requests_df(limit=50, freshness="10m")
+if df_req.empty:
+    st.info("No hay requests recientes.")
+else:
+    st.dataframe(df_req, use_container_width=True)
+    # Quick KPI: proporción de 5xx/4xx
+    try:
+        df_req["status"] = pd.to_numeric(df_req["status"], errors="coerce")
+        total = len(df_req)
+        err_5xx = (df_req["status"] >= 500).sum()
+        err_4xx = ((df_req["status"] >= 400) & (df_req["status"] < 500)).sum()
+        ok_2xx = ((df_req["status"] >= 200) & (df_req["status"] < 300)).sum()
+        k1, k2, k3, k4 = st.columns(4)
+        k1.metric("Requests (10m)", total)
+        k2.metric("2xx", ok_2xx)
+        k3.metric("4xx", err_4xx)
+        k4.metric("5xx", err_5xx)
+    except Exception:
+        pass
+
+# ── Panel 5: Auditorías del “cerebro”
+st.subheader("🧠 Auditorías del cerebro (timeline)")
+df_audit = get_audit_df()
+if df_audit.empty:
+    st.info("No hay auditorías en knowledge/registry/audit aún.")
+else:
+    st.dataframe(
+        df_audit[["timestamp","branch","commit_id","status"]],
+        use_container_width=True
+    )
+    try:
+        # Serie binaria para chart
+        series = df_audit.copy()
+        series["ok"] = series["status"].map({"OK":1, "REVIEW":0})
+        series = series.set_index("ts")["ok"].sort_index()
+        st.line_chart(series)
+    except Exception:
+        pass
+
+st.caption(f"Última actualización: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")

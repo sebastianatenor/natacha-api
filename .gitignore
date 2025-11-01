@@ -40,3 +40,8 @@ last_context.json
 _local_stash_*
 knowledge/registry/audit/
 scripts/
+# --- Natacha dashboard local backups ---
+dashboard/dashboard.py.bak.*
+dashboard/dashboard.py.ROTO.*
+dashboard/*.bak.*
+dashboard/*ROTO*
