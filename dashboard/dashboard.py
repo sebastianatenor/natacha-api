@@ -1,4 +1,14 @@
 import streamlit as st
+import importlib
+
+# 🔐 auth para el dashboard (evita import circular)
+if __package__:
+    auth = importlib.import_module("dashboard.auth")
+else:
+    auth = importlib.import_module("auth")
+auth.check_login()
+
+
 from dashboard import auth
 auth.check_login()
 
