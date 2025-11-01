@@ -36,3 +36,4 @@ infra_snapshots/
 .config/
 .compose.help.txt
 .env.bak.*
+last_context.json

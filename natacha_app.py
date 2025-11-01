@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from routes.memory_routes import router as memory_router
 from routes.tasks_routes import router as tasks_router
@@ -18,19 +19,26 @@ app.include_router(memory_router)
 # tareas
 app.include_router(tasks_router)
 
+# semántica
 app.include_router(semantic_router)
 
+# embeddings
 app.include_router(embeddings_router)
 
+# ops
 app.include_router(ops_routes.router)
-
-app.include_router(memory.router)
 
 # === startup: cargar contexto operativo de Natacha ===
 try:
     from intelligence.startup import load_operational_context
 
-    # en local: puerto 8002
-    load_operational_context(api_base="http://127.0.0.1:8002", limit=20)
+    # 1) primero veo si me lo mandaron por env (Cloud Run)
+    api_base = os.getenv("NATACHA_CONTEXT_API")
+
+    # 2) si no hay env, estoy en local → uso 127.0.0.1
+    if not api_base:
+        api_base = "http://127.0.0.1:8002"
+
+    load_operational_context(api_base=api_base, limit=20)
 except Exception as e:
     print(f"⚠️ Natacha startup context not loaded: {e}")
