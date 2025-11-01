@@ -95,3 +95,23 @@
 - Motivo: módulo `routes/memory.py` ya no existe (reemplazado por `memory_routes.py`)
 - Estado: ✅ validado en local (`uvicorn 8003`) y remoto (`Cloud Run`)
 - Contexto operativo cargado correctamente desde `NATACHA_CONTEXT_API`
+
+---
+
+### 2025-11-01 — Endpoint `/dashboard/data`
+**Servicio:** natacha-api  
+**Ruta:** `GET /dashboard/data`  
+**Tipo:** Core / resumen operativo  
+**Origen de datos:** Firestore (`assistant_memory`, `assistant_tasks`)  
+**Dependencias:** `intelligence.startup.load_operational_context`  
+**Uso:** Dashboard v0.9.3 (lectura de contexto remoto unificado)  
+**Contexto API:** $NATACHA_CONTEXT_API  
+**Validado en:**  
+- Local (`http://127.0.0.1:8003/dashboard/data`) ✅  
+- Cloud Run (`https://natacha-api-422255208682.us-central1.run.app/dashboard/data`) 🔄 pendiente de test  
+**Estado:** ✅ estable  
+**Notas:**  
+- Requiere `routes/core_routes.py` y registro en `natacha_app.py`  
+- Sustituye lecturas manuales de `/ops/insights` en el dashboard  
+- Compatible con entorno `v0.9.3`
+
