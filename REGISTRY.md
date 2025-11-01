@@ -115,3 +115,11 @@
 - Sustituye lecturas manuales de `/ops/insights` en el dashboard  
 - Compatible con entorno `v0.9.3`
 
+
+#### 2025-11-01 – Deploy Cloud Run con /dashboard/data
+- Servicio: natacha-api
+- Revisión: *(la que devolvió gcloud)*
+- Cambio efectivo: incluye `routes/core_routes.py` y expone `GET /dashboard/data`
+- Motivo: endpoint estaba operativo en local pero no en la última imagen de Cloud Run
+- Verificado:
+  - `curl -s https://natacha-api-422255208682.us-central1.run.app/dashboard/data`
