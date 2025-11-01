@@ -123,3 +123,10 @@
 - Motivo: endpoint estaba operativo en local pero no en la última imagen de Cloud Run
 - Verificado:
   - `curl -s https://natacha-api-422255208682.us-central1.run.app/dashboard/data`
+## Dashboard Natacha
+- Servicio: natacha-dashboard
+- URL: https://natacha-dashboard-422255208682.us-central1.run.app
+- Imagen: us-central1-docker.pkg.dev/asistente-sebastian/natacha-docker/natacha-dashboard:secure
+- Revisión: natacha-dashboard-00017-7fs
+- Auth: env (DASH_USER=llvc / DASH_PASS=LLVC-2025-dash)
+- Última actualización: 2025-11-01
