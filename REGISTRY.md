@@ -88,3 +88,10 @@
 - Verificado:
   - `curl -s "https://natacha-api-422255208682.us-central1.run.app/ops/insights?limit=20"`
   - `gcloud run services describe natacha-api --region=us-central1 --project=asistente-sebastian --format="value(spec.template.spec.containers[0].env)"`
+
+### 2025-11-01 – Fix local import y verificación completa
+- Commit: 08c388f
+- Cambio: se eliminó `from routes import memory` en `natacha_app.py`
+- Motivo: módulo `routes/memory.py` ya no existe (reemplazado por `memory_routes.py`)
+- Estado: ✅ validado en local (`uvicorn 8003`) y remoto (`Cloud Run`)
+- Contexto operativo cargado correctamente desde `NATACHA_CONTEXT_API`
