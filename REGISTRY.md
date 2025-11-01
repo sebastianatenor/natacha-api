@@ -79,3 +79,12 @@
 - Verificado en local:
   - `python3 - << 'PYCODE' ... load_operational_context(...) ...`
   - `curl -s "http://127.0.0.1:8002/ops/insights?limit=20"`
+
+### 2025-11-01 – Deploy Cloud Run con contexto remoto
+- Servicio: natacha-api
+- Revisión: natacha-api-00030-7r4
+- Cambio: se agregó env `NATACHA_CONTEXT_API=https://natacha-api-422255208682.us-central1.run.app`
+- Motivo: que el startup (`intelligence/startup.py`) use directamente la URL pública en producción.
+- Verificado:
+  - `curl -s "https://natacha-api-422255208682.us-central1.run.app/ops/insights?limit=20"`
+  - `gcloud run services describe natacha-api --region=us-central1 --project=asistente-sebastian --format="value(spec.template.spec.containers[0].env)"`
