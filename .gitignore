@@ -37,3 +37,6 @@ infra_snapshots/
 .compose.help.txt
 .env.bak.*
 last_context.json
+_local_stash_*
+knowledge/registry/audit/
+scripts/
