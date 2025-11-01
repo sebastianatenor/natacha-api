@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Query, HTTPException
 from google.cloud import firestore
@@ -33,21 +33,61 @@ def looks_like_task(text: str) -> bool:
     return any(word in lower for word in TRIGGER_WORDS)
 
 
+def recent_task_exists(db, title: str, project: str) -> bool:
+    """
+    Evita duplicados obvios: si en los últimos 5 minutos se creó
+    una tarea con el mismo título y proyecto, no la vuelve a crear.
+    """
+    five_minutes_ago = datetime.now(timezone.utc) - timedelta(minutes=5)
+    q = (
+        db.collection("assistant_tasks")
+        .where("project", "==", project)
+        .where("title", "==", title[:100])
+        .order_by("created_at", direction=firestore.Query.DESCENDING)
+        .limit(3)
+    )
+
+    try:
+        docs = list(q.stream())
+    except Exception:
+        # si Firestore no soporta el order_by+where así en tu modo, salimos sin bloquear
+        return False
+
+    for d in docs:
+        data = d.to_dict()
+        created_at = data.get("created_at")
+        try:
+            if created_at and created_at >= five_minutes_ago.isoformat():
+                return True
+        except Exception:
+            # si el formato no es ISO estricta, lo ignoramos
+            continue
+    return False
+
+
 def create_task_from_memory(db, memory_doc: dict):
     """Crea una tarea y registra una memoria de que la creó."""
     summary = memory_doc.get("summary", "")
     if not looks_like_task(summary):
         return  # no parece tarea, salimos
 
+    project = memory_doc.get("project", "general")
+
+    # evitar duplicados inmediatos
+    if recent_task_exists(db, summary, project):
+        return
+
     # 1) crear la tarea
     task = {
         "title": summary[:100],
         "detail": memory_doc.get("detail", ""),
-        "project": memory_doc.get("project", "general"),
+        "project": project,
         "channel": memory_doc.get("channel", "memory-auto"),
         "state": "pending",
         "due": "",
         "created_at": datetime.now(timezone.utc).isoformat(),
+        "visibility": memory_doc.get("visibility", "equipo"),
+        "created_by": memory_doc.get("created_by", "memory.auto"),
     }
     task_ref = db.collection("assistant_tasks").add(task)
 
@@ -56,7 +96,7 @@ def create_task_from_memory(db, memory_doc: dict):
         "summary": f"Tarea creada automáticamente: {task['title']}",
         "detail": f"Origen: memoria.add | task_id: {task_ref[1].id}",
         "channel": "system-auto",
-        "project": memory_doc.get("project", "general"),
+        "project": project,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "state": "vigente",
         "visibility": "equipo",
@@ -69,24 +109,48 @@ def create_task_from_memory(db, memory_doc: dict):
 def memory_add(payload: dict):
     db = get_db()
 
-    summary = payload.get("summary", "").strip()
+    summary = (payload.get("summary") or "").strip()
     if not summary:
         raise HTTPException(status_code=400, detail="summary is required")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
 
     doc = {
         "summary": summary,
         "detail": payload.get("detail", ""),
         "channel": payload.get("channel", "unknown"),
         "project": payload.get("project", "general"),
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": now_iso,
         "state": payload.get("state", "vigente"),
+        # extras
+        "visibility": payload.get("visibility", "equipo"),
+        "created_by": payload.get("created_by", "api.memory.add"),
     }
 
+    # opcional: links de origen
+    source_links = payload.get("source_links") or payload.get("links")
+    if source_links:
+        # lo dejamos siempre como lista
+        if isinstance(source_links, str):
+            source_links = [source_links]
+        doc["source_links"] = source_links
+
     # guardo la memoria original
-    db.collection("assistant_memory").add(doc)
+    try:
+        db.collection("assistant_memory").add(doc)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Firestore error (create memory): {e!r}")
 
     # si parece tarea → creo tarea + anoto que la creé
-    create_task_from_memory(db, doc)
+    try:
+        create_task_from_memory(db, doc)
+    except Exception as e:
+        # no rompemos la respuesta si falló el auto-task
+        return {
+            "status": "ok",
+            "stored": doc,
+            "warning": f"task not created: {e!r}",
+        }
 
     return {"status": "ok", "stored": doc}
 
@@ -135,3 +199,4 @@ def memory_search(
 
     # si no hubo query de texto, devolvemos lo que tenemos (limitado)
     return results[:limit]
+
