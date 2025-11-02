@@ -1,7 +1,11 @@
+# Registro maestro de servicios — Proyecto asistente-sebastian (ID 422255208682)
+
+> Estado consolidado y verificado tras eliminación del entorno duplicado (gen-lang-client-0363543020).
+> Todas las URLs, secretos y cuentas de servicio apuntan a la infraestructura principal en Cloud Run (us-central1).
+
 ## Estado actual (2025-10-31 - post deploy 00027-lkf)
-- URL pública preferida: https://natacha-api-422255208682.us-central1.run.app
-- URL pública secundaria (status Cloud Run): https://natacha-api-mkwskljrhq-uc.a.run.app
-- Revisión activa: natacha-api-00027-lkf
+- URL: https://natacha-api-422255208682.us-central1.run.app
+- Revisión activa: natacha-api-00031-fhl
 - Service Account (runtime): natacha-firestore-access@asistente-sebastian.iam.gserviceaccount.com
 - Secret montado: /etc/secrets/firestore-key.json → natacha-firestore-key:latest
 
@@ -25,7 +29,6 @@
 - Verificado en:
   - `curl -s "http://127.0.0.1:8001/ops/summary?limit=5"`
   - `curl -s "https://natacha-api-422255208682.us-central1.run.app/ops/summary?limit=5"`
-  - `curl -s "https://natacha-api-mkwskljrhq-uc.a.run.app/ops/summary?limit=5"`
 
 ---
 
@@ -44,7 +47,6 @@
 - Verificado en:
   - `http://127.0.0.1:8001/ops/summary?limit=5`
   - `https://natacha-api-422255208682.us-central1.run.app/ops/summary?limit=5`
-  - `https://natacha-api-mkwskljrhq-uc.a.run.app/ops/summary?limit=5`
 
 ### 2025-10-31 – Unificación parcial de OPS
 - Cambio: se replica `/ops/summary` en `routes/ops_routes.py` (el que usa `natacha_app.py`).
@@ -125,8 +127,20 @@
   - `curl -s https://natacha-api-422255208682.us-central1.run.app/dashboard/data`
 ## Dashboard Natacha
 - Servicio: natacha-dashboard
-- URL: https://natacha-dashboard-422255208682.us-central1.run.app
+- URL: https://natacha-api-422255208682.us-central1.run.app
 - Imagen: us-central1-docker.pkg.dev/asistente-sebastian/natacha-docker/natacha-dashboard:secure
 - Revisión: natacha-dashboard-00017-7fs
 - Auth: env (DASH_USER=llvc / DASH_PASS=LLVC-2025-dash)
 - Última actualización: 2025-11-01
+
+### 2025-11-01 – Baseline post-limpieza de proyectos
+- Proyecto: **asistente-sebastian** (ID 422255208682)
+- Servicio: **natacha-api**
+- URL pública única: https://natacha-api-422255208682.us-central1.run.app
+- Revisión activa validada: `natacha-api-00031-fhl`
+- Cuenta de servicio: `natacha-firestore-access@asistente-sebastian.iam.gserviceaccount.com`
+- Secret montado: `natacha-firestore-key`
+- Notas:
+  - Se eliminó el proyecto duplicado `gen-lang-client-0363543020`.
+  - Se corrigieron referencias antiguas a `...505068916737...` en el código.
+  - `scripts/registry_check.py` queda como **fuente de verdad** y debe ejecutarse antes de cambiar URLs en el registro.
