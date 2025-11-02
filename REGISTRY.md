@@ -6,8 +6,9 @@
 ## Estado actual (2025-10-31 - post deploy 00027-lkf)
 - URL: https://natacha-api-422255208682.us-central1.run.app
 - Revisión activa: natacha-api-00031-fhl
+- Service Account: natacha-firestore-access@asistente-sebastian.iam.gserviceaccount.com
 - Service Account (runtime): natacha-firestore-access@asistente-sebastian.iam.gserviceaccount.com
-- Secret montado: /etc/secrets/firestore-key.json → natacha-firestore-key:latest
+- Secret montado: natacha-firestore-key
 
 ## Historial de cambios
 
@@ -84,7 +85,7 @@
 
 ### 2025-11-01 – Deploy Cloud Run con contexto remoto
 - Servicio: natacha-api
-- Revisión: natacha-api-00030-7r4
+- Revisión: natacha-api-00032-p4n
 - Cambio: se agregó env `NATACHA_CONTEXT_API=https://natacha-api-422255208682.us-central1.run.app`
 - Motivo: que el startup (`intelligence/startup.py`) use directamente la URL pública en producción.
 - Verificado:
@@ -120,7 +121,7 @@
 
 #### 2025-11-01 – Deploy Cloud Run con /dashboard/data
 - Servicio: natacha-api
-- Revisión: *(la que devolvió gcloud)*
+- Revisión: natacha-api-00032-p4n
 - Cambio efectivo: incluye `routes/core_routes.py` y expone `GET /dashboard/data`
 - Motivo: endpoint estaba operativo en local pero no en la última imagen de Cloud Run
 - Verificado:
@@ -129,7 +130,7 @@
 - Servicio: natacha-dashboard
 - URL: https://natacha-api-422255208682.us-central1.run.app
 - Imagen: us-central1-docker.pkg.dev/asistente-sebastian/natacha-docker/natacha-dashboard:secure
-- Revisión: natacha-dashboard-00017-7fs
+- Revisión: natacha-api-00032-p4n
 - Auth: env (DASH_USER=llvc / DASH_PASS=LLVC-2025-dash)
 - Última actualización: 2025-11-01
 
@@ -139,7 +140,7 @@
 - URL pública única: https://natacha-api-422255208682.us-central1.run.app
 - Revisión activa validada: `natacha-api-00031-fhl`
 - Cuenta de servicio: `natacha-firestore-access@asistente-sebastian.iam.gserviceaccount.com`
-- Secret montado: `natacha-firestore-key`
+- Secret montado: natacha-firestore-key
 - Notas:
   - Se eliminó el proyecto duplicado `gen-lang-client-0363543020`.
   - Se corrigieron referencias antiguas a `...505068916737...` en el código.

@@ -28,7 +28,7 @@ payload = {
 
 # Enviar a API
 requests.post(
-    "https://natacha-api-mkwskljrhq-uc.a.run.app/memory/add",
+    "https://natacha-api-422255208682.us-central1.run.app/memory/add",
     headers={"Content-Type": "application/json"},
     json=payload
 )
