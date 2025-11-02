@@ -27,6 +27,8 @@ def dashboard_data():
             raise HTTPException(status_code=500, detail=f"No se pudo obtener contexto: {e}")
 
     projects = []
+    if not context:
+        return {"projects": [], "alerts": []}
     for p in context.get("projects", []):
         name = p.get("name")
         pending = p.get("pending_tasks", 0)
