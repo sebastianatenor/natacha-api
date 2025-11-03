@@ -1,0 +1,11 @@
+.venv
+venv
+__pycache__/
+*.pyc
+.git
+.gitignore
+infra_snapshots/
+logs/
+_local_stash_*/
+.backup_*/
+.DS_Store

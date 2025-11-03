@@ -1,3 +1,4 @@
+from google.cloud.firestore import Query as FireQuery
 from google.cloud import firestore
 FireQuery = firestore.Query
 import os
@@ -240,3 +241,20 @@ def ops_insights(limit: int = 20):
         "duplicates": duplicates,
         "raw": {"memories": len(memories), "tasks": len(tasks)},
     }
+
+
+from fastapi.responses import JSONResponse
+import hashlib, inspect
+
+@router.get("/ops/debug_source")
+def ops_debug_source():
+    try:
+        # Ruta real del archivo importado en runtime
+        this_file = inspect.getsourcefile(ops_debug_source) or "<unknown>"
+        # Hash del archivo de esta build
+        with open(__file__, "rb") as fh:
+            content = fh.read()
+        sha = hashlib.sha256(content).hexdigest()
+        return {"file_runtime": this_file, "sha256_this_module": sha}
+    except Exception as e:
+        return JSONResponse(status_code=503, content={"error": str(e)})
