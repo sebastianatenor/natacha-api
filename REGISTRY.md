@@ -1,4 +1,4 @@
-- URL: https://natacha-api-mkwskljrhq-uc.a.run.app
+- URL: https://natacha-api-422255208682.us-central1.run.app
 - Revisión: natacha-api-00039-2fv
 # Registro maestro de servicios — Proyecto asistente-sebastian (ID 422255208682)
 
