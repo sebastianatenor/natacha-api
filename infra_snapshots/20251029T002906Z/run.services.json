@@ -412,7 +412,7 @@
         "run.googleapis.com/ingress": "all",
         "run.googleapis.com/ingress-status": "all",
         "run.googleapis.com/operation-id": "6e708efc-f5ad-4c5f-a38f-bd5429608a82",
-        "run.googleapis.com/urls": "[\"https://natacha-api-422255208682.us-central1.run.app\",\"https://natacha-api-mkwskljrhq-uc.a.run.app\"]",
+        "run.googleapis.com/urls": "[\"https://natacha-api-422255208682.us-central1.run.app\",\"https://natacha-api-422255208682.us-central1.run.app\"]",
         "serving.knative.dev/creator": "sebastianatenor@gmail.com",
         "serving.knative.dev/lastModifier": "sebastianatenor@gmail.com"
       },
@@ -493,7 +493,7 @@
     },
     "status": {
       "address": {
-        "url": "https://natacha-api-mkwskljrhq-uc.a.run.app"
+        "url": "https://natacha-api-422255208682.us-central1.run.app"
       },
       "conditions": [
         {
@@ -522,7 +522,7 @@
           "revisionName": "natacha-api-00164-vtv"
         }
       ],
-      "url": "https://natacha-api-mkwskljrhq-uc.a.run.app"
+      "url": "https://natacha-api-422255208682.us-central1.run.app"
     }
   },
   {

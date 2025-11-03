@@ -184,5 +184,5 @@ if __name__ == "__main__":
     api_base = (
         os.getenv("NATACHA_CONTEXT_API")
         or "https://natacha-api-422255208682.us-central1.run.app"
-    )  # antiguo: https://natacha-api-mkwskljrhq-uc.a.run.app
+    )  # antiguo: https://natacha-api-422255208682.us-central1.run.app
     load_operational_context(api_base=api_base, limit=20)

@@ -32,7 +32,7 @@ for d in dups:
         print(f"    • {i}")
     print("  👉 Para borrar una en la API (ejemplo):")
     print(
-        '     curl -X DELETE "https://natacha-api-mkwskljrhq-uc.a.run.app/tasks/{ID}"'
+        '     curl -X DELETE "https://natacha-api-422255208682.us-central1.run.app/tasks/{ID}"'
     )
     print("     # reemplazar {ID} por uno de los de arriba")
     print()
