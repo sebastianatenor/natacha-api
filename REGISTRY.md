@@ -1,10 +1,11 @@
+- URL: https://natacha-api-mkwskljrhq-uc.a.run.app
+- Revisión: natacha-api-00039-2fv
 # Registro maestro de servicios — Proyecto asistente-sebastian (ID 422255208682)
 
 > Estado consolidado y verificado tras eliminación del entorno duplicado (gen-lang-client-0363543020).
 > Todas las URLs, secretos y cuentas de servicio apuntan a la infraestructura principal en Cloud Run (us-central1).
 
 ## Estado actual (2025-10-31 - post deploy 00027-lkf)
-- URL: https://natacha-api-mkwskljrhq-uc.a.run.app
 - Revisión activa: natacha-api-00036-87g
 - Service Account: natacha-firestore-access@asistente-sebastian.iam.gserviceaccount.com
 - Service Account (runtime): natacha-firestore-access@asistente-sebastian.iam.gserviceaccount.com
@@ -85,7 +86,6 @@
 
 ### 2025-11-01 – Deploy Cloud Run con contexto remoto
 - Servicio: natacha-api
-- Revisión: natacha-api-00032-p4n
 - Cambio: se agregó env `NATACHA_CONTEXT_API=https://natacha-api-422255208682.us-central1.run.app`
 - Motivo: que el startup (`intelligence/startup.py`) use directamente la URL pública en producción.
 - Verificado:
@@ -121,16 +121,13 @@
 
 #### 2025-11-01 – Deploy Cloud Run con /dashboard/data
 - Servicio: natacha-api
-- Revisión: natacha-api-00032-p4n
 - Cambio efectivo: incluye `routes/core_routes.py` y expone `GET /dashboard/data`
 - Motivo: endpoint estaba operativo en local pero no en la última imagen de Cloud Run
 - Verificado:
   - `curl -s https://natacha-api-422255208682.us-central1.run.app/dashboard/data`
 ## Dashboard Natacha
 - Servicio: natacha-dashboard
-- URL: https://natacha-api-mkwskljrhq-uc.a.run.app
 - Imagen: us-central1-docker.pkg.dev/asistente-sebastian/natacha-docker/natacha-dashboard:secure
-- Revisión: natacha-api-00032-p4n
 - Auth: env (DASH_USER=llvc / DASH_PASS=LLVC-2025-dash)
 - Última actualización: 2025-11-01
 
