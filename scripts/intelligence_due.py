@@ -12,11 +12,15 @@ from pathlib import Path
 
 CTX_FILE = Path("last_context.json")
 
+
 def load_context():
     if not CTX_FILE.exists():
-        print("⚠️ No existe last_context.json. Corré primero: python3 intelligence/startup.py")
+        print(
+            "⚠️ No existe last_context.json. Corré primero: python3 intelligence/startup.py"
+        )
         return None
     return json.loads(CTX_FILE.read_text(encoding="utf-8"))
+
 
 def parse_iso(dt_str):
     if not dt_str:
@@ -28,6 +32,7 @@ def parse_iso(dt_str):
         return datetime.fromisoformat(dt_str)
     except Exception:
         return None
+
 
 def main():
     data = load_context()
@@ -89,12 +94,15 @@ def main():
         print("ℹ️ No había alerts de tareas sin fecha.")
 
     # duplicados (opcional)
-    duplicates = (data.get("data") or {}).get("duplicates") or data.get("duplicates") or []
+    duplicates = (
+        (data.get("data") or {}).get("duplicates") or data.get("duplicates") or []
+    )
     if duplicates:
         print("\n== DUPLICADOS DETECTADOS ==")
         for d in duplicates:
             print(f"- {d.get('title')} ({d.get('count')})")
     print("Listo ✅")
+
 
 if __name__ == "__main__":
     main()

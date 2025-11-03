@@ -1,16 +1,24 @@
 #!/usr/bin/env python3
-import os, sys, hashlib, json, fnmatch, difflib
+import difflib
+import fnmatch
+import hashlib
+import json
+import os
+import sys
 from pathlib import Path
 
 CFG = Path("knowledge/registry/STRICT.yaml")
 try:
     import yaml  # PyYAML
 except ImportError:
-    print("PyYAML no instalado: pip install pyyaml", file=sys.stderr); sys.exit(2)
+    print("PyYAML no instalado: pip install pyyaml", file=sys.stderr)
+    sys.exit(2)
+
 
 def load_cfg():
     with open(CFG, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
+
 
 def sha256(p):
     h = hashlib.sha256()
@@ -18,6 +26,7 @@ def sha256(p):
         for chunk in iter(lambda: f.read(65536), b""):
             h.update(chunk)
     return h.hexdigest()
+
 
 def should_ignore(path, patterns):
     # normalizar con / para comparar
@@ -27,10 +36,11 @@ def should_ignore(path, patterns):
             return True
     return False
 
+
 def walk_files(paths, ignore_globs):
     for root in paths:
         root = Path(root)
-        if not root.exists(): 
+        if not root.exists():
             continue
         for dirpath, _, filenames in os.walk(root):
             dp = Path(dirpath)
@@ -38,9 +48,10 @@ def walk_files(paths, ignore_globs):
                 continue
             for name in filenames:
                 fp = dp / name
-                if should_ignore(fp, ignore_globs): 
+                if should_ignore(fp, ignore_globs):
                     continue
                 yield fp
+
 
 def main():
     cfg = load_cfg()
@@ -74,44 +85,48 @@ def main():
         if len(fs) > 1 and name not in allow:
             # Si está en must_be_unique, lo marcamos como error fuerte
             if name in must_unique:
-                errors.append({
-                    "type": "duplicate_name_strict",
-                    "name": name,
-                    "files": list(map(str, fs))
-                })
+                errors.append(
+                    {
+                        "type": "duplicate_name_strict",
+                        "name": name,
+                        "files": list(map(str, fs)),
+                    }
+                )
             else:
-                warnings.append({
-                    "type": "duplicate_name",
-                    "name": name,
-                    "files": list(map(str, fs))
-                })
+                warnings.append(
+                    {
+                        "type": "duplicate_name",
+                        "name": name,
+                        "files": list(map(str, fs)),
+                    }
+                )
 
     # 2) Duplicado por contenido (hash)
     for h, fs in by_hash.items():
         if len(fs) > 1:
-            warnings.append({
-                "type": "duplicate_content",
-                "sha256": h,
-                "files": list(map(str, fs))
-            })
+            warnings.append(
+                {"type": "duplicate_content", "sha256": h, "files": list(map(str, fs))}
+            )
 
     # 3) Casi duplicados (similaridad de nombres)
     # agrupamos por base name sin extensión para detectar dashboard.py vs dashboard_old.py
     bases = [(Path(p).stem.lower(), p) for _, p in names]
     for i in range(len(bases)):
-        for j in range(i+1, len(bases)):
+        for j in range(i + 1, len(bases)):
             n1, p1 = bases[i]
             n2, p2 = bases[j]
-            if n1 == n2: 
+            if n1 == n2:
                 continue
             sim = difflib.SequenceMatcher(a=n1, b=n2).ratio()
             if sim >= thr:
-                warnings.append({
-                    "type": "near_duplicate_name",
-                    "similarity": round(sim, 3),
-                    "a": str(p1),
-                    "b": str(p2)
-                })
+                warnings.append(
+                    {
+                        "type": "near_duplicate_name",
+                        "similarity": round(sim, 3),
+                        "a": str(p1),
+                        "b": str(p2),
+                    }
+                )
 
     out = {"errors": errors, "warnings": warnings}
     print(json.dumps(out, ensure_ascii=False, indent=2))
@@ -122,6 +137,7 @@ def main():
         sys.exit(1)
     else:
         sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

@@ -1,23 +1,28 @@
-from fastapi import FastAPI
-from app.debug_endpoints import router as debug_router
-from fastapi.responses import JSONResponse
-import os, json
+import json
+import os
 from datetime import datetime, timezone
 
-# Imports internos (sin fallbacks)
-from .infra_local_history import save_entry, get_history, clear_history
-from .infra_sync import sync_local_to_firestore, pull_from_firestore
-from health_monitor.auto_healer import auto_heal as auto_heal_fn
-from .cloud_services_scan import get_cloud_run_services
-from .auto_scheduler import start_scheduler
-
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 # Firestore (opcional, lo usamos en algunos endpoints)
 from google.cloud import firestore
 
+from app.debug_endpoints import router as debug_router
+from health_monitor.auto_healer import auto_heal as auto_heal_fn
+
+from .auto_scheduler import start_scheduler
+from .cloud_services_scan import get_cloud_run_services
+# Imports internos (sin fallbacks)
+from .infra_local_history import clear_history, get_history, save_entry
+from .infra_sync import pull_from_firestore, sync_local_to_firestore
+
 app = FastAPI(title="Natacha Health Monitor")
 app.include_router(debug_router)
+
+
 def utc_now_str():
     return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S%z")
+
 
 # =====================================================
 # 🩺 ENDPOINT PRINCIPAL
@@ -25,6 +30,7 @@ def utc_now_str():
 @app.get("/")
 def root():
     return {"status": "ok", "message": "natacha-health-monitor activo"}
+
 
 # =====================================================
 # 🛠️ AUTO-HEALER POR HTTP (nuevo)
@@ -40,15 +46,17 @@ def trigger_auto_heal_fn():
         # Guarda un snapshot del resumen (con TS de servidor)
         try:
             db = firestore.Client()
-            db.collection("auto_heal_runs").add({
-                **summary,
-                "ts_server": firestore.SERVER_TIMESTAMP
-            })
+            db.collection("auto_heal_runs").add(
+                {**summary, "ts_server": firestore.SERVER_TIMESTAMP}
+            )
         except Exception as e:
             print("⚠️ No se pudo guardar auto_heal_runs en Firestore:", str(e))
         return {"status": "ok", "data": summary}
     except Exception as e:
-        return JSONResponse(status_code=500, content={"status": "error", "detail": str(e)})
+        return JSONResponse(
+            status_code=500, content={"status": "error", "detail": str(e)}
+        )
+
 
 # =====================================================
 # 🚀 EJECUCIÓN DE DIAGNÓSTICO AUTOMÁTICO
@@ -76,7 +84,7 @@ def run_auto_infra_check():
             "vm_status": [],
             "docker_containers": [],
             "cloud_run_services": cloud_services,
-            "disk_usage": "1%"
+            "disk_usage": "1%",
         }
 
         # 🔹 Guardar el diagnóstico localmente
@@ -94,10 +102,17 @@ def run_auto_infra_check():
         except Exception as ae:
             print("⚠️ Error en auto-heal:", str(ae))
 
-        return {"status": "ok", "detail": "Diagnóstico ejecutado correctamente", "data": result}
+        return {
+            "status": "ok",
+            "detail": "Diagnóstico ejecutado correctamente",
+            "data": result,
+        }
 
     except Exception as e:
-        return JSONResponse(status_code=500, content={"status": "error","detail": str(e)})
+        return JSONResponse(
+            status_code=500, content={"status": "error", "detail": str(e)}
+        )
+
 
 # =====================================================
 # ☁️ GUARDADO EN FIRESTORE
@@ -112,6 +127,7 @@ def save_to_firestore(data):
     except Exception as e:
         print(f"⚠️ Error al guardar en Firestore: {e}")
 
+
 # =====================================================
 # 📜 HISTORIAL LOCAL
 # =====================================================
@@ -124,6 +140,7 @@ def infra_history():
     except Exception as e:
         return {"status": "error", "detail": str(e)}
 
+
 @app.delete("/infra_clear")
 def infra_clear():
     """Limpia el historial local de infraestructura."""
@@ -132,6 +149,7 @@ def infra_clear():
         return {"status": "ok", "message": "Historial local eliminado correctamente"}
     except Exception as e:
         return {"status": "error", "detail": str(e)}
+
 
 # =====================================================
 # 🔁 SINCRONIZACIÓN MANUAL CON FIRESTORE
@@ -142,11 +160,13 @@ def sync_firestore():
     result = sync_local_to_firestore()
     return result
 
+
 @app.get("/infra_history_cloud")
 def infra_history_cloud():
     """Obtiene el historial directamente desde Firestore."""
     result = pull_from_firestore()
     return result
+
 
 # =====================================================
 # ⚙️ INICIO AUTOMÁTICO DE PROCESOS EN BACKGROUND
@@ -161,18 +181,22 @@ def startup_event():
     except Exception as e:
         print("⚠️ No se pudo iniciar el AutoScheduler:", str(e))
 
+
 # =====================================================
 # 🧪 EJECUCIÓN LOCAL
 # =====================================================
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("health_monitor.app:app", host="0.0.0.0", port=8085, reload=True)
 # --- std health endpoint (no side effects) ---
 try:
     app  # ensure 'app' exists
+
     @app.get("/health", include_in_schema=False)
     def health():
         return {"status": "ok"}
+
 except NameError:
     # If 'app' isn't available in this module, don't break imports
     pass

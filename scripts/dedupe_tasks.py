@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 CTX = Path("last_context.json")
 
@@ -26,12 +26,14 @@ for d in dups:
     title = d.get("title")
     count = d.get("count")
     ids = d.get("ids") or []
-    print(f"- \"{title}\"  ({count} ocurrencias)")
+    print(f'- "{title}"  ({count} ocurrencias)')
     print("  IDs:")
     for i in ids:
         print(f"    • {i}")
     print("  👉 Para borrar una en la API (ejemplo):")
-    print("     curl -X DELETE \"https://natacha-api-mkwskljrhq-uc.a.run.app/tasks/{ID}\"")
+    print(
+        '     curl -X DELETE "https://natacha-api-mkwskljrhq-uc.a.run.app/tasks/{ID}"'
+    )
     print("     # reemplazar {ID} por uno de los de arriba")
     print()
 

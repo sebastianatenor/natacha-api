@@ -4,8 +4,8 @@
 > Todas las URLs, secretos y cuentas de servicio apuntan a la infraestructura principal en Cloud Run (us-central1).
 
 ## Estado actual (2025-10-31 - post deploy 00027-lkf)
-- URL: https://natacha-api-422255208682.us-central1.run.app
-- Revisión activa: natacha-api-00031-fhl
+- URL: https://natacha-api-mkwskljrhq-uc.a.run.app
+- Revisión activa: natacha-api-00036-87g
 - Service Account: natacha-firestore-access@asistente-sebastian.iam.gserviceaccount.com
 - Service Account (runtime): natacha-firestore-access@asistente-sebastian.iam.gserviceaccount.com
 - Secret montado: natacha-firestore-key
@@ -102,20 +102,20 @@
 ---
 
 ### 2025-11-01 — Endpoint `/dashboard/data`
-**Servicio:** natacha-api  
-**Ruta:** `GET /dashboard/data`  
-**Tipo:** Core / resumen operativo  
-**Origen de datos:** Firestore (`assistant_memory`, `assistant_tasks`)  
-**Dependencias:** `intelligence.startup.load_operational_context`  
-**Uso:** Dashboard v0.9.3 (lectura de contexto remoto unificado)  
-**Contexto API:** $NATACHA_CONTEXT_API  
-**Validado en:**  
-- Local (`http://127.0.0.1:8003/dashboard/data`) ✅  
-- Cloud Run (`https://natacha-api-422255208682.us-central1.run.app/dashboard/data`) 🔄 pendiente de test  
-**Estado:** ✅ estable  
-**Notas:**  
-- Requiere `routes/core_routes.py` y registro en `natacha_app.py`  
-- Sustituye lecturas manuales de `/ops/insights` en el dashboard  
+**Servicio:** natacha-api
+**Ruta:** `GET /dashboard/data`
+**Tipo:** Core / resumen operativo
+**Origen de datos:** Firestore (`assistant_memory`, `assistant_tasks`)
+**Dependencias:** `intelligence.startup.load_operational_context`
+**Uso:** Dashboard v0.9.3 (lectura de contexto remoto unificado)
+**Contexto API:** $NATACHA_CONTEXT_API
+**Validado en:**
+- Local (`http://127.0.0.1:8003/dashboard/data`) ✅
+- Cloud Run (`https://natacha-api-422255208682.us-central1.run.app/dashboard/data`) 🔄 pendiente de test
+**Estado:** ✅ estable
+**Notas:**
+- Requiere `routes/core_routes.py` y registro en `natacha_app.py`
+- Sustituye lecturas manuales de `/ops/insights` en el dashboard
 - Compatible con entorno `v0.9.3`
 
 
@@ -128,7 +128,7 @@
   - `curl -s https://natacha-api-422255208682.us-central1.run.app/dashboard/data`
 ## Dashboard Natacha
 - Servicio: natacha-dashboard
-- URL: https://natacha-api-422255208682.us-central1.run.app
+- URL: https://natacha-api-mkwskljrhq-uc.a.run.app
 - Imagen: us-central1-docker.pkg.dev/asistente-sebastian/natacha-docker/natacha-dashboard:secure
 - Revisión: natacha-api-00032-p4n
 - Auth: env (DASH_USER=llvc / DASH_PASS=LLVC-2025-dash)
@@ -145,3 +145,22 @@
   - Se eliminó el proyecto duplicado `gen-lang-client-0363543020`.
   - Se corrigieron referencias antiguas a `...505068916737...` en el código.
   - `scripts/registry_check.py` queda como **fuente de verdad** y debe ejecutarse antes de cambiar URLs en el registro.
+
+  kind: local-script
+  purpose: Lee last_context.json y muestra tareas con vencimiento + sin fecha
+  inputs:
+    - last_context.json
+  produces:
+    - consola
+  related:
+    - scripts/intelligence_summary.py
+    - BEGIN:CLOUD_RUN -->
+  kind: local-script
+  purpose: Lee last_context.json y muestra tareas con vencimiento + sin fecha
+  inputs:
+    - last_context.json
+  produces:
+    - consola
+  related:
+    - scripts/intelligence_summary.py
+    - END:CLOUD_RUN -->

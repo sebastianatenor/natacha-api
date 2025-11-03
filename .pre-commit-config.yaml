@@ -1,0 +1,28 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-merge-conflict
+  - repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks:
+      - id: black
+        language_version: python3
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+  - repo: local
+    hooks:
+      - id: registry-check
+        name: registry-check
+        entry: python3 scripts/registry_check.py
+        language: system
+        pass_filenames: false
+      - id: auto-refactor-dryrun
+        name: auto-refactor-dryrun
+        entry: bash scripts/check_auto_refactor.sh
+        language: system
+        pass_filenames: false

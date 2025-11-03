@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-import os, json, sys
+import json
+import os
+import sys
 import urllib.request
 
 PRIMARY = "https://natacha-api-422255208682.us-central1.run.app"
 SECONDARY = "https://natacha-api-422255208682.us-central1.run.app"
 
+
 def fetch(url):
     with urllib.request.urlopen(url, timeout=8) as r:
         return json.loads(r.read().decode("utf-8"))
+
 
 def describe(name, data):
     print(f"\n== {name} ==")
@@ -24,6 +28,7 @@ def describe(name, data):
     else:
         print("⚠️ forma no esperada")
 
+
 def main():
     # 1) oficial
     try:
@@ -38,6 +43,7 @@ def main():
         describe("SECUNDARIO /ops/summary", d2)
     except Exception as e:
         print("⚠️ no pude leer del servicio SECUNDARIO:", e)
+
 
 if __name__ == "__main__":
     main()
