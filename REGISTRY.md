@@ -161,3 +161,15 @@
   related:
     - scripts/intelligence_summary.py
     - END:CLOUD_RUN -->
+
+#### /ops/insights
+- Method: GET
+- Query: `limit` (int)
+- Response:
+```json
+{ "generated_at": "RFC3339|null",
+  "insights": [
+    { "id": "string", "timestamp": "RFC3339", "event": "string", "origin": "string|null", "detail": "string" }
+  ]
+}
+```
