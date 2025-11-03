@@ -1,5 +1,5 @@
 - URL: https://natacha-api-422255208682.us-central1.run.app
-- Revisión: natacha-api-00039-2fv
+- Revisión: 
 # Registro maestro de servicios — Proyecto asistente-sebastian (ID 422255208682)
 
 > Estado consolidado y verificado tras eliminación del entorno duplicado (gen-lang-client-0363543020).
@@ -161,3 +161,15 @@
   related:
     - scripts/intelligence_summary.py
     - END:CLOUD_RUN -->
+
+#### /ops/insights
+- Method: GET
+- Query: `limit` (int)
+- Response:
+```json
+{ "generated_at": "RFC3339|null",
+  "insights": [
+    { "id": "string", "timestamp": "RFC3339", "event": "string", "origin": "string|null", "detail": "string" }
+  ]
+}
+```
