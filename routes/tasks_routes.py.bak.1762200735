@@ -1,0 +1,151 @@
+from fastapi import Body
+import logging
+import traceback
+import os
+from datetime import datetime, timezone
+import os
+from datetime import datetime, timezone
+from typing import Optional
+
+from fastapi import APIRouter, Query
+from google.cloud import firestore
+from google.oauth2 import service_account
+
+router = APIRouter
+logger = logging.getLogger("tasks")(tags=["tasks"])
+
+PROJECT_ID = os.getenv("GCP_PROJECT", "gen-lang-client-0363543020")
+
+
+def get_db():
+    cred_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+    if cred_path and os.path.exists(cred_path):
+        creds = service_account.Credentials.from_service_account_file(cred_path)
+        return firestore.Client(project=PROJECT_ID, credentials=creds)
+    return firestore.Client(project=PROJECT_ID)
+
+
+@router.get("/tasks/search")
+def task_search(
+    project: Optional[str] = Query(default=None),
+    state: Optional[str] = Query(default=None),
+    limit: int = Query(default=20, le=100),
+):
+    """Busca tareas filtradas por proyecto o estado"""
+    db = get_db()
+    q = db.collection("assistant_tasks").order_by(
+        "created_at",
+        direction=firestore.Query.DESCENDING,
+    )
+    docs = q.limit(200).stream()
+    results = []
+    for d in docs:
+        item = d.to_dict()
+        if project and item.get("project") != project:
+            continue
+        if state and item.get("state") != state:
+            continue
+        results.append({"id": d.id, **item})
+        if len(results) >= limit:
+            break
+    return results
+
+
+@router.post("/tasks/add")
+def task_add(payload: dict = Body(...)):
+    """
+    Handler *permisivo* (hotfix):
+    - Lee JSON crudo
+    - Normaliza campos
+    - Escribe en Firestore
+    - Devuelve OK o traceback
+    """
+    try:
+        from app.utils.firestore_client import get_client
+        db = get_client()
+
+        doc = {
+            "summary": payload.get("summary", "no-summary"),
+            "detail": payload.get("detail", ""),
+            "project": payload.get("project", "LLVC"),
+            "channel": payload.get("channel", "gpt-chat"),
+            "state": payload.get("state", "vigente"),
+            "visibility": payload.get("visibility", "equipo"),
+            "impact": payload.get("impact", "medio"),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_by": "api.tasks.add"
+        }
+
+        db.collection("assistant_tasks").add(doc)
+        return {"status": "ok", "stored": doc}
+    except Exception as e:
+        tb = traceback.format_exc()
+        logger.exception("tasks.add failed | payload=%s\n%s", payload, tb)
+        from fastapi.responses import PlainTextResponse
+        return PlainTextResponse(tb, status_code=500)
+
+
+
+@router.post("/tasks/add2")
+def task_add2(payload: dict = Body(...)):
+    from app.utils.firestore_client import get_client
+    req = {k: payload.get(k, "") for k in ("summary","detail","project","channel","state","visibility","impact")}
+    if not req["summary"] or not req["project"] or not req["channel"]:
+        raise HTTPException(status_code=400, detail="summary, project y channel son obligatorios")
+    doc = {
+        **req,
+        "created_by": "api.tasks.add2",
+        "timestamp": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat()
+    }
+    db = get_client()
+    db.collection("assistant_tasks").add(doc)
+    return {"status":"ok","stored":doc}
+
+
+@router.post("/add2")
+def task_add2(payload: dict = Body(...)):
+    """
+    Minimal, Pydantic-free mirror of /tasks/add to isolate the error.
+    Returns 200 on success; writes to assistant_tasks.
+    """
+    from app.utils.firestore_client import get_client
+    req = {k: payload.get(k, "") for k in ("summary","detail","project","channel","state","visibility","impact")}
+    # required fields
+    for k in ("summary","project","channel"):
+        if not req[k]:
+            raise HTTPException(status_code=400, detail=f"{k} is required")
+
+    doc = {
+        **req,
+        "created_by": "api.tasks.add2",
+        "timestamp": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat()
+    }
+    db = get_client()
+    db.collection("assistant_tasks").add(doc)
+    return {"status":"ok","stored":doc}
+
+# --- DEBUG SELFTEST (append) ---
+from fastapi.responses import PlainTextResponse  # idempotente si ya está
+import traceback                                   # idempotente si ya está
+
+@router.get("/selftest")
+def tasks_selftest():
+    try:
+        from app.utils.firestore_client import get_client
+        db = get_client()
+        doc = {
+            "summary": "tasks.selftest",
+            "detail": "autotest",
+            "project": "LLVC",
+            "channel": "selftest",
+            "state": "vigente",
+            "visibility": "equipo",
+            "impact": "bajo",
+            "created_by": "api.tasks.selftest"
+        }
+        db.collection("assistant_tasks").add(doc)
+        return {"status":"ok","wrote":"assistant_tasks","doc":doc}
+    except Exception:
+        tb = traceback.format_exc()
+        return PlainTextResponse(tb, status_code=500)
+# --- FIN DEBUG SELFTEST ---

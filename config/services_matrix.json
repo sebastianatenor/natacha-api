@@ -1,0 +1,70 @@
+{
+  "$schema": "https://llvc-global.com/schemas/natacha/services-matrix.v1.json",
+  "version": "2025-11-03",
+  "services": {
+    "natacha-api": {
+      "description": "API principal: memory, ops, embeddings, auto",
+      "endpoints": {
+        "health": "/health",
+        "openapi": "/openapi.json",
+        "ops_summary": "/ops/summary",
+        "ops_insights": "/ops/insights",
+        "memory_add": "/memory/add",
+        "memory_search": "/memory/search"
+      },
+      "environments": {
+        "local": {
+          "base_url": "http://127.0.0.1:8080",
+          "owner": "dev"
+        },
+        "prod-422": {
+          "base_url": "https://natacha-api-422255208682.us-central1.run.app",
+          "owner": "asistente-sebastian"
+        }
+      },
+      "canonical": "prod-422"
+    },
+
+    "natacha-core": {
+      "description": "Core / auxiliares (si aplica)",
+      "endpoints": {
+        "health": "/health",
+        "openapi": "/openapi.json"
+      },
+      "environments": {
+        "local": {
+          "base_url": "http://127.0.0.1:8081",
+          "owner": "dev"
+        },
+        "prod-422": {
+          "base_url": "https://natacha-core-422255208682.us-central1.run.app",
+          "owner": "asistente-sebastian"
+        }
+      },
+      "canonical": "prod-422"
+    },
+
+    "natacha-whatsapp": {
+      "description": "Servicio WhatsApp",
+      "endpoints": {
+        "health": "/health",
+        "send": "/sendWhatsApp"
+      },
+      "environments": {
+        "prod-422": {
+          "base_url": "https://natacha-whatsapp-422255208682.us-central1.run.app",
+          "owner": "asistente-sebastian"
+        }
+      },
+      "canonical": "prod-422"
+    }
+  },
+
+  "rules": {
+    "openapi_must_exist": true,
+    "health_must_be_200": true,
+    "ops_insights_required_in": ["natacha-api"],
+    "public_endpoints": ["/health", "/openapi.json"],
+    "prefer_canonical": true
+  }
+}

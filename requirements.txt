@@ -1,1 +1,4 @@
 -r health_monitor/requirements.txt
+python-dotenv
+google-cloud-firestore
+google-auth
