@@ -8,19 +8,9 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter
 from google.oauth2 import service_account
-
-from app.utils.firestore_client import get_client
-
 router = APIRouter(tags=["ops"])
 
 PROJECT_ID = os.getenv("GCP_PROJECT", "asistente-sebastian")
-def _get_db_legacy():
-    cred_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-    if cred_path and os.path.exists(cred_path):
-        creds = service_account.Credentials.from_service_account_file(cred_path)
-        # return firestore.Client(project=PROJECT_ID, credentials=creds)
-    return get_client()
-
 
 @router.post("/ops/snapshot")
 def take_snapshot():

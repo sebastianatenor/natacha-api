@@ -183,7 +183,7 @@ def auto_plan_refactor(payload: dict = Body(...)):
     )
 
     # guardar el plan y devolver id
-    plan_id = _store_refactor_plan(goal, backups)
+        plan_id = _store_refactor_plan(goal, backups)
     sample = backups[:5] if backups else []
 
     return {
