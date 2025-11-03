@@ -1,5 +1,7 @@
 import os
+
 from google.cloud import secretmanager
+
 
 class SecretManager:
     """
@@ -16,4 +18,3 @@ class SecretManager:
         secret_path = f"projects/{project}/secrets/{name}/versions/latest"
         response = self.client.access_secret_version(name=secret_path)
         return response.payload.data.decode("utf-8")
-

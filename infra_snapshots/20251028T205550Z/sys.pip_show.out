@@ -18,26 +18,26 @@ Author-email: googleapis-packages@google.com
 License: Apache 2.0
 Location: /Users/alvarosebastianatenor/Projects/natacha-api/venv/lib/python3.13/site-packages
 Requires: google-api-core, google-auth, google-cloud-core, proto-plus, protobuf
-Required-by: 
+Required-by:
 ---
 Name: fastapi
 Version: 0.120.0
 Summary: FastAPI framework, high performance, easy to learn, fast to code, ready for production
 Home-page: https://github.com/fastapi/fastapi
-Author: 
+Author:
 Author-email: =?utf-8?q?Sebasti=C3=A1n_Ram=C3=ADrez?= <tiangolo@gmail.com>
-License: 
+License:
 Location: /Users/alvarosebastianatenor/Projects/natacha-api/venv/lib/python3.13/site-packages
 Requires: annotated-doc, pydantic, starlette, typing-extensions
-Required-by: 
+Required-by:
 ---
 Name: uvicorn
 Version: 0.38.0
 Summary: The lightning-fast ASGI server.
 Home-page: https://uvicorn.dev/
-Author: 
+Author:
 Author-email: Tom Christie <tom@tomchristie.com>
 License-Expression: BSD-3-Clause
 Location: /Users/alvarosebastianatenor/Projects/natacha-api/venv/lib/python3.13/site-packages
 Requires: click, h11
-Required-by: 
+Required-by:

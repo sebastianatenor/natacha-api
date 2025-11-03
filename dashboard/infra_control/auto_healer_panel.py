@@ -1,12 +1,14 @@
-import streamlit as st
-import requests
-from datetime import datetime, timezone
-import pandas as pd
 import json
 import os
+from datetime import datetime, timezone
+
+import pandas as pd
+import requests
+import streamlit as st
 from google.cloud import firestore
 
 BACKEND_URL = "https://natacha-health-monitor-422255208682.us-central1.run.app"
+
 
 # ============================================================
 # 🔥 CLIENTE FIRESTORE
@@ -32,7 +34,7 @@ def log_autoheal_event(action: str, status: str, detail: str = ""):
             "status": status,
             "detail": detail,
             "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
-            "source": "dashboard"
+            "source": "dashboard",
         }
         client.collection("auto_healer_log").add(doc)
         st.success(f"📝 Evento registrado en Firestore ({action})")
@@ -56,16 +58,22 @@ def show():
         if st.button("🔍 Escanear estado de servicios"):
             with st.spinner("Consultando historial en Natacha Health Monitor..."):
                 try:
-                    resp = requests.get(f"{BACKEND_URL}/infra_history_cloud", timeout=10)
+                    resp = requests.get(
+                        f"{BACKEND_URL}/infra_history_cloud", timeout=10
+                    )
                     if resp.status_code == 200:
                         data = resp.json()
-                        history = data if isinstance(data, list) else data.get("data", [])
+                        history = (
+                            data if isinstance(data, list) else data.get("data", [])
+                        )
                         if not history:
                             st.warning("⚠️ No hay registros recientes en Firestore.")
                             return
 
                         df = pd.DataFrame(history)
-                        df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
+                        df["timestamp"] = pd.to_datetime(
+                            df["timestamp"], errors="coerce"
+                        )
                         df = df.sort_values("timestamp", ascending=False)
 
                         st.success(f"✅ {len(df)} registros cargados desde Firestore.")
@@ -83,15 +91,23 @@ def show():
         if st.button("♻️ Ejecutar Auto-Healer"):
             with st.spinner("Ejecutando Auto-Healer remoto..."):
                 try:
-                    run = requests.post(f"{BACKEND_URL}/run_auto_infra_check", timeout=15)
+                    run = requests.post(
+                        f"{BACKEND_URL}/run_auto_infra_check", timeout=15
+                    )
                     if run.status_code == 200:
                         data = run.json()
                         st.success("✅ Auto-Healer ejecutado correctamente.")
                         st.code(json.dumps(data, indent=2))
-                        log_autoheal_event("auto_heal_remote", "ok", "Ejecución remota exitosa")
+                        log_autoheal_event(
+                            "auto_heal_remote", "ok", "Ejecución remota exitosa"
+                        )
                     else:
-                        st.warning(f"⚠️ No se pudo ejecutar el Auto-Healer ({run.status_code})")
-                        log_autoheal_event("auto_heal_remote", "error", f"HTTP {run.status_code}")
+                        st.warning(
+                            f"⚠️ No se pudo ejecutar el Auto-Healer ({run.status_code})"
+                        )
+                        log_autoheal_event(
+                            "auto_heal_remote", "error", f"HTTP {run.status_code}"
+                        )
                 except Exception as e:
                     st.error(f"🚨 Error al ejecutar Auto-Healer: {e}")
                     log_autoheal_event("auto_heal_remote", "error", str(e))
@@ -112,7 +128,9 @@ def show():
                         result = os.popen(cmd).read()
                         st.success(f"✅ Servicio `{service_name}` reiniciado.")
                         st.text(result)
-                        log_autoheal_event("manual_restart", "ok", f"Servicio: {service_name}")
+                        log_autoheal_event(
+                            "manual_restart", "ok", f"Servicio: {service_name}"
+                        )
                     except Exception as e:
                         st.error(f"❌ Error al reiniciar {service_name}: {e}")
                         log_autoheal_event("manual_restart", "error", str(e))
@@ -146,4 +164,6 @@ def show():
         except Exception as e:
             st.error(f"🚨 Error al leer historial de Firestore: {e}")
 
-    st.info(f"🕒 Última actualización: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}")
+    st.info(
+        f"🕒 Última actualización: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}"
+    )

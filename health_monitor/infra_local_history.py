@@ -1,15 +1,17 @@
-import os
 import json
+import os
 from datetime import datetime
 
 # 🔹 Nuevo destino seguro (usa /tmp en vez de /app)
 HISTORY_FILE = os.environ.get("INFRA_HISTORY_PATH", "/tmp/infra_history.json")
+
 
 def ensure_history_dir():
     """Crea la carpeta de logs si no existe."""
     directory = os.path.dirname(HISTORY_FILE)
     if not os.path.exists(directory):
         os.makedirs(directory, exist_ok=True)
+
 
 def load_history():
     """Carga el historial local si existe, o retorna una lista vacía."""
@@ -21,6 +23,7 @@ def load_history():
         except Exception:
             return []
     return []
+
 
 def save_entry(data: dict):
     """Agrega una nueva entrada al historial local."""
@@ -34,9 +37,11 @@ def save_entry(data: dict):
         json.dump(history, f, indent=2)
     return data
 
+
 def get_history():
     """Devuelve todo el historial local."""
     return load_history()
+
 
 def clear_history():
     """Vacía el historial local."""

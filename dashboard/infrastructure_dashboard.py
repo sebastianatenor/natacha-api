@@ -1,10 +1,11 @@
-import streamlit as st
-import subprocess
 import json
-import docker
-from google.cloud import firestore
+import subprocess
 from datetime import datetime
+
+import docker
 import pandas as pd
+import streamlit as st
+from google.cloud import firestore
 
 # =====================================================
 # 🌐 PANEL DE INFRAESTRUCTURA UNIFICADA DE NATACHA
@@ -13,7 +14,9 @@ import pandas as pd
 st.set_page_config(page_title="Infraestructura Natacha", layout="wide", page_icon="🧭")
 
 st.title("🧭 Infraestructura del Sistema Natacha")
-st.caption("Panel unificado de control de servicios locales (Docker) y en la nube (Cloud Run, Firestore, FHIR)")
+st.caption(
+    "Panel unificado de control de servicios locales (Docker) y en la nube (Cloud Run, Firestore, FHIR)"
+)
 
 st.divider()
 
@@ -27,13 +30,9 @@ st.sidebar.markdown("🔄 Recarga manual con `R` o actualiza cada 1 min")
 # =====================================================
 # 🔹 TABS
 # =====================================================
-tab_resumen, tab_docker, tab_cloudrun, tab_firestore, tab_fhir = st.tabs([
-    "📊 Resumen General",
-    "🐳 Docker Local",
-    "☁️ Cloud Run",
-    "🔥 Firestore",
-    "🧬 FHIR"
-])
+tab_resumen, tab_docker, tab_cloudrun, tab_firestore, tab_fhir = st.tabs(
+    ["📊 Resumen General", "🐳 Docker Local", "☁️ Cloud Run", "🔥 Firestore", "🧬 FHIR"]
+)
 
 # =====================================================
 # 📊 TAB 1 - RESUMEN GENERAL
@@ -49,17 +48,27 @@ with tab_resumen:
         containers = client.containers.list(all=True)
         total_docker = len(containers)
         activos = len([c for c in containers if c.status == "running"])
-        col1.metric("🐳 Contenedores Docker", f"{activos}/{total_docker}", delta=f"{total_docker - activos} detenidos")
+        col1.metric(
+            "🐳 Contenedores Docker",
+            f"{activos}/{total_docker}",
+            delta=f"{total_docker - activos} detenidos",
+        )
     except:
         col1.error("Docker no disponible")
 
     # Cloud Run Summary
     try:
         cmd = [
-            "gcloud", "run", "services", "list",
-            "--platform", "managed",
-            "--project", "asistente-sebastian",
-            "--format", "json"
+            "gcloud",
+            "run",
+            "services",
+            "list",
+            "--platform",
+            "managed",
+            "--project",
+            "asistente-sebastian",
+            "--format",
+            "json",
         ]
         result = subprocess.run(cmd, capture_output=True, text=True)
         services = json.loads(result.stdout)
@@ -78,11 +87,18 @@ with tab_resumen:
     # FHIR Summary
     try:
         cmd = [
-            "gcloud", "healthcare", "fhir-stores", "list",
-            "--dataset", "natacha-health",
-            "--location", "us-central1",
-            "--project", "asistente-sebastian",
-            "--format", "json"
+            "gcloud",
+            "healthcare",
+            "fhir-stores",
+            "list",
+            "--dataset",
+            "natacha-health",
+            "--location",
+            "us-central1",
+            "--project",
+            "asistente-sebastian",
+            "--format",
+            "json",
         ]
         result = subprocess.run(cmd, capture_output=True, text=True)
         stores = json.loads(result.stdout)
@@ -91,7 +107,9 @@ with tab_resumen:
         col4.error("FHIR API no disponible")
 
     st.divider()
-    st.info("📋 Navegá entre las pestañas para ver el detalle por componente: Docker, Cloud Run, Firestore y FHIR.")
+    st.info(
+        "📋 Navegá entre las pestañas para ver el detalle por componente: Docker, Cloud Run, Firestore y FHIR."
+    )
 
 
 # =====================================================
@@ -108,19 +126,27 @@ with tab_docker:
             rows = []
             for c in containers:
                 ports = []
-                if c.attrs['NetworkSettings']['Ports']:
-                    for private, mapping in c.attrs['NetworkSettings']['Ports'].items():
+                if c.attrs["NetworkSettings"]["Ports"]:
+                    for private, mapping in c.attrs["NetworkSettings"]["Ports"].items():
                         if mapping:
                             for m in mapping:
                                 ports.append(f"{m['HostPort']}→{private}")
-                rows.append({
-                    "Nombre": c.name,
-                    "Imagen": c.image.tags[0] if c.image.tags else "(sin tag)",
-                    "Estado": "🟢 Activo" if c.status == "running" else "🔴 Detenido",
-                    "Puertos": ", ".join(ports) or "-",
-                    "Red": list(c.attrs["NetworkSettings"]["Networks"].keys())[0] if c.attrs["NetworkSettings"]["Networks"] else "-",
-                    "Inicio": c.attrs["State"]["StartedAt"][:19].replace("T", " "),
-                })
+                rows.append(
+                    {
+                        "Nombre": c.name,
+                        "Imagen": c.image.tags[0] if c.image.tags else "(sin tag)",
+                        "Estado": (
+                            "🟢 Activo" if c.status == "running" else "🔴 Detenido"
+                        ),
+                        "Puertos": ", ".join(ports) or "-",
+                        "Red": (
+                            list(c.attrs["NetworkSettings"]["Networks"].keys())[0]
+                            if c.attrs["NetworkSettings"]["Networks"]
+                            else "-"
+                        ),
+                        "Inicio": c.attrs["State"]["StartedAt"][:19].replace("T", " "),
+                    }
+                )
             df = pd.DataFrame(rows)
             st.dataframe(df, use_container_width=True)
         else:
@@ -137,10 +163,16 @@ with tab_cloudrun:
 
     try:
         cmd = [
-            "gcloud", "run", "services", "list",
-            "--platform", "managed",
-            "--project", "asistente-sebastian",
-            "--format", "json"
+            "gcloud",
+            "run",
+            "services",
+            "list",
+            "--platform",
+            "managed",
+            "--project",
+            "asistente-sebastian",
+            "--format",
+            "json",
         ]
         result = subprocess.run(cmd, capture_output=True, text=True)
         services = json.loads(result.stdout)
@@ -150,13 +182,17 @@ with tab_cloudrun:
             for s in services:
                 meta = s.get("metadata", {})
                 status = s.get("status", {})
-                table.append({
-                    "Servicio": meta.get("name", "-"),
-                    "Región": s.get("location", "-"),
-                    "Último despliegue": meta.get("creationTimestamp", "-"),
-                    "URL": status.get("url", "-"),
-                    "Estado": "🟢 READY" if "Ready" in str(status) else "⚪ Desconocido"
-                })
+                table.append(
+                    {
+                        "Servicio": meta.get("name", "-"),
+                        "Región": s.get("location", "-"),
+                        "Último despliegue": meta.get("creationTimestamp", "-"),
+                        "URL": status.get("url", "-"),
+                        "Estado": (
+                            "🟢 READY" if "Ready" in str(status) else "⚪ Desconocido"
+                        ),
+                    }
+                )
             st.dataframe(pd.DataFrame(table), use_container_width=True)
         else:
             st.warning("No se encontraron servicios activos en Cloud Run.")
@@ -188,17 +224,27 @@ with tab_fhir:
 
     try:
         cmd = [
-            "gcloud", "healthcare", "fhir-stores", "list",
-            "--dataset", "natacha-health",
-            "--location", "us-central1",
-            "--project", "asistente-sebastian",
-            "--format", "json"
+            "gcloud",
+            "healthcare",
+            "fhir-stores",
+            "list",
+            "--dataset",
+            "natacha-health",
+            "--location",
+            "us-central1",
+            "--project",
+            "asistente-sebastian",
+            "--format",
+            "json",
         ]
         result = subprocess.run(cmd, capture_output=True, text=True)
         stores = json.loads(result.stdout)
 
         if stores:
-            rows = [{"Store": s["name"], "Versión": s["version"], "Estado": "🟢 Activo"} for s in stores]
+            rows = [
+                {"Store": s["name"], "Versión": s["version"], "Estado": "🟢 Activo"}
+                for s in stores
+            ]
             st.dataframe(pd.DataFrame(rows))
         else:
             st.warning("No se encontraron FHIR stores en el dataset 'natacha-health'.")

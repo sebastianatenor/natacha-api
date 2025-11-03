@@ -1,7 +1,7 @@
 import os
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from google.cloud import firestore
 from google.oauth2 import service_account
 
@@ -21,8 +21,20 @@ def get_db():
 
 # Palabras que disparan “esto parece una tarea”
 TRIGGER_WORDS = [
-    "enviar", "mandar", "llamar", "preparar", "revisar", "pasar", "cotizar",
-    "seguir", "recordar", "contactar", "avisar", "confirmar", "pagar", "armar"
+    "enviar",
+    "mandar",
+    "llamar",
+    "preparar",
+    "revisar",
+    "pasar",
+    "cotizar",
+    "seguir",
+    "recordar",
+    "contactar",
+    "avisar",
+    "confirmar",
+    "pagar",
+    "armar",
 ]
 
 
@@ -139,7 +151,9 @@ def memory_add(payload: dict):
     try:
         db.collection("assistant_memory").add(doc)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Firestore error (create memory): {e!r}")
+        raise HTTPException(
+            status_code=500, detail=f"Firestore error (create memory): {e!r}"
+        )
 
     # si parece tarea → creo tarea + anoto que la creé
     try:
@@ -199,4 +213,3 @@ def memory_search(
 
     # si no hubo query de texto, devolvemos lo que tenemos (limitado)
     return results[:limit]
-

@@ -1,11 +1,13 @@
-import streamlit as st
-import psutil
+import os
 import platform
 import socket
-import os
 import subprocess
 from datetime import datetime
+
 import pandas as pd
+import psutil
+import streamlit as st
+
 
 def show():
     st.title("🖥️ Sistema Local — Estado del Host")
@@ -14,15 +16,17 @@ def show():
     # --- Información del sistema
     uname = platform.uname()
     st.subheader("📦 Información del sistema operativo")
-    st.write({
-        "Sistema": uname.system,
-        "Versión": uname.version,
-        "Release": uname.release,
-        "Arquitectura": uname.machine,
-        "Procesador": uname.processor,
-        "Python": platform.python_version(),
-        "Usuario": os.getenv("USER")
-    })
+    st.write(
+        {
+            "Sistema": uname.system,
+            "Versión": uname.version,
+            "Release": uname.release,
+            "Arquitectura": uname.machine,
+            "Procesador": uname.processor,
+            "Python": platform.python_version(),
+            "Usuario": os.getenv("USER"),
+        }
+    )
 
     # --- Recursos principales
     st.subheader("⚙️ Recursos del sistema")
@@ -65,5 +69,6 @@ def show():
     except Exception as e:
         st.warning(f"No se pudieron listar los puertos: {e}")
 
-    st.caption(f"Última actualización: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}")
-
+    st.caption(
+        f"Última actualización: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}"
+    )

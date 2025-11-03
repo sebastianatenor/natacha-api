@@ -1,26 +1,26 @@
 import os
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 # Fallbacks de import locales (no recursivos)
 try:
-    from .infra_local_history import get_history, clear_history
+    from .infra_local_history import clear_history, get_history
 except Exception:
-    from infra_local_history import get_history, clear_history
+    from infra_local_history import clear_history, get_history
 
 try:
     from google.cloud import firestore
 except Exception:
-    firestore = None  # permitirá importar el módulo sin la lib; fallará al usar Firestore
+    firestore = (
+        None  # permitirá importar el módulo sin la lib; fallará al usar Firestore
+    )
 
 
 # -----------------------------
 # Config
 # -----------------------------
 GCP_PROJECT: Optional[str] = (
-    os.getenv("GOOGLE_CLOUD_PROJECT")
-    or os.getenv("GCP_PROJECT")
-    or None
+    os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("GCP_PROJECT") or None
 )
 COLL_NAME = os.getenv("INFRA_HISTORY_COLLECTION", "infra_history")
 
@@ -88,8 +88,11 @@ def sync_local_to_firestore() -> Dict[str, Any]:
             # no consideramos esto un error fatal de sync
             pass
 
-    out: Dict[str, Any] = {"status": "ok" if errors == 0 else "partial",
-                           "pushed": pushed, "errors": errors}
+    out: Dict[str, Any] = {
+        "status": "ok" if errors == 0 else "partial",
+        "pushed": pushed,
+        "errors": errors,
+    }
     if last_error:
         out["last_error"] = last_error
     return out
@@ -109,11 +112,15 @@ def pull_from_firestore(limit: int = 20) -> Dict[str, Any]:
 
         try:
             # si los docs tienen created_at
-            qry = coll.order_by("created_at", direction=firestore.Query.DESCENDING).limit(limit)
+            qry = coll.order_by(
+                "created_at", direction=firestore.Query.DESCENDING
+            ).limit(limit)
             docs = list(qry.stream())
         except Exception:
             # fallback: orden por nombre de doc (id) desc
-            qry = coll.order_by("__name__", direction=firestore.Query.DESCENDING).limit(limit)
+            qry = coll.order_by("__name__", direction=firestore.Query.DESCENDING).limit(
+                limit
+            )
             docs = list(qry.stream())
 
         out = []

@@ -1,15 +1,17 @@
+import datetime
+import json
+
+import requests
+import uvicorn
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
-import uvicorn
-import json
-import datetime
-import requests
 
 app = FastAPI(
     title="Natacha Core Service",
     description="Servicio central de procesamiento cognitivo de Natacha 🧠",
     version="1.0.0",
 )
+
 
 # === MODELOS ===
 class ProcessInput(BaseModel):
@@ -24,7 +26,7 @@ def health():
     return {
         "status": "ok",
         "message": "Core local funcionando correctamente 🚀",
-        "timestamp": datetime.datetime.utcnow().isoformat()
+        "timestamp": datetime.datetime.utcnow().isoformat(),
     }
 
 
@@ -50,23 +52,23 @@ def process(input_data: ProcessInput):
     try:
         payload = {
             "key": f"core_log_{datetime.datetime.utcnow().isoformat()}",
-            "value": json.dumps({
-                "input": input_data.text,
-                "intent": response["intent"],
-                "reply": response["reply"],
-                "user": input_data.user,
-                "metadata": input_data.metadata
-            })
+            "value": json.dumps(
+                {
+                    "input": input_data.text,
+                    "intent": response["intent"],
+                    "reply": response["reply"],
+                    "user": input_data.user,
+                    "metadata": input_data.metadata,
+                }
+            ),
         }
-        requests.post("http://natacha-memory-console:8080/memory/store", json=payload, timeout=3)
+        requests.post(
+            "http://natacha-memory-console:8080/memory/store", json=payload, timeout=3
+        )
     except Exception as e:
         response["memory_sync"] = f"⚠️ Error al registrar en memoria: {e}"
 
-    return {
-        "core_status": "ok",
-        "input": input_data.text,
-        "response": response
-    }
+    return {"core_status": "ok", "input": input_data.text, "response": response}
 
 
 # === ENDPOINT /analyze ===
@@ -80,14 +82,10 @@ def analyze(input_data: ProcessInput):
         "words": len(text.split()),
         "has_question": "?" in text,
         "has_greeting": any(w in text.lower() for w in ["hola", "buenos días", "hey"]),
-        "timestamp": datetime.datetime.utcnow().isoformat()
+        "timestamp": datetime.datetime.utcnow().isoformat(),
     }
 
-    return {
-        "analysis_status": "ok",
-        "text": text,
-        "analysis": analysis
-    }
+    return {"analysis_status": "ok", "text": text, "analysis": analysis}
 
 
 # === MAIN ===

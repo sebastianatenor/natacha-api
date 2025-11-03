@@ -1,10 +1,12 @@
+import math
+from datetime import datetime
+
 from fastapi import APIRouter, HTTPException
 from google.cloud import firestore
 from google.oauth2 import service_account
-from datetime import datetime
-import math
 
 router = APIRouter(tags=["semantic"])
+
 
 def get_db():
     cred_path = "firestore-key.json"
@@ -14,14 +16,16 @@ def get_db():
     except Exception:
         return firestore.Client(project="asistente-sebastian")
 
+
 def cosine_similarity(vec1, vec2):
     """Calcula similitud coseno entre dos vectores simples (listas numéricas)."""
     if not vec1 or not vec2:
         return 0
-    dot = sum(a*b for a,b in zip(vec1, vec2))
-    norm1 = math.sqrt(sum(a*a for a in vec1))
-    norm2 = math.sqrt(sum(b*b for b in vec2))
+    dot = sum(a * b for a, b in zip(vec1, vec2))
+    norm1 = math.sqrt(sum(a * a for a in vec1))
+    norm2 = math.sqrt(sum(b * b for b in vec2))
     return dot / (norm1 * norm2) if norm1 and norm2 else 0
+
 
 @router.post("/memory/search_smart")
 def search_smart(payload: dict):
@@ -39,12 +43,14 @@ def search_smart(payload: dict):
             score += 1
         if query in data.get("detail", "").lower():
             score += 1
-        results.append({
-            "id": d.id,
-            "summary": data.get("summary", ""),
-            "detail": data.get("detail", ""),
-            "score": score,
-            "timestamp": data.get("timestamp", "")
-        })
+        results.append(
+            {
+                "id": d.id,
+                "summary": data.get("summary", ""),
+                "detail": data.get("detail", ""),
+                "score": score,
+                "timestamp": data.get("timestamp", ""),
+            }
+        )
     results.sort(key=lambda x: x["score"], reverse=True)
     return {"query": query, "matches": results[:10], "found": len(results)}

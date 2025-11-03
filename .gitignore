@@ -45,3 +45,23 @@ dashboard/dashboard.py.bak.*
 dashboard/dashboard.py.ROTO.*
 dashboard/*.bak.*
 dashboard/*ROTO*
+# Python / venv
+.venv/
+__pycache__/
+*.pyc
+
+# Builds, dist-info de paquetes instalados
+*.egg-info/
+*.dist-info/
+
+# Logs y backups
+logs/
+backups/
+
+# Archivos locales
+*.log
+*.tmp
+
+# Backups REGISTRY
+REGISTRY.md.bak*
+knowledge/registry/REGISTRY.md.bak*

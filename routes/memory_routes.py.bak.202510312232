@@ -199,4 +199,3 @@ def memory_search(
 
     # si no hubo query de texto, devolvemos lo que tenemos (limitado)
     return results[:limit]
-

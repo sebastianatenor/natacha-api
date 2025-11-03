@@ -1,9 +1,15 @@
 import json
 import os
+
 from google.cloud import firestore
 from google.oauth2 import service_account
 
-PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("GCP_PROJECT") or "asistente-sebastian"
+PROJECT_ID = (
+    os.getenv("GOOGLE_CLOUD_PROJECT")
+    or os.getenv("GCP_PROJECT")
+    or "asistente-sebastian"
+)
+
 
 def get_client():
     """

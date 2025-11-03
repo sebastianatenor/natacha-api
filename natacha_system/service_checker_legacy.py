@@ -1,6 +1,7 @@
-import requests
 import time
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+
+import requests
 from google.cloud import firestore
 
 # Servicios a monitorear y sus endpoints
@@ -11,6 +12,7 @@ SERVICES = {
 }
 
 db = firestore.Client()
+
 
 def check_service(name, url):
     try:
@@ -34,15 +36,18 @@ def check_service(name, url):
         status = f"⚠️ {type(e).__name__}"
 
     # Guardar en Firestore
-    db.collection("system_health").add({
-        "service": name,
-        "status": status,
-        "latency_ms": latency,
-        "timestamp": datetime.now(UTC).isoformat(),
-    })
+    db.collection("system_health").add(
+        {
+            "service": name,
+            "status": status,
+            "latency_ms": latency,
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
+    )
 
     print(f" - {name} → {status} ({latency or '–'} ms)")
     return status, latency
+
 
 def main():
     print("🔍 Verificando estado de servicios...\n")
@@ -50,6 +55,7 @@ def main():
         check_service(name, url)
         time.sleep(0.5)
     print("\n✅ Verificación completada.")
+
 
 if __name__ == "__main__":
     main()

@@ -4,11 +4,11 @@ starting build "c7fd485d-0798-44b8-b119-58d55152369d"
 FETCHSOURCE
 Fetching storage object: gs://asistente-sebastian_cloudbuild/source/1761613097.256881-2074a3f4aaca47758614c13cee1f15a2.tgz#1761613099026560
 Copying gs://asistente-sebastian_cloudbuild/source/1761613097.256881-2074a3f4aaca47758614c13cee1f15a2.tgz#1761613099026560...
-/ [0 files][    0.0 B/ 43.6 KiB]                                                / [1 files][ 43.6 KiB/ 43.6 KiB]                                                
+/ [0 files][    0.0 B/ 43.6 KiB]                                                / [1 files][ 43.6 KiB/ 43.6 KiB]
 Operation completed over 1 objects/43.6 KiB.
 BUILD
 Already have image (with digest): gcr.io/cloud-builders/gcb-internal
-Sending build context to Docker daemon    297kB
+Sending build context to Docker daemon    297kB
 Step 1/6 : FROM python:3.11-slim
 3.11-slim: Pulling from library/python
 38513bd72563: Pulling fs layer

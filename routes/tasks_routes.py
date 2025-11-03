@@ -1,13 +1,15 @@
-from fastapi import APIRouter, Query
+import os
 from datetime import datetime, timezone
 from typing import Optional
+
+from fastapi import APIRouter, Query
 from google.cloud import firestore
 from google.oauth2 import service_account
-import os
 
 router = APIRouter(tags=["tasks"])
 
 PROJECT_ID = os.getenv("GCP_PROJECT", "gen-lang-client-0363543020")
+
 
 def get_db():
     cred_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
@@ -15,6 +17,7 @@ def get_db():
         creds = service_account.Credentials.from_service_account_file(cred_path)
         return firestore.Client(project=PROJECT_ID, credentials=creds)
     return firestore.Client(project=PROJECT_ID)
+
 
 @router.post("/tasks/add")
 def task_add(payload: dict):
@@ -31,6 +34,7 @@ def task_add(payload: dict):
     }
     db.collection("assistant_tasks").add(doc)
     return {"status": "ok", "stored": doc}
+
 
 @router.get("/tasks/search")
 def task_search(

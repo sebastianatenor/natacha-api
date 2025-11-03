@@ -1,6 +1,9 @@
-import psutil, docker
+from datetime import UTC, datetime
+
+import docker
+import psutil
 from google.cloud import firestore
-from datetime import datetime, UTC
+
 
 def check_alerts():
     db = firestore.Client()
@@ -19,7 +22,7 @@ def check_alerts():
         doc = {
             "service": "alerts-system",
             "alerts": alerts,
-            "timestamp": datetime.now(UTC).isoformat()
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         db.collection("system_health").add(doc)
         print("🚨 ALERTA registrada en Firestore:", alerts)

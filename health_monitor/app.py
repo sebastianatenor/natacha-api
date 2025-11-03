@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+
 # Firestore (opcional, lo usamos en algunos endpoints)
 from google.cloud import firestore
 
@@ -12,6 +13,7 @@ from health_monitor.auto_healer import auto_heal as auto_heal_fn
 
 from .auto_scheduler import start_scheduler
 from .cloud_services_scan import get_cloud_run_services
+
 # Imports internos (sin fallbacks)
 from .infra_local_history import clear_history, get_history, save_entry
 from .infra_sync import pull_from_firestore, sync_local_to_firestore

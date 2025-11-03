@@ -50,9 +50,9 @@ Natacha evoluciona hacia un sistema **autónomo, autosupervisado y autorregulado
 **Tareas previstas:**
 - Consolidar canal de WhatsApp y fallback (correo / Telegram).
 - Implementar “heartbeat diario” automático.
-- Permitir comandos por WhatsApp:  
-  - `Reiniciá core`  
-  - `Ver estado`  
+- Permitir comandos por WhatsApp:
+  - `Reiniciá core`
+  - `Ver estado`
   - `Logs de ayer`
 
 ---
@@ -79,5 +79,5 @@ Natacha evoluciona hacia un sistema **autónomo, autosupervisado y autorregulado
 ---
 
 ### ✳️ Próximo paso sugerido
-Integrar `health_monitor.py` con Firestore → colección `system_health`,  
+Integrar `health_monitor.py` con Firestore → colección `system_health`,
 para permitir aprendizaje continuo de estado y eventos.

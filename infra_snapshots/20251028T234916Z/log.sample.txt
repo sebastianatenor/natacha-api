@@ -16,7 +16,7 @@
 2025-10-28T23:45:02.051003Z	natacha-health-monitor		✅ Servicio saludable: natacha-health-monitor (routesready: unknown (n/a))
 2025-10-28T23:45:02.050919Z	natacha-health-monitor		✅ 14 servicios activos encontrados.
 2025-10-28T23:45:01.968026Z	natacha-health-monitor		🚀 Ejecutando Auto-Healer Natacha...
-2025-10-28T23:45:01.949677Z	natacha-health-monitor	INFO	
+2025-10-28T23:45:01.949677Z	natacha-health-monitor	INFO
 2025-10-28T23:45:01.899931Z	natacha-health-monitor		INFO:     169.254.169.126:40732 - "POST /run_auto_infra_check HTTP/1.1" 200 OK
 2025-10-28T23:45:01.898928Z	natacha-health-monitor		📋 Resumen final registrado: {'timestamp': '2025-10-28 23:45:01+0000', 'checked': 14, 'restarted': [], 'healthy': ['natacha-health-monitor', 'natacha-whatsapp', 'natacha-plugin-registry', 'natacha-memory-console', 'natacha-dashboard', 'natacha-core', 'log-natacha-activity', 'auto-stop-vm', 'vm-proxy', 'autostart-vm', 'stop-natacha-vm', 'natacha-command-endpoint', 'natacha-api', 'natachaspeak'], 'errors': []}
 2025-10-28T23:45:01.837487Z	natacha-health-monitor		✅ Servicio saludable: natachaspeak (routesready: unknown (n/a))

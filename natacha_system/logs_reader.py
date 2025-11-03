@@ -1,5 +1,6 @@
 import os
 
+
 def read_recent_logs(path="logs", lines=20):
     if not os.path.exists(path):
         return ["[No hay logs disponibles]"]

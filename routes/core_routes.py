@@ -2,11 +2,13 @@
 import json
 import os
 from datetime import datetime, timezone
+
 from fastapi import APIRouter, HTTPException
 
 from intelligence.startup import load_operational_context
 
 router = APIRouter(tags=["core"])
+
 
 @router.get("/dashboard/data")
 def dashboard_data():
@@ -24,7 +26,9 @@ def dashboard_data():
             with open("last_context.json", "r") as f:
                 context = json.load(f)
         except Exception:
-            raise HTTPException(status_code=500, detail=f"No se pudo obtener contexto: {e}")
+            raise HTTPException(
+                status_code=500, detail=f"No se pudo obtener contexto: {e}"
+            )
 
     projects = []
     if not context:
@@ -34,13 +38,15 @@ def dashboard_data():
         pending = p.get("pending_tasks", 0)
         urgent = p.get("urgent_task", {}) or {}
         alerts = p.get("alerts", [])
-        projects.append({
-            "name": name,
-            "pending_tasks": pending,
-            "urgent_title": urgent.get("title"),
-            "urgent_due": urgent.get("due"),
-            "alerts": alerts,
-        })
+        projects.append(
+            {
+                "name": name,
+                "pending_tasks": pending,
+                "urgent_title": urgent.get("title"),
+                "urgent_due": urgent.get("due"),
+                "alerts": alerts,
+            }
+        )
 
     raw = context.get("raw", {})
     totals = {

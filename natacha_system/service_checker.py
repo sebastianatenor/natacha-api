@@ -1,6 +1,7 @@
 import time
-import requests
 from datetime import datetime
+
+import requests
 from google.cloud import firestore
 
 # Inicialización Firestore
@@ -11,7 +12,7 @@ COLLECTION_NAME = "system_health"
 SERVICES = {
     "natacha-api": "http://natacha-api:8080/health",
     "natacha-core": "http://natacha-core:8080/health",
-    "natacha-health-monitor": "http://natacha-health-monitor:8080/health"
+    "natacha-health-monitor": "http://natacha-health-monitor:8080/health",
 }
 
 CHECK_INTERVAL = 60  # segundos
@@ -23,7 +24,7 @@ def log_status_to_firestore(service_name, status, response_time_ms):
         "service": service_name,
         "status": status,
         "response_time_ms": response_time_ms,
-        "timestamp": datetime.utcnow().isoformat() + "Z"
+        "timestamp": datetime.utcnow().isoformat() + "Z",
     }
     try:
         db.collection(COLLECTION_NAME).add(entry)

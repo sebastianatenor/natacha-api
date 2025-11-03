@@ -1,6 +1,7 @@
-import os
 import json
+import os
 from datetime import datetime
+
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 
@@ -10,14 +11,21 @@ from health_monitor.infra_sync import pull_from_firestore
 
 router = APIRouter()
 
+
 def _format_entry(entry: dict, idx: int) -> str:
     """Formatea una entrada de historial como una fila HTML."""
     ts = entry.get("timestamp", "—")
     env = entry.get("environment", "—")
     disk = entry.get("disk_usage", "—")
     vm_count = len(entry.get("vm_status", [])) if entry.get("vm_status") else 0
-    docker_count = len(entry.get("docker_containers", [])) if entry.get("docker_containers") else 0
-    cloud_count = len(entry.get("cloud_run_services", [])) if entry.get("cloud_run_services") else 0
+    docker_count = (
+        len(entry.get("docker_containers", [])) if entry.get("docker_containers") else 0
+    )
+    cloud_count = (
+        len(entry.get("cloud_run_services", []))
+        if entry.get("cloud_run_services")
+        else 0
+    )
 
     return f"""
     <tr>
@@ -38,12 +46,20 @@ def infra_dashboard_view():
     # 🔸 Intentar traer Firestore, fallback a local
     try:
         entries = pull_from_firestore()
-        if isinstance(entries, dict) and "status" in entries and entries["status"] == "error":
+        if (
+            isinstance(entries, dict)
+            and "status" in entries
+            and entries["status"] == "error"
+        ):
             raise Exception(entries["detail"])
     except Exception:
         entries = get_history()
 
-    rows = "".join([_format_entry(e, i + 1) for i, e in enumerate(entries)]) if entries else "<tr><td colspan=7>No hay registros</td></tr>"
+    rows = (
+        "".join([_format_entry(e, i + 1) for i, e in enumerate(entries)])
+        if entries
+        else "<tr><td colspan=7>No hay registros</td></tr>"
+    )
 
     html = f"""
     <html>

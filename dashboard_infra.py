@@ -1,11 +1,13 @@
 import json
 import os
 import time
+
 import requests
 import streamlit as st
 
 # === CONFIGURACIÓN ===
 st.set_page_config(page_title="Infraestructura Natacha", page_icon="🌐", layout="wide")
+
 
 def load_data():
     path = os.path.expanduser("~/Projects/natacha-api/infra_status.json")
@@ -14,6 +16,7 @@ def load_data():
         return None
     with open(path, "r") as f:
         return json.load(f)
+
 
 def check_url_health(url: str) -> str:
     """Devuelve el estado de salud del servicio."""
@@ -25,6 +28,7 @@ def check_url_health(url: str) -> str:
             return "⚠️"
     except Exception:
         return "❌"
+
 
 # === TÍTULO ===
 st.title("🌐 Monitoreo de Infraestructura Natacha")
@@ -58,11 +62,7 @@ if not docker_data:
 else:
     for c in docker_data:
         status = c["status"].lower()
-        color = (
-            "✅" if "up" in status
-            else "⚠️" if "restarting" in status
-            else "❌"
-        )
+        color = "✅" if "up" in status else "⚠️" if "restarting" in status else "❌"
         st.markdown(f"{color} **{c['name']}** — {c['status']} — `{c['ports']}`")
 
 st.divider()
@@ -85,6 +85,8 @@ st.divider()
 
 # === AUTO REFRESH ===
 refresh_sec = st.slider("⏱️ Actualizar cada (segundos)", 10, 300, 60)
-st.caption("El panel se actualizará automáticamente con los últimos datos de `check_infra_status.sh`.")
+st.caption(
+    "El panel se actualizará automáticamente con los últimos datos de `check_infra_status.sh`."
+)
 time.sleep(refresh_sec)
 st.experimental_rerun()

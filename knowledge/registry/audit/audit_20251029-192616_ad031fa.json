@@ -11,7 +11,7 @@
     @@ -1,46 +1,77 @@
     -# REGISTRY — Natacha (auto-generado)
     +# REGISTRY — Natacha Capabilities
-     
+
     -## Uptime & Alerting
     -- **Uptime Check**: `projects/asistente-sebastian/uptimeCheckConfigs/healthmonitor-mertgzh6hJg`
     -  - Host: `natacha-health-monitor-422255208682.us-central1.run.app`
@@ -28,7 +28,7 @@
     +    project_id: asistente-sebastian
     +  type: uptime_url
     +name: projects/asistente-sebastian/uptimeCheckConfigs/healthmonitor-mertgzh6hJg
-     
+
     -### Alert Policies (Uptime)
     -```
     +## Alert Policies (Uptime)
@@ -36,7 +36,7 @@
      projects/asistente-sebastian/alertPolicies/13575294913821338865  CRun | HealthMonitor | Uptime / all regions down  True
      projects/asistente-sebastian/alertPolicies/5980311962589578804   CRun | HealthMonitor | Uptime / down              True
     -```
-     
+
     -### Snapshots locales
     -```
     -infra_snapshots/alerts/metric-health-monitor-5xx.prod.json
@@ -48,7 +48,7 @@
     -infra_snapshots/alerts/policy-uptime.by-host.json
     -```
     +### Detalle
-     
+
     -## Dashboards
     -Archivos encontrados:
     -```
@@ -92,7 +92,7 @@
     +    "evaluationMissingData": "EVALUATION_MISSING_DATA_INACTIVE"
     +  }
     +}
-     
+
     -## Notas
     -- Aplicar **preflight** antes de crear archivos/capacidades nuevas.
     -- Priorizar **actualizar lo existente** sobre crear duplicados.

@@ -1,8 +1,10 @@
 import os
 import platform
+
+import pandas as pd
 import psutil
 import streamlit as st
-import pandas as pd
+
 
 def get_system_info():
     return {
@@ -15,27 +17,30 @@ def get_system_info():
         "Usuario": os.getenv("USER") or os.getenv("USERNAME") or "N/A",
     }
 
+
 def get_usage_info():
     try:
         cpu = psutil.cpu_percent(interval=1)
         mem = psutil.virtual_memory().percent
-        disk = psutil.disk_usage('/').percent
+        disk = psutil.disk_usage("/").percent
         return cpu, mem, disk
     except Exception:
         return 0, 0, 0
 
+
 def get_top_processes(limit=5):
     rows = []
-    for p in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
+    for p in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
         try:
             info = p.info
-            info['cpu_percent'] = info.get('cpu_percent') or 0.0
-            info['memory_percent'] = info.get('memory_percent') or 0.0
+            info["cpu_percent"] = info.get("cpu_percent") or 0.0
+            info["memory_percent"] = info.get("memory_percent") or 0.0
             rows.append(info)
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
-    rows = sorted(rows, key=lambda x: x['cpu_percent'], reverse=True)
+    rows = sorted(rows, key=lambda x: x["cpu_percent"], reverse=True)
     return rows[:limit]
+
 
 def show():
     st.subheader("📦 Información del sistema operativo")

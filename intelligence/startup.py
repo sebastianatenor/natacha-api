@@ -1,8 +1,9 @@
 import json
-from datetime import datetime
 import os
-import requests
+from datetime import datetime
 from pathlib import Path
+
+import requests
 
 
 def _fetch(url: str):
@@ -110,7 +111,6 @@ def load_operational_context(api_base: str = "http://127.0.0.1:8002", limit: int
     except Exception as e:
         print(f"⚠️ startup: fallo creando memoria de duplicados: {e}")
 
-
     # 4) memo de tareas sin fecha por proyecto
     try:
         if isinstance(data, dict) and "projects" in data:
@@ -132,14 +132,16 @@ def load_operational_context(api_base: str = "http://127.0.0.1:8002", limit: int
                         "visibility": "equipo",
                     }
                     import requests
+
                     r = requests.post(mem_url, json=body, timeout=8)
                     if r.status_code == 200:
                         print(f"📝 startup: memo de tareas sin fecha para {name}")
                     else:
-                        print(f"⚠️ startup: no pude crear memo de tareas sin fecha ({r.status_code})")
+                        print(
+                            f"⚠️ startup: no pude crear memo de tareas sin fecha ({r.status_code})"
+                        )
     except Exception as e:
         print(f"⚠️ startup: fallo creando memo de tareas sin fecha: {e}")
-
 
     # 5) memo de tarea urgente detectada
     try:
@@ -162,11 +164,14 @@ def load_operational_context(api_base: str = "http://127.0.0.1:8002", limit: int
                         "visibility": "equipo",
                     }
                     import requests
+
                     r = requests.post(mem_url, json=body, timeout=8)
                     if r.status_code == 200:
                         print(f"📝 startup: tarea urgente registrada para {name}")
                     else:
-                        print(f"⚠️ startup: no pude registrar tarea urgente ({r.status_code})")
+                        print(
+                            f"⚠️ startup: no pude registrar tarea urgente ({r.status_code})"
+                        )
     except Exception as e:
         print(f"⚠️ startup: fallo creando memo de tarea urgente: {e}")
 
@@ -176,5 +181,8 @@ def load_operational_context(api_base: str = "http://127.0.0.1:8002", limit: int
 
 if __name__ == "__main__":
     # permite correr:  python3 intelligence/startup.py
-    api_base = os.getenv("NATACHA_CONTEXT_API") or "https://natacha-api-422255208682.us-central1.run.app"  # antiguo: https://natacha-api-mkwskljrhq-uc.a.run.app
+    api_base = (
+        os.getenv("NATACHA_CONTEXT_API")
+        or "https://natacha-api-422255208682.us-central1.run.app"
+    )  # antiguo: https://natacha-api-mkwskljrhq-uc.a.run.app
     load_operational_context(api_base=api_base, limit=20)

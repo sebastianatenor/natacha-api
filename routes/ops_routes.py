@@ -1,8 +1,10 @@
 import os
 from datetime import datetime, timezone
+
 from fastapi import APIRouter
-from app.utils.firestore_client import get_firestore_client
 from google.oauth2 import service_account
+
+from app.utils.firestore_client import get_firestore_client
 
 router = APIRouter(tags=["ops"])
 
@@ -15,6 +17,7 @@ def get_db():
         creds = service_account.Credentials.from_service_account_file(cred_path)
         return firestore.Client(project=PROJECT_ID, credentials=creds)
     return get_firestore_client()
+
 
 @router.post("/ops/snapshot")
 def take_snapshot():
@@ -191,16 +194,20 @@ def ops_insights(limit: int = 20):
     duplicates = []
     for title, items in title_index.items():
         if len(items) > 1:
-            duplicates.append({
-                "title": title,
-                "count": len(items),
-                "ids": [i["id"] for i in items],
-            })
+            duplicates.append(
+                {
+                    "title": title,
+                    "count": len(items),
+                    "ids": [i["id"] for i in items],
+                }
+            )
 
     # armar salida por proyecto
     projects_out = []
     for name, data in by_project.items():
-        pending_tasks = [t for t in data["tasks"] if t.get("state") in (None, "", "pending")]
+        pending_tasks = [
+            t for t in data["tasks"] if t.get("state") in (None, "", "pending")
+        ]
         # tarea más urgente
         dated = [t for t in pending_tasks if t.get("due")]
         if dated:
@@ -215,20 +222,19 @@ def ops_insights(limit: int = 20):
         if no_due:
             alerts.append(f"{len(no_due)} tarea(s) sin fecha")
 
-        projects_out.append({
-            "name": name,
-            "pending_tasks": len(pending_tasks),
-            "urgent_task": urgent,
-            "recent_memory": data["memories"][0] if data["memories"] else None,
-            "alerts": alerts,
-        })
+        projects_out.append(
+            {
+                "name": name,
+                "pending_tasks": len(pending_tasks),
+                "urgent_task": urgent,
+                "recent_memory": data["memories"][0] if data["memories"] else None,
+                "alerts": alerts,
+            }
+        )
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "projects": projects_out,
         "duplicates": duplicates,
-        "raw": {
-            "memories": len(memories),
-            "tasks": len(tasks)
-        }
+        "raw": {"memories": len(memories), "tasks": len(tasks)},
     }

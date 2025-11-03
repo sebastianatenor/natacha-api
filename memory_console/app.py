@@ -1,8 +1,10 @@
-from fastapi import FastAPI
-from google.cloud import firestore
 import os
 
+from fastapi import FastAPI
+from google.cloud import firestore
+
 app = FastAPI(title="Natacha Memory Console", version="1.0")
+
 
 # ✅ Health check
 @app.get("/health")
@@ -40,7 +42,12 @@ def get_memory(key: str):
         db = firestore.Client()
         doc = db.collection("memories").document(key).get()
         if doc.exists:
-            return {"found": True, "key": key, "value": doc.to_dict().get("value"), "source": "firestore"}
+            return {
+                "found": True,
+                "key": key,
+                "value": doc.to_dict().get("value"),
+                "source": "firestore",
+            }
         else:
             return {"found": False, "key": key}
     except Exception as e:
@@ -55,10 +62,7 @@ def list_firestore_documents():
         db = firestore.Client()
         docs = db.collection("memories").stream()
         data = [{doc.id: doc.to_dict()} for doc in docs]
-        return {
-            "count": len(data),
-            "documents": data
-        }
+        return {"count": len(data), "documents": data}
     except Exception as e:
         return {"error": str(e)}
 

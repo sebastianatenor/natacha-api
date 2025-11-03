@@ -1,9 +1,9 @@
 == Docker Inventory @ Wed Oct 29 21:11:23 -03 2025 ==
 NAMES                                   IMAGE                                 STATUS                          CREATED         PORTS
 natacha-api-natacha-memory-console-1    natacha-api-natacha-memory-console    Up 6 minutes (healthy)          6 minutes ago   0.0.0.0:8082->8080/tcp, [::]:8082->8080/tcp
-natacha-api-natacha-service-checker-1   natacha-api-natacha-service-checker   Restarting (1) 43 seconds ago   6 minutes ago   
+natacha-api-natacha-service-checker-1   natacha-api-natacha-service-checker   Restarting (1) 43 seconds ago   6 minutes ago
 natacha-api-natacha-core-1              natacha-api-natacha-core              Up 6 minutes (healthy)          6 minutes ago   0.0.0.0:8081->8080/tcp, [::]:8081->8080/tcp
-natacha-api-natacha-health-monitor-1    natacha-api-natacha-health-monitor    Up 6 minutes (healthy)          6 minutes ago   
+natacha-api-natacha-health-monitor-1    natacha-api-natacha-health-monitor    Up 6 minutes (healthy)          6 minutes ago
 natacha-api-keen_heyrovsky-1            natacha-health-monitor-test           Up 6 minutes (unhealthy)        6 minutes ago   0.0.0.0:8085->8080/tcp, [::]:8085->8080/tcp
 natacha-api-natacha-api-1               natacha-api-natacha-api               Up 6 minutes (healthy)          6 minutes ago   0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
 

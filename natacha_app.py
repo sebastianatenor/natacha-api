@@ -1,18 +1,21 @@
 import os
+
 from fastapi import FastAPI
 
-from routes.memory_routes import router as memory_router
-from routes.tasks_routes import router as tasks_router
-from routes.semantic_routes import router as semantic_router
-from routes.embeddings_routes import router as embeddings_router
-from routes.ops_routes import router as ops_router
 from routes.core_routes import router as core_router  # 👈 NUEVO
+from routes.embeddings_routes import router as embeddings_router
+from routes.memory_routes import router as memory_router
+from routes.ops_routes import router as ops_router
+from routes.semantic_routes import router as semantic_router
+from routes.tasks_routes import router as tasks_router
 
 app = FastAPI()
+
 
 @app.get("/health")
 def health():
     return {"status": "ok", "message": "Natacha API base funcionando correctamente 🚀"}
+
 
 # memoria
 app.include_router(memory_router)

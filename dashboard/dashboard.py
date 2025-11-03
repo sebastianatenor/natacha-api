@@ -1,4 +1,5 @@
 import os
+
 import streamlit as st
 
 # =========================
@@ -6,6 +7,7 @@ import streamlit as st
 # =========================
 DASH_USER = os.getenv("DASH_USER", "admin")
 DASH_PASS = os.getenv("DASH_PASS", "admin")
+
 
 def require_login():
     if "auth_ok" not in st.session_state:
@@ -27,6 +29,7 @@ def require_login():
                 st.error("Usuario o contraseña incorrectos")
         st.stop()
 
+
 # 1) primero forzamos login
 require_login()
 
@@ -42,7 +45,7 @@ page = st.sidebar.selectbox(
         # "☁️ Infra Cloud",
         # "🧠 Memoria / Firestore",
         "⚙️ Configuración",
-    ]
+    ],
 )
 
 if page == "🏠 Inicio":
@@ -52,11 +55,13 @@ if page == "🏠 Inicio":
 
 elif page == "⚙️ Configuración":
     st.header("⚙️ Configuración actual")
-    st.code({
-        "BACKEND_URL": os.getenv("BACKEND_URL", "no-config"),
-        "DASH_USER": DASH_USER,
-        "DASH_PASS": "***",
-    })
+    st.code(
+        {
+            "BACKEND_URL": os.getenv("BACKEND_URL", "no-config"),
+            "DASH_USER": DASH_USER,
+            "DASH_PASS": "***",
+        }
+    )
 
 # == Ejemplos de cómo importar módulos internos ==
 # Cuando confirmemos los nombres de archivo dentro de dashboard/:

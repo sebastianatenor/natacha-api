@@ -2,7 +2,7 @@
 
 - Proyecto: asistente-sebastian
 - Región: us-central1
-- Host: Darwin MacBook-Air-de-Alvaro.local 24.6.0 Darwin Kernel Version 24.6.0: Mon Aug 11 21:16:52 PDT 2025; root:xnu-11417.140.69.701.11~1/RELEASE_ARM64_T8112 arm64 
+- Host: Darwin MacBook-Air-de-Alvaro.local 24.6.0 Darwin Kernel Version 24.6.0: Mon Aug 11 21:16:52 PDT 2025; root:xnu-11417.140.69.701.11~1/RELEASE_ARM64_T8112 arm64
 
 ## Resumen rápido
 

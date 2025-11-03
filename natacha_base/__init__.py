@@ -1,5 +1,6 @@
 from natacha_base.observer import run_learning_cycle
 
+
 def create_app():
 
     @app.route("/ops/force_learn", methods=["POST"])

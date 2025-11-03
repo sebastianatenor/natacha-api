@@ -1,6 +1,8 @@
 import os
-import requests
 import time
+
+import requests
+
 
 class Comms:
     """Maneja comunicaciones de Natacha (WhatsApp, logs, etc.)."""
@@ -19,13 +21,13 @@ class Comms:
         url = f"https://graph.facebook.com/v23.0/{self.phone_id}/messages"
         headers = {
             "Authorization": f"Bearer {self.token}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
         payload = {
             "messaging_product": "whatsapp",
             "to": numero or self.numero_default,
             "type": "text",
-            "text": {"body": mensaje}
+            "text": {"body": mensaje},
         }
 
         for intento in range(3):
@@ -35,7 +37,9 @@ class Comms:
                     print(f"✅ WhatsApp enviado correctamente a {numero}")
                     return
                 else:
-                    print(f"⚠️ Error WhatsApp intento {intento+1}: {resp.status_code} — {resp.text}")
+                    print(
+                        f"⚠️ Error WhatsApp intento {intento+1}: {resp.status_code} — {resp.text}"
+                    )
             except Exception as e:
                 print(f"❌ Excepción WhatsApp: {e}")
             time.sleep(2)

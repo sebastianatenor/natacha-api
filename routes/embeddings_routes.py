@@ -1,7 +1,8 @@
-import os
-import math
 import hashlib
+import math
+import os
 from datetime import datetime, timezone
+
 from fastapi import APIRouter, HTTPException
 from google.cloud import firestore
 from google.oauth2 import service_account
@@ -10,12 +11,14 @@ router = APIRouter(tags=["embeddings"])
 
 PROJECT_ID = os.getenv("GCP_PROJECT", "asistente-sebastian")
 
+
 def get_db():
     cred_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "firestore-key.json")
     if cred_path and os.path.exists(cred_path):
         creds = service_account.Credentials.from_service_account_file(cred_path)
         return firestore.Client(project=PROJECT_ID, credentials=creds)
     return firestore.Client(project=PROJECT_ID)
+
 
 def cheap_embed(text: str) -> list[float]:
     """
@@ -28,20 +31,22 @@ def cheap_embed(text: str) -> list[float]:
     # 16 números / dims
     dims = []
     for i in range(0, 64, 4):
-        chunk = h[i:i+4]
+        chunk = h[i : i + 4]
         v = int(chunk, 16) / 0xFFFF  # 0..1
         dims.append(v)
     return dims
 
+
 def cosine(a: list[float], b: list[float]) -> float:
     if not a or not b:
         return 0.0
-    dot = sum(x*y for x, y in zip(a, b))
-    na = math.sqrt(sum(x*x for x in a))
-    nb = math.sqrt(sum(y*y for y in b))
+    dot = sum(x * y for x, y in zip(a, b))
+    na = math.sqrt(sum(x * x for x in a))
+    nb = math.sqrt(sum(y * y for y in b))
     if not na or not nb:
         return 0.0
     return dot / (na * nb)
+
 
 @router.post("/memory/embed")
 def memory_embed(payload: dict):
@@ -78,6 +83,7 @@ def memory_embed(payload: dict):
     db.collection("assistant_memory").add(doc)
     return {"status": "ok", "stored": doc}
 
+
 @router.post("/memory/search_vector")
 def memory_search_vector(payload: dict):
     """
@@ -107,20 +113,22 @@ def memory_search_vector(payload: dict):
             # si no tiene vector, lo ignoro
             continue
         score = cosine(qvec, vec)
-        scored.append({
-            "id": d.id,
-            "summary": data.get("summary", ""),
-            "detail": data.get("detail", ""),
-            "project": data.get("project", ""),
-            "channel": data.get("channel", ""),
-            "timestamp": data.get("timestamp", ""),
-            "score": score,
-        })
+        scored.append(
+            {
+                "id": d.id,
+                "summary": data.get("summary", ""),
+                "detail": data.get("detail", ""),
+                "project": data.get("project", ""),
+                "channel": data.get("channel", ""),
+                "timestamp": data.get("timestamp", ""),
+                "score": score,
+            }
+        )
 
     scored.sort(key=lambda x: x["score"], reverse=True)
     return {
         "query": query,
         "project": project,
         "results": scored[:limit],
-        "found": len(scored)
+        "found": len(scored),
     }

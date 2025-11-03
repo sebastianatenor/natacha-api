@@ -1,10 +1,12 @@
-import os
 import json
-import streamlit as st
+import os
+
 import pandas as pd
+import streamlit as st
 
 AUDIT_DIR = "knowledge/registry/audit"
 DOCKER_DIR = "logs"
+
 
 def _list_audit_files():
     files = []
@@ -12,24 +14,29 @@ def _list_audit_files():
         for f in os.listdir(AUDIT_DIR):
             if f.endswith(".json") or f.endswith(".txt"):
                 path = os.path.join(AUDIT_DIR, f)
-                files.append({
-                    "file": f,
-                    "path": path,
-                    "type": "json" if f.endswith(".json") else "text",
-                    "size": os.path.getsize(path),
-                })
+                files.append(
+                    {
+                        "file": f,
+                        "path": path,
+                        "type": "json" if f.endswith(".json") else "text",
+                        "size": os.path.getsize(path),
+                    }
+                )
     if os.path.isdir(DOCKER_DIR):
         for f in os.listdir(DOCKER_DIR):
             if f.startswith("docker_"):
                 path = os.path.join(DOCKER_DIR, f)
-                files.append({
-                    "file": f,
-                    "path": path,
-                    "type": "text",
-                    "size": os.path.getsize(path),
-                })
+                files.append(
+                    {
+                        "file": f,
+                        "path": path,
+                        "type": "text",
+                        "size": os.path.getsize(path),
+                    }
+                )
     files.sort(key=lambda x: x["file"], reverse=True)
     return files
+
 
 def _load_file(item: dict):
     path = item["path"]
@@ -46,6 +53,7 @@ def _load_file(item: dict):
         with open(path, "r") as f:
             return {"mode": "text", "raw": f.read()}
 
+
 def show():
     st.subheader("🧩 Auditoría Global de Infraestructura")
     st.caption("Últimas corridas de auditoría sobre REGISTRY / servicios / duplicados")
@@ -55,11 +63,9 @@ def show():
         st.info("No se encontraron auditorías en disco.")
         return
 
-    df = pd.DataFrame([{
-        "Archivo": f["file"],
-        "Tipo": f["type"],
-        "Tamaño": f["size"]
-    } for f in files])
+    df = pd.DataFrame(
+        [{"Archivo": f["file"], "Tipo": f["type"], "Tamaño": f["size"]} for f in files]
+    )
     st.dataframe(df, use_container_width=True)
 
     pick_names = [f["file"] for f in files]
@@ -74,7 +80,14 @@ def show():
     if loaded["mode"] == "json":
         data = loaded["data"]
         if isinstance(data, dict):
-            main_keys = ["timestamp", "summary", "service", "result", "duplicates", "alerts"]
+            main_keys = [
+                "timestamp",
+                "summary",
+                "service",
+                "result",
+                "duplicates",
+                "alerts",
+            ]
             cols = st.columns(len(main_keys))
             for i, k in enumerate(main_keys):
                 val = data.get(k)

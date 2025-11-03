@@ -8,7 +8,7 @@ Copying gs://asistente-sebastian_cloudbuild/source/1761351040.420162-194f0c543ae
 Operation completed over 1 objects/19.0 MiB.
 BUILD
 Already have image (with digest): gcr.io/cloud-builders/gcb-internal
-Sending build context to Docker daemon  69.05MB
+Sending build context to Docker daemon  69.05MB
 Step 1/7 : FROM python:3.11-slim
 3.11-slim: Pulling from library/python
 38513bd72563: Pulling fs layer

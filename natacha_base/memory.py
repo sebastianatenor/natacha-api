@@ -1,6 +1,8 @@
-from google.cloud import firestore
-from datetime import datetime
 import traceback
+from datetime import datetime
+
+from google.cloud import firestore
+
 
 class NatachaMemory:
     """Memoria cognitiva de Natacha — registra, recuerda y aprende de la experiencia."""
@@ -11,7 +13,9 @@ class NatachaMemory:
         try:
             self.db = firestore.Client(project=project_id)
             self.online = True
-            self._log_local("Memory inicializada", "Conectada a Firestore", level="info")
+            self._log_local(
+                "Memory inicializada", "Conectada a Firestore", level="info"
+            )
         except Exception as e:
             self.db = None
             self.online = False
@@ -23,7 +27,7 @@ class NatachaMemory:
             "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
             "level": level,
             "summary": summary,
-            "detail": detail
+            "detail": detail,
         }
         self.local_memory.append(entry)
         print(f"[MEMORY-{level.upper()}] {summary}: {detail}")
@@ -35,7 +39,7 @@ class NatachaMemory:
             "summary": summary,
             "detail": detail,
             "level": level,
-            "type": type
+            "type": type,
         }
 
         self._log_local(summary, detail, level)

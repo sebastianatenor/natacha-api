@@ -1,6 +1,6 @@
 import json
-from typing import List, Dict, Any
 import os
+from typing import Any, Dict, List
 
 import google.auth
 from google.auth.transport.requests import AuthorizedSession
@@ -8,7 +8,9 @@ from google.auth.transport.requests import AuthorizedSession
 
 def _get_auth_session() -> AuthorizedSession:
     """Crea una sesión autenticada usando ADC (Workload Identity / SA del servicio)."""
-    creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+    creds, _ = google.auth.default(
+        scopes=["https://www.googleapis.com/auth/cloud-platform"]
+    )
     return AuthorizedSession(creds)
 
 
@@ -18,7 +20,9 @@ def _list_services(project: str, region: str) -> List[Dict[str, Any]]:
     GET https://run.googleapis.com/v2/projects/{project}/locations/{region}/services
     """
     session = _get_auth_session()
-    base = f"https://run.googleapis.com/v2/projects/{project}/locations/{region}/services"
+    base = (
+        f"https://run.googleapis.com/v2/projects/{project}/locations/{region}/services"
+    )
     services: List[Dict[str, Any]] = []
 
     url = base
@@ -40,14 +44,26 @@ def _list_services(project: str, region: str) -> List[Dict[str, Any]]:
 def _parse_conditions(svc: Dict[str, Any]) -> Dict[str, Any]:
     """Devuelve estado legible y ‘healthy’ a partir de las condiciones."""
     url = svc.get("uri") or (svc.get("status", {}) or {}).get("url", "N/A")
-    traffic = svc.get("traffic") or (svc.get("status", {}) or {}).get("traffic", []) or []
+    traffic = (
+        svc.get("traffic") or (svc.get("status", {}) or {}).get("traffic", []) or []
+    )
     full_name = svc.get("name", "unknown")
     name = full_name.split("/")[-1] if "/" in full_name else full_name
-    conditions = svc.get("conditions") or (svc.get("status", {}) or {}).get("conditions", []) or []
+    conditions = (
+        svc.get("conditions")
+        or (svc.get("status", {}) or {}).get("conditions", [])
+        or []
+    )
 
-    cond_map = {str(c.get("type", "")).lower(): c for c in conditions if isinstance(c, dict)}
+    cond_map = {
+        str(c.get("type", "")).lower(): c for c in conditions if isinstance(c, dict)
+    }
     ready = cond_map.get("ready") or cond_map.get("readycondition")
-    routes_ready = cond_map.get("routesready") or cond_map.get("route-ready") or cond_map.get("routesreadycondition")
+    routes_ready = (
+        cond_map.get("routesready")
+        or cond_map.get("route-ready")
+        or cond_map.get("routesreadycondition")
+    )
 
     def _fmt(c):
         if not c:
@@ -57,16 +73,30 @@ def _parse_conditions(svc: Dict[str, Any]) -> Dict[str, Any]:
         msg = c.get("message") or c.get("reason") or "N/A"
         return f"{ctype.lower()}: {cstatus} ({msg})"
 
-    display = _fmt(ready) if ready else (_fmt(routes_ready) if routes_ready else _fmt(None))
+    display = (
+        _fmt(ready) if ready else (_fmt(routes_ready) if routes_ready else _fmt(None))
+    )
     healthy = (
-        (ready and str(ready.get("status", "")).lower() in ("true", "ok", "ready", "success")) or
-        (routes_ready and str(routes_ready.get("status", "")).lower() in ("true", "ok", "ready", "success"))
+        ready
+        and str(ready.get("status", "")).lower() in ("true", "ok", "ready", "success")
+    ) or (
+        routes_ready
+        and str(routes_ready.get("status", "")).lower()
+        in ("true", "ok", "ready", "success")
     )
 
-    return {"name": name, "url": url or "N/A", "status": display, "traffic": traffic, "healthy": healthy}
+    return {
+        "name": name,
+        "url": url or "N/A",
+        "status": display,
+        "traffic": traffic,
+        "healthy": healthy,
+    }
 
 
-def get_cloud_run_services(project: str = None, region: str = None) -> List[Dict[str, Any]]:
+def get_cloud_run_services(
+    project: str = None, region: str = None
+) -> List[Dict[str, Any]]:
     """
     Lista servicios Cloud Run vía API v2 (sin gcloud).
     Usa env GCP_PROJECT/GCP_REGION si están, sino defaults del proyecto.

@@ -1,9 +1,11 @@
-from flask import Blueprint, jsonify
-import socket
 import datetime
+import socket
+
 import requests
+from flask import Blueprint, jsonify
 
 health_bp = Blueprint("health", __name__)
+
 
 @health_bp.route("/ops/smart_health", methods=["POST"])
 def smart_health():
@@ -24,11 +26,16 @@ def smart_health():
     except Exception:
         diagnostics["internet"] = "fail"
 
-    return jsonify({
-        "service": "natacha-api",
-        "extended_status": "ok",
-        "diagnostics": diagnostics
-    }), 200
+    return (
+        jsonify(
+            {
+                "service": "natacha-api",
+                "extended_status": "ok",
+                "diagnostics": diagnostics,
+            }
+        ),
+        200,
+    )
 
 
 @health_bp.route("/ops/memory_report", methods=["GET"])
@@ -38,10 +45,12 @@ def memory_report():
         "status": "ok",
         "timestamp": datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
         "patterns": {
-            "analysis_time": datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "analysis_time": datetime.datetime.utcnow().strftime(
+                "%Y-%m-%d %H:%M:%S UTC"
+            ),
             "total": 0,
-            "patterns": {"error": 0, "warning": 0, "info": 0}
+            "patterns": {"error": 0, "warning": 0, "info": 0},
         },
-        "recent": []
+        "recent": [],
     }
     return jsonify(diagnostics), 200

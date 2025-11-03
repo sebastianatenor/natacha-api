@@ -12,4 +12,3 @@ streamlit run dashboard/dashboard.py --server.port=8503 &
 echo "✅ Dashboards en ejecución:"
 echo "   - http://localhost:8502 (Salud del sistema)"
 echo "   - http://localhost:8503 (Panel central)"
-

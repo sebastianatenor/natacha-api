@@ -1,7 +1,9 @@
-from google.cloud import firestore
 from datetime import datetime
 
+from google.cloud import firestore
+
 db = firestore.Client()
+
 
 def run_learning_cycle():
     print("🧠 Iniciando ciclo de aprendizaje...")
@@ -18,11 +20,11 @@ def run_learning_cycle():
         {"fase": "5", "nombre": "Gobernanza total", "estado": "⚪"},
     ]
     doc_id = f"progress_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
-    db.collection("progress_reports").document(doc_id).set({
-        "timestamp": datetime.utcnow().isoformat(),
-        "resultados": fases
-    })
+    db.collection("progress_reports").document(doc_id).set(
+        {"timestamp": datetime.utcnow().isoformat(), "resultados": fases}
+    )
     print(f"✅ Progreso actualizado en Firestore ({doc_id})")
+
 
 if __name__ == "__main__":
     run_learning_cycle()

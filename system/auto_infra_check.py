@@ -1,8 +1,9 @@
-import subprocess
-import json
-import requests
 import datetime
+import json
 import os
+import subprocess
+
+import requests
 
 print("🔄 Ejecutando diagnóstico automático de infraestructura...")
 
@@ -30,7 +31,7 @@ payload = {
 requests.post(
     "https://natacha-api-422255208682.us-central1.run.app/memory/add",
     headers={"Content-Type": "application/json"},
-    json=payload
+    json=payload,
 )
 
 print("✅ Memoria guardada correctamente en Firestore.")

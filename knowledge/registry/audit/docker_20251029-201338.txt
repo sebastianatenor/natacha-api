@@ -1,8 +1,8 @@
 == Docker Inventory @ Wed Oct 29 20:13:38 -03 2025 ==
 NAMES                     IMAGE                                 STATUS          CREATED        PORTS
 keen_heyrovsky            natacha-health-monitor-test           Up 32 minutes   45 hours ago   0.0.0.0:8085->8080/tcp, [::]:8085->8080/tcp
-natacha-service-checker   natacha-api-natacha-service-checker   Up 2 days       2 days ago     
-natacha-health-monitor    natacha-api-natacha-health-monitor    Up 2 days       2 days ago     
+natacha-service-checker   natacha-api-natacha-service-checker   Up 2 days       2 days ago
+natacha-health-monitor    natacha-api-natacha-health-monitor    Up 2 days       2 days ago
 natacha-core              natacha-api-natacha-core              Up 2 days       2 days ago     0.0.0.0:8081->8080/tcp, [::]:8081->8080/tcp
 natacha-api               natacha-api-natacha-api               Up 2 days       2 days ago     0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
 natacha-memory-console    natacha-api-natacha-memory-console    Up 2 days       2 days ago     0.0.0.0:8082->8080/tcp, [::]:8082->8080/tcp

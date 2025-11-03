@@ -1,10 +1,10 @@
-from pathlib import Path
-from datetime import datetime, timezone
-from typing import List, Optional
 import os
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import List, Optional
 
 import requests
-from fastapi import APIRouter, HTTPException, Query, Body
+from fastapi import APIRouter, Body, HTTPException, Query
 
 # usamos el cliente centralizado, como en tasks_routes
 from app.utils.firestore_client import get_client
@@ -95,7 +95,9 @@ def _log_auto(event: str, meta: dict):
     )
 
 
-def _post_json(url: str, payload: dict, timeout: float = 4.0) -> Optional[requests.Response]:
+def _post_json(
+    url: str, payload: dict, timeout: float = 4.0
+) -> Optional[requests.Response]:
     try:
         return requests.post(url, json=payload, timeout=timeout)
     except Exception:
@@ -200,7 +202,12 @@ def auto_log_action(payload: dict = Body(...)):
     """
     meta = payload or {}
     _log_auto("manual-log", meta)
-    return {"status": "ok", "logged": meta, "created_at": datetime.now(timezone.utc).isoformat()}
+    return {
+        "status": "ok",
+        "logged": meta,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+
 
 def _store_refactor_plan(goal: str, backups: list) -> str:
     """
@@ -223,4 +230,3 @@ def _store_refactor_plan(goal: str, backups: list) -> str:
         return ref.id  # por si devuelve directamente la ref
     except Exception:
         return ""
-
