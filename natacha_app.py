@@ -40,9 +40,7 @@ def __debug_routers():
             pass
     return JSONResponse(out)
 # ==== END DEBUG ====
-
-app.include_router(tasks_router)
-
+# app.include_router(tasks_router)  # via auto-discovery
 # ==== AUTO-DISCOVERY DE ROUTERS ====
 import pkgutil, importlib, inspect
 from fastapi import APIRouter
@@ -109,20 +107,15 @@ def health():
 
 
 # memoria
-app.include_router(memory_router)
-
+# app.include_router(memory_router)  # via auto-discovery
 # tareas
-app.include_router(tasks_router)
-
+# app.include_router(tasks_router)  # via auto-discovery
 # semántica
-app.include_router(semantic_router)
-
+# app.include_router(semantic_router)  # via auto-discovery
 # embeddings
-app.include_router(embeddings_router)
-
+# app.include_router(embeddings_router)  # via auto-discovery
 # ops
-app.include_router(ops_router)
-
+# app.include_router(ops_router)  # via auto-discovery
 # core / dashboard
 app.include_router(core_router)  # 👈 NUEVO
 
