@@ -1,6 +1,6 @@
 from google.cloud.firestore import Query as FireQuery
 from google.cloud import firestore
-FireQuery = firestore.Query
+
 import os
 
 from routes.db_util import get_db
