@@ -1,7 +1,5 @@
 
 from routes import ops_routes
-from routes import ops_health
-print('### DEBUG: imported ops_health OK')
 import logging
 import traceback
 from fastapi.responses import PlainTextResponse
@@ -17,29 +15,7 @@ from routes.semantic_routes import router as semantic_router
 from routes.tasks_routes import router as tasks_router
 
 app = FastAPI()
-
-@app.get("/__alive")
-def __alive():
-    return {"ok": True, "where": "app-core"}
-
-@app.get("/__whereami")
-def __whereami():
-    import os
-    return {"__file__": __file__, "cwd": os.getcwd()}
 app.include_router(ops_routes.router)
-# --- auto-mount any extra APIRouter exposed by routes.ops_routes ---
-try:
-    import inspect
-    from fastapi import APIRouter
-    import routes.ops_routes as _ops_mod
-    for _name, _val in vars(_ops_mod).items():
-        if isinstance(_val, APIRouter) and _val is not ops_routes.router:
-            app.include_router(_val)
-except Exception as _e:
-    print("### DEBUG: auto-mount extra ops routers failed:", _e)
-# --- end auto-mount ---
-app.include_router(ops_health.router)
-print('### DEBUG: mounted ops_health OK')
 
 # ==== DEBUG RUNTIME CODE-ID ====
 import importlib, inspect, hashlib, json
@@ -176,7 +152,7 @@ from fastapi import FastAPI  # por si el import de arriba estaba antes
 try:
     app
 except NameError:
-# REMOVED duplicate:     app = FastAPI()
+    app = FastAPI()
 
 @app.get("/")
 def root():
@@ -216,13 +192,3 @@ def __debug_codeid_ops_routes():
         import traceback
         return PlainTextResponse(traceback.format_exc(), status_code=500)
 
-
-
-@app.get("/__debug/routes")
-def __debug_routes():
-    return {"routes":[{"path": r.path, "name": getattr(r, "name", None)} for r in app.router.routes]}
-
-
-@app.get("/ops/ping_core")
-def ping_core():
-    return {"ok": True, "where": "app-core"}

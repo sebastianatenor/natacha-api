@@ -17,15 +17,6 @@ from routes.semantic_routes import router as semantic_router
 from routes.tasks_routes import router as tasks_router
 
 app = FastAPI()
-
-@app.get("/__alive")
-def __alive():
-    return {"ok": True, "where": "app-core"}
-
-@app.get("/__whereami")
-def __whereami():
-    import os
-    return {"__file__": __file__, "cwd": os.getcwd()}
 app.include_router(ops_routes.router)
 # --- auto-mount any extra APIRouter exposed by routes.ops_routes ---
 try:

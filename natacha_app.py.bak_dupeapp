@@ -1,3 +1,7 @@
+
+from routes import ops_routes
+from routes import ops_health
+print('### DEBUG: imported ops_health OK')
 import logging
 import traceback
 from fastapi.responses import PlainTextResponse
@@ -13,6 +17,9 @@ from routes.semantic_routes import router as semantic_router
 from routes.tasks_routes import router as tasks_router
 
 app = FastAPI()
+app.include_router(ops_routes.router)
+app.include_router(ops_health.router)
+print('### DEBUG: mounted ops_health OK')
 
 # ==== DEBUG RUNTIME CODE-ID ====
 import importlib, inspect, hashlib, json
@@ -40,9 +47,7 @@ def __debug_routers():
             pass
     return JSONResponse(out)
 # ==== END DEBUG ====
-
-app.include_router(tasks_router)
-
+# app.include_router(tasks_router)  # via auto-discovery
 # ==== AUTO-DISCOVERY DE ROUTERS ====
 import pkgutil, importlib, inspect
 from fastapi import APIRouter
@@ -109,20 +114,15 @@ def health():
 
 
 # memoria
-app.include_router(memory_router)
-
+# app.include_router(memory_router)  # via auto-discovery
 # tareas
-app.include_router(tasks_router)
-
+# app.include_router(tasks_router)  # via auto-discovery
 # semántica
-app.include_router(semantic_router)
-
+# app.include_router(semantic_router)  # via auto-discovery
 # embeddings
-app.include_router(embeddings_router)
-
+# app.include_router(embeddings_router)  # via auto-discovery
 # ops
-app.include_router(ops_router)
-
+# app.include_router(ops_router)  # via auto-discovery
 # core / dashboard
 app.include_router(core_router)  # 👈 NUEVO
 
@@ -137,3 +137,67 @@ try:
     load_operational_context(api_base=api_base, limit=20)
 except Exception as e:
     print(f"⚠️ Natacha startup context not loaded: {e}")
+
+# ===== Bootstrap guard (local-friendly) =====
+import os
+try:
+    from dotenv import load_dotenv  # opcional: pip install python-dotenv
+    load_dotenv()
+except Exception:
+    pass
+
+# Flags de entorno
+REMOTE_BOOTSTRAP = os.getenv("NATACHA_REMOTE_BOOTSTRAP", "1") == "1"
+REMOTE_BASE_URL = (os.getenv("REMOTE_BASE_URL") or "").rstrip("/")
+
+from fastapi import FastAPI  # por si el import de arriba estaba antes
+
+# Asegura que exista 'app' (si ya existe, no lo pisa)
+try:
+    app
+except NameError:
+    app = FastAPI()
+
+@app.get("/")
+def root():
+    return {"service": "natacha-api", "ok": True}
+
+@app.on_event("startup")
+async def _guard_remote_bootstrap():
+    """
+    Evita que el fallo de endpoints remotos rompa el arranque local.
+    """
+    if not REMOTE_BOOTSTRAP:
+        print("ℹ️  Bootstrap remoto desactivado (NATACHA_REMOTE_BOOTSTRAP=0).")
+        return
+    if not REMOTE_BASE_URL:
+        print("⚠️  REMOTE_BASE_URL no configurada; saltando bootstrap remoto.")
+        return
+    try:
+        # Acá iría tu fetch remoto si corresponde (lo dejamos noop en local)
+        # p.ej.: requests.get(f"{REMOTE_BASE_URL}/ops/insights", timeout=5)
+        pass
+    except Exception as e:
+        print(f"⚠️  No se pudo cargar contexto remoto: {e}")
+# ===== /Bootstrap guard =====
+
+
+@app.get("/__debug/codeid/ops_routes")
+def __debug_codeid_ops_routes():
+    try:
+        import importlib, inspect, hashlib
+        from fastapi.responses import JSONResponse, PlainTextResponse
+        mod = importlib.import_module("routes.ops_routes")
+        src = inspect.getsource(mod)
+        path = inspect.getfile(mod)
+        sha = hashlib.sha256(src.encode("utf-8")).hexdigest()[:16]
+        return JSONResponse({"module":"routes.ops_routes","file":path,"sha256_16":sha})
+    except Exception:
+        import traceback
+        return PlainTextResponse(traceback.format_exc(), status_code=500)
+
+
+
+@app.get("/__debug/routes")
+def __debug_routes():
+    return {"routes":[{"path": r.path, "name": getattr(r, "name", None)} for r in app.router.routes]}
