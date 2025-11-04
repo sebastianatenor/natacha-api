@@ -1,4 +1,5 @@
--r health_monitor/requirements.txt
-python-dotenv
-google-cloud-firestore
-google-auth
+fastapi==0.115.3
+uvicorn[standard]==0.30.6
+google-cloud-firestore==2.18.0
+google-auth==2.35.0
+requests==2.32.3
