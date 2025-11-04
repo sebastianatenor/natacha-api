@@ -1,28 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# 1) Actualizar Registry siempre
-if [ -x scripts/brain_sync.sh ]; then
-  scripts/brain_sync.sh >/dev/null || true
-  git add knowledge/registry/REGISTRY.md 2>/dev/null || true
-fi
-
-# 2) Bloquear duplicados de alert snapshots por displayName
-if command -v jq >/dev/null 2>&1; then
-  MAP=$(mktemp); DUP=$(mktemp)
-  for f in infra_snapshots/alerts/*.json; do
-    [ -f "$f" ] || continue
-    DN="$(jq -r 'try .displayName // empty' "$f" 2>/dev/null || true)"
-    [ -n "$DN" ] && echo -e "$DN\t$f" >> "$MAP"
-  done
-  if [ -s "$MAP" ]; then
-    awk -F'\t' '{cnt[$1]++; files[$1]=files[$1] "  - " $2 "\n"} END {for (k in cnt) if (cnt[k]>1) {print "⛔ Duplicado displayName: " k "\n" files[k]}}' "$MAP" > "$DUP"
-    if [ -s "$DUP" ]; then
-      cat "$DUP" >&2
-      echo "Pre-commit abortado por duplicados en infra_snapshots/alerts." >&2
-      exit 5
-    fi
+if [[ -f REGISTRY.md ]]; then
+  COUNT="$(grep -E '^### (🧩|<0001f9e9>) OpenAPI Schema' -c REGISTRY.md || true)"
+  if [[ "${COUNT:-0}" -gt 1 ]]; then
+    echo "❌ Hay más de un bloque 'OpenAPI Schema' en REGISTRY.md. Ejecutá scripts/update_registry_openapi.sh y reintenta."
+    exit 1
   fi
 fi
-
 exit 0
