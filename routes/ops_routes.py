@@ -79,15 +79,13 @@ def list_snapshots(limit: int = 10):
 
 # === resumen operativo rápido (único) ===
 @router.get("/ops/summary")
-def ops_summary(limit: int = 10):
-        try:
-        """
-            Devuelve en una sola respuesta:
-            - últimas memorias
-            - últimas tareas
-            - agrupadas por proyecto
-            """
-            db = get_db()
+    """
+    Devuelve en una sola respuesta:
+    - últimas memorias
+    - últimas tareas
+    - agrupadas por proyecto
+    """
+    db = get_db()
 
             # 1) últimas memorias
             mem_docs = (
