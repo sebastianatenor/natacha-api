@@ -1,3 +1,4 @@
+from routes.tasks_routes import router as tasks_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
@@ -5,6 +6,8 @@ import os, hashlib, traceback
 from routes.auto_routes import router as auto_router
 
 app = FastAPI(title="Natacha API", version="1.0.0")
+app.include_router(tasks_router)
+
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.include_router(auto_router)
 
