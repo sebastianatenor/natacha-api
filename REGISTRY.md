@@ -118,7 +118,6 @@
 - Sustituye lecturas manuales de `/ops/insights` en el dashboard
 - Compatible con entorno `v0.9.3`
 
-
 #### 2025-11-01 – Deploy Cloud Run con /dashboard/data
 - Servicio: natacha-api
 - Cambio efectivo: incluye `routes/core_routes.py` y expone `GET /dashboard/data`
@@ -173,3 +172,29 @@
   ]
 }
 ```
+
+---
+
+### <0001f9e9> OpenAPI Schema (Cloud Run / Natacha API)
+
+**Servicio:** `natacha-api`
+**Proyecto:** `asistente-sebastian`
+**Región:** `us-central1`
+**Revisión activa:** `natacha-api-00115-tf4`
+**URL público:** [https://natacha-api-422255208682.us-central1.run.app](https://natacha-api-422255208682.us-central1.run.app)
+
+#### 📘 Endpoint de esquema (para Actions / herramientas externas)
+- JSON: `https://natacha-api-422255208682.us-central1.run.app/openapi.v1.json`
+
+#### <0001f9f1> Estructura técnica
+- **Base module serving:** `entrypoint_app.py`
+- **Router responsable:** `routes/openapi_compat.py`
+- **Versión de OpenAPI publicada:** `3.1.0`
+- **Servers:** `[{ "url": "https://natacha-api-422255208682.us-central1.run.app" }]`
+- **Env var usada:** `OPENAPI_PUBLIC_URL`
+- **Propósito:** Publicar un esquema OpenAPI compatible con Actions y otras integraciones externas.
+
+#### 🛠 Cómo actualizar solo la versión del esquema
+1. Editar `routes/openapi_compat.py` y ajustar: `schema["openapi"] = "3.1.0"` (o `"3.1.1"` si tu editor lo exige).
+2. Build & deploy normales del servicio.
+3. Verificar: `curl -fsS "https://natacha-api-422255208682.us-central1.run.app/openapi.v1.json" | jq '.openapi, .servers'`
