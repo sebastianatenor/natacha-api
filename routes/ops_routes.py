@@ -200,7 +200,6 @@ def ops_insights(limit: int = 20):
 
 @router.get("/ops/debug_source")
 def ops_debug_source():
-    try:
         # Ruta real del archivo importado en runtime
         this_file = inspect.getsourcefile(ops_debug_source) or "<unknown>"
         # Hash del archivo de esta build
@@ -208,22 +207,3 @@ def ops_debug_source():
             content = fh.read()
         sha = hashlib.sha256(content).hexdigest()
         return {"file_runtime": this_file, "sha256_this_module": sha}
-    except Exception as e:
-        return JSONResponse(status_code=503, content={"error": str(e)})
-
-
-@router.get("/ops/ping")
-def ops_ping():
-    # Sanity: sin DB
-    return {"ok": True, "service": "natacha-api", "component": "ops", "note": "no-db"}
-
-@router.get("/ops/_debug_db")
-def ops_debug_db():
-    try:
-        db = get_db()
-        # simple lectura "barata": listar collections (no falla si hay permisos de lectura)
-        cols = [c.id for c in db.collections()]
-        return {"ok": True, "collections": cols}
-    except Exception as e:
-        logging.exception("ops_debug_db failed")
-        return JSONResponse({"ok": False, "err": f"{e.__class__.__name__}: {e}"}, status_code=503)

@@ -1,3 +1,4 @@
+from typing import Optional
 import os
 from datetime import datetime, timezone
 from pathlib import Path
@@ -23,7 +24,6 @@ PUBLIC_BASE = os.getenv(
 # URL interna (dentro del mismo servicio)
 LOCAL_BASE = os.getenv("NATACHA_LOCAL_BASE", "http://127.0.0.1:8080")
 
-
 @router.get("/auto/list_repo")
 def auto_list_repo(subdir: str = Query(".", description="Subcarpeta dentro del repo")):
     root = (BASE_DIR / subdir).resolve()
@@ -40,7 +40,6 @@ def auto_list_repo(subdir: str = Query(".", description="Subcarpeta dentro del r
         )
     return {"status": "ok", "base": str(root), "items": items}
 
-
 @router.get("/auto/show_file")
 def auto_show_file(path: str = Query(..., description="Ruta relativa dentro del repo")):
     file_path = (BASE_DIR / path).resolve()
@@ -48,7 +47,6 @@ def auto_show_file(path: str = Query(..., description="Ruta relativa dentro del 
         raise HTTPException(status_code=404, detail=f"{path} no encontrado")
     content = file_path.read_text(encoding="utf-8")
     return {"status": "ok", "path": path, "content": content, "size": len(content)}
-
 
 def _detect_backups() -> List[dict]:
     """
@@ -81,7 +79,6 @@ def _detect_backups() -> List[dict]:
                 )
     return suspects
 
-
 def _log_auto(event: str, meta: dict):
     """Registra en assistant_ops para que quede historia."""
     db = get_client()
@@ -94,15 +91,11 @@ def _log_auto(event: str, meta: dict):
         }
     )
 
-
-def _post_json(
-    url: str, payload: dict, timeout: float = 4.0
-) -> Optional[requests.Response]:
+def _post_json(url: str, payload: dict, timeout: float = 4.0) -> Optional[requests.Response]:
     try:
         return requests.post(url, json=payload, timeout=timeout)
     except Exception:
         return None
-
 
 def _create_internal_task(title: str, detail: str, backups_count: int) -> dict:
     """
@@ -144,7 +137,6 @@ def _create_internal_task(title: str, detail: str, backups_count: int) -> dict:
     _post_json(f"{PUBLIC_BASE}/memory/add", mem_payload, timeout=3.0)
     return {"source": "fallback", "status": 500}
 
-
 @router.post("/auto/plan_refactor")
 def auto_plan_refactor(payload: dict = Body(...)):
     """
@@ -183,7 +175,7 @@ def auto_plan_refactor(payload: dict = Body(...)):
     )
 
     # guardar el plan y devolver id
-        plan_id = _store_refactor_plan(goal, backups)
+    plan_id = _store_refactor_plan(goal, backups)
     sample = backups[:5] if backups else []
 
     return {
@@ -194,7 +186,6 @@ def auto_plan_refactor(payload: dict = Body(...)):
         "plan_id": plan_id,
         "sample": sample,
     }
-
 
 def auto_log_action(payload: dict = Body(...)):
     """
@@ -208,25 +199,27 @@ def auto_log_action(payload: dict = Body(...)):
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
-
 def _store_refactor_plan(goal: str, backups: list) -> str:
     """
     Guarda el plan de refactor en Firestore para revisión humana.
-    NO ejecuta nada.
+    NO ejecuta nada; solo persiste el plan y devuelve el id del doc.
     """
     db = get_client()
     doc = {
         "kind": "auto-refactor-plan",
         "goal": goal,
-        "backups_count": len(backups),
-        "backups": backups[:50],  # no mandar TODO si es enorme
-        "approved": False,
+        "backups": backups,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
-    ref = db.collection("assistant_refactor_plans").add(doc)
-    if isinstance(ref, tuple) and len(ref) == 2:
-        return ref[1].id
     try:
-        return ref.id  # por si devuelve directamente la ref
+        # add() puede devolver un tuple (write_result, ref) o variar por SDK
+        res = db.collection("assistant_ops").add(doc)  # usa tu colección favorita si preferís una dedicada
+        # Intentar obtener un id robustamente
+        if isinstance(res, tuple):
+            # (update_time, DocumentReference)
+            ref = res[1]
+            return getattr(ref, "id", str(ref))
+        return getattr(res, "id", str(res))
     except Exception:
-        return ""
+        # En caso de fallo, igual devolvemos algo trazable
+        return "error-writing-refactor-plan"
