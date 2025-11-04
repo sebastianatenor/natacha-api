@@ -1,17 +1,6 @@
-# usa .dockerignore por defecto; pero explícitamente:
-.gcloudignore
-.git
-.venv
-__pycache__
-*.pyc
-*.pyo
-*.pyd
-*.bak
-*~
-*.old
-*.backup
-REGISTRY.md.bak*
-backups/
-infra_snapshots/
-logs/
-venv/
+# No ignores peligrosos: aseguramos incluir el código
+!routes/**
+!service_main.py
+!Dockerfile
+!requirements.txt
+# lo demás, tus exclusiones de siempre...

@@ -1,3 +1,4 @@
+from routes.db_util import get_client
 from fastapi.responses import JSONResponse
 from google.cloud.firestore import Query as FireQuery
 from google.cloud import firestore
@@ -55,7 +56,9 @@ def take_snapshot():
         "message": "snapshot creado",
         "memories": len(memories),
         "tasks": len(tasks),
-    }
+    
+    'tasks': _tasks_snapshot(get_client),
+}
 
 
 @router.get("/ops/snapshots")
@@ -207,3 +210,17 @@ def ops_debug_source():
             content = fh.read()
         sha = hashlib.sha256(content).hexdigest()
         return {"file_runtime": this_file, "sha256_this_module": sha}
+
+
+def _tasks_snapshot(get_client, limit: int = 3):
+    try:
+        db = get_client()
+        q = db.collection("assistant_tasks").order_by("created_at", direction="DESCENDING")
+        items = []
+        for i, doc in enumerate(q.stream()):
+            if i >= limit: break
+            d = doc.to_dict(); d["id"] = doc.id
+            items.append({"id": d.get("id",""), "title": d.get("title",""), "state": d.get("state",""), "created_at": d.get("created_at","")})
+        return {"count": len(items), "items": items}
+    except Exception as e:
+        return {"error": str(e)}

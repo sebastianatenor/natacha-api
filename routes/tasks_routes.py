@@ -7,7 +7,7 @@ from routes.db_util import get_client
 
 router = APIRouter()  # mismo esquema que auto_routes (sin prefix para mantener paths planos)
 
-def _now_iso():
+def now_iso():
     return datetime.now(timezone.utc).isoformat()
 
 @router.post("/tasks/add")
@@ -26,7 +26,7 @@ def tasks_add(payload: dict = Body(...)):
             "state": payload.get("state") or "pending",
             "due": payload.get("due") or "",
             "user_id": payload.get("user_id") or "system",
-            "created_at": _now_iso(),
+            "created_at": now_iso(),
             "source": "tasks_routes",
         }
         ref = db.collection("assistant_tasks").add(doc)
@@ -62,3 +62,23 @@ def tasks_list(
         return {"status": "ok", "count": len(items), "items": items}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"tasks_list error: {e}")
+
+@router.post("/tasks/update")
+def tasks_update(payload: dict = Body(...)):
+    """
+    Actualiza campos simples de una tarea: state, due, title, detail, project, channel.
+    Requiere: id
+    """
+    try:
+        tid = payload.get("id")
+        if not tid:
+            raise HTTPException(status_code=400, detail="missing id")
+        db = get_client()
+        ref = db.collection("assistant_tasks").document(tid)
+        fields = {k: v for k, v in payload.items() if k in {"state","due","title","detail","project","channel"}}
+        if not fields:
+            return {"status":"noop","id":tid}
+        ref.update(fields)
+        return {"status":"ok","id":tid,"updated":sorted(fields.keys())}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"tasks_update error: {e}")

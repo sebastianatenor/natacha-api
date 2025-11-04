@@ -1,28 +1,20 @@
-import os, logging
-from google.cloud import firestore
-from google.oauth2 import service_account
+from typing import Optional, Any, Dict
+from datetime import datetime, timezone
 
-logger = logging.getLogger("uvicorn.error")
+# Import perezoso de Firestore para no romper import-time si no está instalado
+def _lazy_firestore_client():
+    from google.cloud import firestore  # importa sólo cuando se usa
+    return firestore.Client()
 
-PROJECT_ID = os.getenv("GCP_PROJECT") or os.getenv("PROJECT_ID") or "asistente-sebastian"
-SA_KEY_PATH = os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or "/secrets/firestore-key.json"
+def get_client():
+    """
+    Devuelve un cliente de Firestore.
+    En Cloud Run usará las credenciales del service account por defecto.
+    En local podés usar GOOGLE_APPLICATION_CREDENTIALS si querés.
+    """
+    return _lazy_firestore_client()
 
-_db = None
+def now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
-def get_db():
-    """Singleton de Firestore con ADC o service account file."""
-    global _db
-    if _db is not None:
-        return _db
-    creds = None
-    try:
-        if SA_KEY_PATH and os.path.exists(SA_KEY_PATH):
-            creds = service_account.Credentials.from_service_account_file(SA_KEY_PATH)
-            logger.info("Firestore usando service account de %s", SA_KEY_PATH)
-        else:
-            logger.info("Firestore usando Application Default Credentials")
-        _db = firestore.Client(project=PROJECT_ID, credentials=creds)
-        return _db
-    except Exception:
-        logger.error("No se pudo inicializar Firestore", exc_info=True)
-        raise
+__all__ = ["get_client", "now_iso"]
