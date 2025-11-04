@@ -135,7 +135,7 @@ def ops_insights(limit: int = 20):
     except Exception as e:
         return JSONResponse(status_code=503, content={"status":"error","where":"/ops/insights","type":e.__class__.__name__,"msg":str(e)})
 
-@router.get("/ops/smart_health")
+@router.api_route("/ops/smart_health", methods=["GET","POST"])
 def ops_smart_health():
     """Chequeo de salud con prueba real a Firestore (limit 1)."""
     from datetime import datetime

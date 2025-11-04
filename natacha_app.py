@@ -1,3 +1,4 @@
+from fastapi.middleware.cors import CORSMiddleware
 
 from routes import ops_routes
 from routes import ops_health
@@ -7,7 +8,8 @@ import traceback
 from fastapi.responses import PlainTextResponse
 import os
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
+from fastapi.openapi.utils import get_openapi, Request
 
 from routes.core_routes import router as core_router  # 👈 NUEVO
 from routes.embeddings_routes import router as embeddings_router
@@ -18,6 +20,8 @@ from routes.tasks_routes import router as tasks_router
 
 app = FastAPI()
 
+
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 @app.get("/__alive")
 def __alive():
     return {"ok": True, "where": "app-core"}
@@ -170,7 +174,8 @@ except Exception:
 REMOTE_BOOTSTRAP = os.getenv("NATACHA_REMOTE_BOOTSTRAP", "1") == "1"
 REMOTE_BASE_URL = (os.getenv("REMOTE_BASE_URL") or "").rstrip("/")
 
-from fastapi import FastAPI  # por si el import de arriba estaba antes
+from fastapi import FastAPI
+from fastapi.openapi.utils import get_openapi  # por si el import de arriba estaba antes
 
 # Asegura que exista 'app' (si ya existe, no lo pisa)
 try:
@@ -226,3 +231,44 @@ def __debug_routes():
 @app.get("/ops/ping_core")
 def ping_core():
     return {"ok": True, "where": "app-core"}
+
+from routes import openapi_route
+app.include_router(openapi_route.router)
+
+# === Montar OpenAPI dinámico para Actions ===
+try:
+    from routes.openapi_dynamic import mount_openapi_dynamic
+    PUBLIC_URL = "https://natacha-api-422255208682.us-central1.run.app"
+    mount_openapi_dynamic(app, PUBLIC_URL)
+    print(f"[openapi] /openapi.json publicado con servers={PUBLIC_URL}")
+except Exception as e:
+    print("[openapi] No se pudo montar /openapi.json:", e)
+
+# === OpenAPI dinámico para Actions ===
+try:
+    from routes.openapi_dynamic import mount_openapi_dynamic
+    PUBLIC_URL = ""
+    mount_openapi_dynamic(app, PUBLIC_URL)
+    print(f"[openapi] /openapi.json servers={PUBLIC_URL}")
+except Exception as e:
+    print("[openapi] No se pudo montar /openapi.json:", e)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+# === OpenAPI servers override ===
+def custom_openapi():
+    public_url = os.environ.get("OPENAPI_PUBLIC_URL", "").rstrip("/")
+    schema = get_openapi(
+        title=getattr(app, "title", "Natacha API"),
+        version=getattr(app, "version", "1.0.0"),
+        description=getattr(app, "description", "Natacha Cloud API"),
+        routes=app.routes,
+    )
+    if public_url:
+        schema["servers"] = [{"url": public_url}]
+    return schema
+
+try:
+    app.openapi_schema = None
+except Exception:
+    pass
+app.openapi = custom_openapi
