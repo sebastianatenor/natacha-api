@@ -79,6 +79,7 @@ def list_snapshots(limit: int = 10):
 
 # === resumen operativo rápido (único) ===
 @router.get("/ops/summary")
+def ops_summary(limit: int = 10):
     """
     Devuelve en una sola respuesta:
     - últimas memorias
@@ -87,51 +88,51 @@ def list_snapshots(limit: int = 10):
     """
     db = get_db()
 
-            # 1) últimas memorias
-            mem_docs = (
-                db.collection("assistant_memory")
-                .order_by("timestamp", direction=FireQuery.DESCENDING)
-                .limit(limit)
-                .stream()
-            )
-            memories = []
-            for d in mem_docs:
-                data = d.to_dict()
-                data["id"] = d.id
-                memories.append(data)
+    # 1) últimas memorias
+    mem_docs = (
+        db.collection("assistant_memory")
+        .order_by("timestamp", direction=FireQuery.DESCENDING)
+        .limit(limit)
+        .stream()
+    )
+    memories = []
+    for d in mem_docs:
+        data = d.to_dict()
+        data["id"] = d.id
+        memories.append(data)
 
-            # 2) últimas tareas
-            task_docs = (
-                db.collection("assistant_tasks")
-                .order_by("created_at", direction=FireQuery.DESCENDING)
-                .limit(limit)
-                .stream()
-            )
-            tasks = []
-            for d in task_docs:
-                data = d.to_dict()
-                data["id"] = d.id
-                tasks.append(data)
+    # 2) últimas tareas
+    task_docs = (
+        db.collection("assistant_tasks")
+        .order_by("created_at", direction=FireQuery.DESCENDING)
+        .limit(limit)
+        .stream()
+    )
+    tasks = []
+    for d in task_docs:
+        data = d.to_dict()
+        data["id"] = d.id
+        tasks.append(data)
 
-            # 3) agrupar por proyecto
-            by_project = {}
-            for m in memories:
-                p = m.get("project", "general")
-                by_project.setdefault(p, {"memories": [], "tasks": []})
-                by_project[p]["memories"].append(m)
+    # 3) agrupar por proyecto
+    by_project = {}
+    for m in memories:
+        p = m.get("project", "general")
+        by_project.setdefault(p, {"memories": [], "tasks": []})
+        by_project[p]["memories"].append(m)
 
-            for t in tasks:
-                p = t.get("project", "general")
-                by_project.setdefault(p, {"memories": [], "tasks": []})
-                by_project[p]["tasks"].append(t)
+    for t in tasks:
+        p = t.get("project", "general")
+        by_project.setdefault(p, {"memories": [], "tasks": []})
+        by_project[p]["tasks"].append(t)
 
-            return {
-                "generated_at": datetime.now(timezone.utc).isoformat(),
-                "limit": limit,
-                "memories": memories,
-                "tasks": tasks,
-                "by_project": by_project,
-            }
+    return {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "limit": limit,
+        "memories": memories,
+        "tasks": tasks,
+        "by_project": by_project,
+    }
 
 
         # === capa de inteligencia ligera ===
