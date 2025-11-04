@@ -1,3 +1,17 @@
-!.git
-__pycache__/
+# usa .dockerignore por defecto; pero explícitamente:
+.gcloudignore
+.git
+.venv
+__pycache__
 *.pyc
+*.pyo
+*.pyd
+*.bak
+*~
+*.old
+*.backup
+REGISTRY.md.bak*
+backups/
+infra_snapshots/
+logs/
+venv/
