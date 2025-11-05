@@ -24,15 +24,19 @@ def ping():
 @router.get("/{owner}")
 def get_ctx(owner: str):
     ref = _fs().collection("context").document(owner)
-    doc = ref.get()
-    if not doc.exists:
+    snap = ref.get()
+    if not snap.exists:
         return {"owner": owner, "notes": []}
-    data = doc.to_dict() or {}
+    data = snap.to_dict() or {}
     return {"owner": owner, "notes": data.get("notes", [])}
 
 @router.post("/add_note/{owner}")
 def add_note(owner: str, body: AddNoteBody):
     ref = _fs().collection("context").document(owner)
-    note_doc = {"text": body.merged_text(), "tags": body.tags or [], "ts": firestore.SERVER_TIMESTAMP}
+    note_doc = {
+        "text": body.merged_text(),
+        "tags": body.tags or [],
+        "ts": firestore.SERVER_TIMESTAMP,
+    }
     ref.set({"notes": firestore.ArrayUnion([note_doc])}, merge=True)
     return {"ok": True, "appended": True, "ns": "ctx"}
