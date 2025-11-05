@@ -33,10 +33,6 @@ def get_ctx(owner: str):
 @router.post("/add_note/{owner}")
 def add_note(owner: str, body: AddNoteBody):
     ref = _fs().collection("context").document(owner)
-    note_doc = {
-        "text": body.merged_text(),
-        "tags": body.tags or [],
-        "ts": firestore.SERVER_TIMESTAMP,
-    }
+    note_doc = {"text": body.merged_text(), "tags": body.tags or [], "ts": firestore.SERVER_TIMESTAMP}
     ref.set({"notes": firestore.ArrayUnion([note_doc])}, merge=True)
     return {"ok": True, "appended": True, "ns": "ctx"}
