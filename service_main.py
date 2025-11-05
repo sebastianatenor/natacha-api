@@ -52,6 +52,18 @@ def custom_openapi():
     return app.openapi_schema
 
 app.openapi_schema = None
+
+import os, sys, logging
+logging.getLogger("uvicorn.error").setLevel(logging.INFO)
+print("BOOT: FastAPI module imported OK", flush=True)
+
+from fastapi import FastAPI
+app = FastAPI()
+
+@app.on_event("startup")
+async def _boot_banner():
+    print("BOOT: startup event fired (app is starting)", flush=True)
+
 app.openapi = custom_openapi
 
 # /openapi.v1.json compat
