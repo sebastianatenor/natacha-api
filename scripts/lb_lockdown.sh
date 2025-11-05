@@ -3,7 +3,7 @@ set -euo pipefail
 PROJ=${PROJ:-asistente-sebastian}
 REG=${REG:-us-central1}
 SVC=${SVC:-natacha-api}
-DOMAIN=${DOMAIN:-api.llvc-global.com}
+DOMAIN=${DOMAIN:?export DOMAIN antes de ejecutar}
 
 echo "== DNS check =="
 dig +short $DOMAIN
