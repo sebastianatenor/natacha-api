@@ -1,6 +1,6 @@
 - URL: https://natacha-api-422255208682.us-central1.run.app
 - Revisión:
-# Registro maestro de servicios — Proyecto asistente-sebastian (ID 422255208682)
+natacha-api-00151-wew
 
 > Estado consolidado y verificado tras eliminación del entorno duplicado (gen-lang-client-0363543020).
 > Todas las URLs, secretos y cuentas de servicio apuntan a la infraestructura principal en Cloud Run (us-central1).

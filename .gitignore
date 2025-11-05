@@ -69,3 +69,10 @@ knowledge/registry/REGISTRY.md.bak*
 # ---- allow tooling scripts (override broader ignores) ----
 !scripts/
 !scripts/**/*.sh
+
+# secrets
+firestore-key.json
+
+# Local-only
+svc.json
+svc.patched.json

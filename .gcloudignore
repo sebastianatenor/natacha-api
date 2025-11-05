@@ -1,3 +1,4 @@
-!.git
-__pycache__/
-*.pyc
+!routes/**
+!service_main.py
+!Dockerfile
+!requirements.txt

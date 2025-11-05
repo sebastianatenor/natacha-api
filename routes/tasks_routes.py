@@ -1,122 +1,84 @@
-from fastapi import APIRouter, Body, Query, HTTPException
-from fastapi.responses import PlainTextResponse
-import logging, traceback
+from fastapi import APIRouter, Body, HTTPException, Query
 from datetime import datetime, timezone
 from typing import Optional
 
-from google.cloud import firestore
-from app.utils.firestore_client import get_client
+# reusamos el cliente Firestore del proyecto
+from routes.db_util import get_client
 
-router = APIRouter(tags=["tasks"])
-logger = logging.getLogger("tasks")
+router = APIRouter()  # mismo esquema que auto_routes (sin prefix para mantener paths planos)
 
-
-@router.get("/tasks/search")
-def task_search(
-    project: Optional[str] = Query(default=None),
-    state: Optional[str] = Query(default=None),
-    limit: int = Query(default=20, le=100),
-):
-    """Busca tareas; ordena por timestamp (fallback created_at) y filtra opcionalmente por project/state."""
-    db = get_client()
-    try:
-        q = db.collection("assistant_tasks").order_by(
-            "timestamp", direction=firestore.Query.DESCENDING
-        )
-    except Exception:
-        q = db.collection("assistant_tasks").order_by(
-            "created_at", direction=firestore.Query.DESCENDING
-        )
-
-    docs = q.limit(200).stream()
-    out = []
-    for d in docs:
-        item = d.to_dict()
-        if project and item.get("project") != project:
-            continue
-        if state and item.get("state") != state:
-            continue
-        out.append({"id": d.id, **item})
-        if len(out) >= limit:
-            break
-    return out
-
+def now_iso():
+    return datetime.now(timezone.utc).isoformat()
 
 @router.post("/tasks/add")
-def task_add(payload: dict = Body(...)):
-    """Inserta una tarea con validación mínima y timestamps ISO-UTC."""
+def tasks_add(payload: dict = Body(...)):
+    """
+    Crea una tarea mínima en Firestore.
+    Espera (sugerido, no obligatorio): title, detail, project, channel, state, due, user_id
+    """
     try:
-        req = {k: payload.get(k, "") for k in ("summary","detail","project","channel","state","visibility","impact")}
-        # campos requeridos
-        for k in ("summary","project","channel"):
-            if not req[k]:
-                raise HTTPException(status_code=400, detail=f"{k} is required")
-
-        now = datetime.now(timezone.utc).isoformat()
-        doc = {
-            **req,
-            "state": req.get("state") or "vigente",
-            "visibility": req.get("visibility") or "equipo",
-            "impact": req.get("impact") or "medio",
-            "timestamp": now,
-            "created_at": now,
-            "created_by": "api.tasks.add",
-        }
         db = get_client()
-        db.collection("assistant_tasks").add(doc)
-        return {"status": "ok", "stored": doc}
-    except HTTPException:
-        raise
-    except Exception:
-        tb = traceback.format_exc()
-        logger.exception("tasks.add failed | payload=%s\n%s", payload, tb)
-        return PlainTextResponse(tb, status_code=500)
+        doc = {
+            "title": payload.get("title") or "(untitled)",
+            "detail": payload.get("detail") or "",
+            "project": payload.get("project") or "Natacha",
+            "channel": payload.get("channel") or "api",
+            "state": payload.get("state") or "pending",
+            "due": payload.get("due") or "",
+            "user_id": payload.get("user_id") or "system",
+            "created_at": now_iso(),
+            "source": "tasks_routes",
+        }
+        ref = db.collection("assistant_tasks").add(doc)
+        task_id = ref[1].id if isinstance(ref, tuple) and len(ref) == 2 else getattr(ref, "id", "")
+        return {"status": "ok", "id": task_id, "task": doc}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"tasks_add error: {e}")
 
-
-# Endpoints diagnósticos (para aislar problemas de ruteo/Firestore)
-@router.post("/tasks/add_raw")
-def tasks_add_raw(payload: dict = Body(...)):
-    """Inserción permisiva sin validaciones — útil para aislar errores."""
+@router.get("/tasks/list")
+def tasks_list(
+    project: Optional[str] = Query(default=None),
+    state: Optional[str] = Query(default=None),
+    limit: int = Query(default=20, ge=1, le=200),
+):
+    """
+    Lista tareas desde Firestore (assistant_tasks), con filtros simples.
+    """
     try:
-        now = datetime.now(timezone.utc).isoformat()
-        doc = {
-            "summary": payload.get("summary", "no-summary"),
-            "detail": payload.get("detail", ""),
-            "project": payload.get("project", "LLVC"),
-            "channel": payload.get("channel", "gpt-chat"),
-            "state": payload.get("state", "vigente"),
-            "visibility": payload.get("visibility", "equipo"),
-            "impact": payload.get("impact", "medio"),
-            "timestamp": now,
-            "created_at": now,
-            "created_by": "api.tasks.add_raw",
-        }
         db = get_client()
-        db.collection("assistant_tasks").add(doc)
-        return {"status":"ok","stored":doc}
-    except Exception:
-        return PlainTextResponse(traceback.format_exc(), status_code=500)
+        q = db.collection("assistant_tasks").order_by("created_at", direction="DESCENDING")
+        if project:
+            q = q.where("project", "==", project)
+        if state:
+            q = q.where("state", "==", state)
 
+        items = []
+        for i, doc in enumerate(q.stream()):
+            if i >= limit:
+                break
+            d = doc.to_dict()
+            d["id"] = doc.id
+            items.append(d)
+        return {"status": "ok", "count": len(items), "items": items}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"tasks_list error: {e}")
 
-@router.get("/tasks/selftest")
-def tasks_selftest():
-    """Autotest: escribe un doc mínimo en assistant_tasks y devuelve 200 si todo ok."""
+@router.post("/tasks/update")
+def tasks_update(payload: dict = Body(...)):
+    """
+    Actualiza campos simples de una tarea: state, due, title, detail, project, channel.
+    Requiere: id
+    """
     try:
-        now = datetime.now(timezone.utc).isoformat()
-        doc = {
-            "summary": "tasks.selftest",
-            "detail": "autotest",
-            "project": "LLVC",
-            "channel": "selftest",
-            "state": "vigente",
-            "visibility": "equipo",
-            "impact": "bajo",
-            "timestamp": now,
-            "created_at": now,
-            "created_by": "api.tasks.selftest",
-        }
+        tid = payload.get("id")
+        if not tid:
+            raise HTTPException(status_code=400, detail="missing id")
         db = get_client()
-        db.collection("assistant_tasks").add(doc)
-        return {"status":"ok","wrote":"assistant_tasks","doc":doc}
-    except Exception:
-        return PlainTextResponse(traceback.format_exc(), status_code=500)
+        ref = db.collection("assistant_tasks").document(tid)
+        fields = {k: v for k, v in payload.items() if k in {"state","due","title","detail","project","channel"}}
+        if not fields:
+            return {"status":"noop","id":tid}
+        ref.update(fields)
+        return {"status":"ok","id":tid,"updated":sorted(fields.keys())}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"tasks_update error: {e}")

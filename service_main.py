@@ -1,12 +1,20 @@
+from routes.cog_routes import router as cog_router
+from routes.actions_routes import router as actions_router
+from routes.tasks_routes import router as tasks_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 import os, hashlib, traceback
+from routes.auto_routes import router as auto_router
 
 app = FastAPI(title="Natacha API", version="1.0.0")
+app.include_router(cog_router)
+app.include_router(actions_router)
 
-# CORS amplio (ajustá si querés restringir)
+app.include_router(tasks_router)
+
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.include_router(auto_router)
 
 @app.get("/__alive")
 def __alive():
@@ -20,7 +28,7 @@ def __sha():
     except Exception as e:
         return {"error": str(e)}
 
-# Montar routers opcionales si existen (no rompe si faltan)
+# Routers opcionales (no rompe si faltan)
 IMPORT_ERR = None
 try:
     from routes import ops_routes
@@ -32,7 +40,6 @@ except Exception as e:
 def __ops_import_status():
     return {"import_ok": IMPORT_ERR is None, "error": IMPORT_ERR}
 
-# Hook OpenAPI para inyectar 'servers' desde OPENAPI_PUBLIC_URL
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
@@ -47,7 +54,7 @@ def custom_openapi():
 app.openapi_schema = None
 app.openapi = custom_openapi
 
-# Exponer /openapi.v1.json compatible
+# /openapi.v1.json compat
 try:
     from routes.openapi_compat import router as openapi_router
     app.include_router(openapi_router)
