@@ -1,20 +1,26 @@
-from routes.cog_routes import router as cog_router
-from routes.actions_routes import router as actions_router
-from routes.tasks_routes import router as tasks_router
+from routes import ops_routes, context2_routes
+# MARK service_main ctx2 enabled
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-import os, hashlib, traceback
-from routes.auto_routes import router as auto_router
+import os, hashlib
+
+from routes.context_routes import router as ctx_router
+from routes.context2_routes import router as ctx2_router
 
 app = FastAPI(title="Natacha API", version="1.0.0")
-app.include_router(cog_router)
-app.include_router(actions_router)
 
-app.include_router(tasks_router)
+# Routers
+app.include_router(ctx_router)
+app.include_router(ctx2_router)
 
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
-app.include_router(auto_router)
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/__alive")
 def __alive():
@@ -28,47 +34,20 @@ def __sha():
     except Exception as e:
         return {"error": str(e)}
 
-# Routers opcionales (no rompe si faltan)
-IMPORT_ERR = None
-try:
-    from routes import ops_routes
-    app.include_router(ops_routes.router)
-except Exception as e:
-    IMPORT_ERR = "".join(traceback.format_exception_only(type(e), e)).strip()
-
-@app.get("/__ops_import_status")
-def __ops_import_status():
-    return {"import_ok": IMPORT_ERR is None, "error": IMPORT_ERR}
-
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
-    schema = get_openapi(title=app.title, version=app.version, routes=app.routes, description="Natacha API")
-    public = os.getenv("OPENAPI_PUBLIC_URL","").rstrip("/")
+    schema = get_openapi(
+        title=app.title, version=app.version, routes=app.routes, description="Natacha API"
+    )
+    public = os.getenv("OPENAPI_PUBLIC_URL", "").strip("/")
     if public:
         schema["servers"] = [{"url": public}]
-    schema["openapi"] = "3.1.0"
     app.openapi_schema = schema
     return app.openapi_schema
 
-app.openapi_schema = None
-
-import os, sys, logging
-logging.getLogger("uvicorn.error").setLevel(logging.INFO)
-print("BOOT: FastAPI module imported OK", flush=True)
-
-from fastapi import FastAPI
-app = FastAPI()
-
-@app.on_event("startup")
-async def _boot_banner():
-    print("BOOT: startup event fired (app is starting)", flush=True)
-
 app.openapi = custom_openapi
 
-# /openapi.v1.json compat
-try:
-    from routes.openapi_compat import router as openapi_router
-    app.include_router(openapi_router)
-except Exception:
-    pass
+# === auto-include added ===
+app.include_router(ops_routes.router)
+app.include_router(context2_routes.router)
