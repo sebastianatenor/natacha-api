@@ -51,3 +51,18 @@ app.openapi = custom_openapi
 # === auto-include added ===
 app.include_router(ops_routes.router)
 app.include_router(context2_routes.router)
+
+# === auto-include (forced) ===
+try:
+    from routes import ctx_routes, ops_routes
+    try:
+        app.include_router(ctx_routes.router)
+    except Exception as _e:
+        print("WARN include ctx_routes:", _e)
+    try:
+        app.include_router(ops_routes.router)
+    except Exception as _e:
+        print("WARN include ops_routes:", _e)
+except Exception as e:
+    print("WARN imports for ctx/ops failed:", e)
+
