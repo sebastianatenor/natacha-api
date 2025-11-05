@@ -5,7 +5,12 @@ from google.cloud import firestore
 
 import os
 
-from routes.db_util import get_db
+try:
+    from routes.db_util import get_db
+except Exception:
+    def _fallback_get_db():
+        return None
+    get_db = _fallback_get_db
 from datetime import datetime, timezone
 
 from fastapi import APIRouter
