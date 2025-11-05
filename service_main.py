@@ -54,6 +54,18 @@ def custom_openapi():
 app.openapi_schema = None
 app.openapi = custom_openapi
 
+from fastapi.responses import JSONResponse
+@app.get("/__debug/routes")
+def __debug_routes():
+    out=[]
+    for r in app.router.routes:
+        try:
+            out.append({"path": r.path, "methods": sorted(list(r.methods))})
+        except Exception:
+            pass
+    return JSONResponse(out)
+
+
 # /openapi.v1.json compat
 try:
     from routes.openapi_compat import router as openapi_router
