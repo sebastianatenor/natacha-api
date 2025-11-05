@@ -20,14 +20,14 @@ LOCATION="us-central1"
 
 # === Auth for signed HTTP checks ===
 IMPERSONATE_SA="scheduler-invoker@asistente-sebastian.iam.gserviceaccount.com"
-HEALTH_AUD="https://natacha-health-monitor-mkwskljrhq-uc.a.run.app"
+HEALTH_AUD="https://natacha-health-monitor-422255208682.us-central1.run.app"
 API_HEALTH_URL="https://natacha-api-422255208682.us-central1.run.app/health"
-AUTO_HEAL_URL="https://natacha-health-monitor-mkwskljrhq-uc.a.run.app/auto_heal"
+AUTO_HEAL_URL="https://natacha-health-monitor-422255208682.us-central1.run.app/auto_heal"
 # === Auth for signed HTTP checks ===
 IMPERSONATE_SA="scheduler-invoker@asistente-sebastian.iam.gserviceaccount.com"
-HEALTH_AUD="https://natacha-health-monitor-mkwskljrhq-uc.a.run.app"
+HEALTH_AUD="https://natacha-health-monitor-422255208682.us-central1.run.app"
 API_HEALTH_URL="https://natacha-api-422255208682.us-central1.run.app/health"
-AUTO_HEAL_URL="https://natacha-health-monitor-mkwskljrhq-uc.a.run.app/auto_heal"
+AUTO_HEAL_URL="https://natacha-health-monitor-422255208682.us-central1.run.app/auto_heal"
 
 # ================== SISTEMA ==================
 log "▶ sys.uname"

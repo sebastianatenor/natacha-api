@@ -1,6 +1,4 @@
-# No ignores peligrosos: aseguramos incluir el código
 !routes/**
 !service_main.py
 !Dockerfile
 !requirements.txt
-# lo demás, tus exclusiones de siempre...

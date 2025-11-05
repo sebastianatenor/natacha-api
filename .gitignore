@@ -72,3 +72,7 @@ knowledge/registry/REGISTRY.md.bak*
 
 # secrets
 firestore-key.json
+
+# Local-only
+svc.json
+svc.patched.json
