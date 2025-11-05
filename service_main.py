@@ -30,6 +30,9 @@ from routes.context2_routes import router as ctx2_router
 
 app = FastAPI(title="Natacha API", version="1.0.0")
 
+app.include_router(ctx_routes.router)
+app.include_router(ops_routes.router)
+
 # === explicit wire by plan F2 ===
 try:
     from routes import ctx_routes, ops_routes
