@@ -1,5 +1,4 @@
-
-from fastapi import APIRouter, Response, HTTPException, Depends, Request, Query
+from fastapi import APIRouter, Response, Query, Request
 from typing import List, Optional
 from io import StringIO
 import csv, json
@@ -38,25 +37,21 @@ def export_notes(owner: str = Query(...), fmt: str = "jsonl", limit: int = 1000)
                 "ts": r["ts"] or ""
             })
         return Response(buf.getvalue(), media_type="text/csv")
-    # default jsonl
     return Response("\n".join(json.dumps(r, ensure_ascii=False) for r in rows),
                     media_type="application/x-ndjson")
 
 from pydantic import BaseModel
-
 class ImportItem(BaseModel):
     text: str
     tags: Optional[List[str]] = None
-
 class ImportPayload(BaseModel):
     items: List[ImportItem]
 
 @router.post("/import")
 def import_notes(payload: ImportPayload, owner: str = Query(...), request: Request = None):
-    # Seguridad: exige x-api-key verificada por tu middleware global (ya lo tenés activo)
     fs = _fs()
     batch = fs.batch()
-    coll = (fs.collection("context").document(owner).collection("notes"))
+    coll = fs.collection("context").document(owner).collection("notes")
     count = 0
     for it in payload.items:
         doc_ref = coll.document()

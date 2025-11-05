@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from routes import ctx_routes, ops_routes, tools_routes
+from routes import ctx_routes, ops_routes, tools_routes, tools_routes
 import os
 
 API_KEY = os.getenv("NATACHA_API_KEY", "dev-key")
