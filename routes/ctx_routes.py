@@ -9,16 +9,12 @@ def _fs():
     return firestore.Client()
 
 class AddNoteBody(BaseModel):
-    # aceptamos ambos nombres para compatibilidad
     text: Optional[str] = Field(default=None)
     note: Optional[str] = Field(default=None)
     tags: Optional[List[str]] = None
-
     def merged_text(self) -> str:
-        if self.text and isinstance(self.text, str):
-            return self.text
-        if self.note and isinstance(self.note, str):
-            return self.note
+        if self.text: return self.text
+        if self.note: return self.note
         raise ValueError("field 'text' (o 'note') requerido")
 
 @router.get("/ping")
@@ -37,10 +33,6 @@ def get_ctx(owner: str):
 @router.post("/add_note/{owner}")
 def add_note(owner: str, body: AddNoteBody):
     ref = _fs().collection("context").document(owner)
-    note_doc = {
-        "text": body.merged_text(),
-        "tags": body.tags or [],
-        "ts": firestore.SERVER_TIMESTAMP,
-    }
+    note_doc = {"text": body.merged_text(), "tags": body.tags or [], "ts": firestore.SERVER_TIMESTAMP}
     ref.set({"notes": firestore.ArrayUnion([note_doc])}, merge=True)
     return {"ok": True, "appended": True, "ns": "ctx"}
