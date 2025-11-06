@@ -204,3 +204,11 @@ natacha-api-00151-wew
 - Imagen: us-central1-docker.pkg.dev/asistente-sebastian/natacha-repo/memory_console:fix-port-v2
 - Revisión activa: natacha-memory-console-00049-s2d
 - Último deploy: 2025-11-06
+
+## natacha-memory-console
+- URL: https://natacha-memory-console-422255208682.us-central1.run.app
+- Imagen: us-central1-docker.pkg.dev/asistente-sebastian/natacha-repo/memory_console:v1-mem3
+- Revisión activa: natacha-memory-console-00056-4t5
+- Service Account: natacha-memory-console@asistente-sebastian.iam.gserviceaccount.com
+- Env: MEM_CONSOLE_TOKEN (guardado en Cloud Run)
+- Último deploy: 2025-11-06
