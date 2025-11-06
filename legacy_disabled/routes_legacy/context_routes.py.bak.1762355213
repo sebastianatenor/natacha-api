@@ -1,0 +1,62 @@
+from fastapi import APIRouter, HTTPException
+from typing import Dict, Any, List
+import os
+
+_db = None
+def _fs():
+    global _db
+    if _db is None:
+        from google.cloud import firestore
+        _db = firestore.Client()
+    return _db
+
+COLL = os.getenv("CTX_COLLECTION", "context")
+router = APIRouter(prefix="/context", tags=["context"])
+
+@router.get("/ping")
+def ping_context():
+    return {"ok": True, "component": "context", "collection": COLL}
+
+@router.head("/ping")
+def ping_context_head():
+    return {}
+
+@router.get("/{owner}")
+def get_context(owner: str) -> Dict[str, Any]:
+    doc = _fs().collection(COLL).document(owner).get()
+    return doc.to_dict() or {}
+
+@router.post("/upsert/{owner}")
+def upsert(owner: str, body: Dict[str, Any]) -> Dict[str, Any]:
+    _fs().collection(COLL).document(owner).set(body, merge=True)
+    return {"ok": True, "owner": owner}
+
+@router.post("/add_note/{owner}")
+def add_note(owner: str, body: Dict[str, Any]) -> Dict[str, Any]:
+    note = body.get("note")
+    if not note:
+        raise HTTPException(400, "field 'note' requerido")
+    ref = _fs().collection(COLL).document(owner)
+    snap = ref.get()
+    data = snap.to_dict() or {}
+    notes: List[str] = data.get("notes", [])
+    notes.append(note)
+    ref.set({"notes": notes}, merge=True)
+    return {"ok": True, "notes_len": len(notes)}
+
+
+@router.get("/_meta")
+def _meta_context():
+    import hashlib, inspect
+    src_file = __file__
+    try:
+        raw = Path(src_file).read_bytes()
+        sha = hashlib.sha256(raw).hexdigest()
+    except Exception:
+        sha = "ERR"
+    # También devolvemos los primeros 3 renglones de la función add_note para ver su firma
+    try:
+        add_src = inspect.getsource(add_note).splitlines()[:3]
+    except Exception:
+        add_src = []
+    return {"file": src_file, "sha256": sha, "add_note_head": add_src}

@@ -1,4 +1,11 @@
-!routes/**
-!service_main.py
-!Dockerfile
-!requirements.txt
+.git
+.venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.bak
+*~
+*.old
+*.backup
+venv/

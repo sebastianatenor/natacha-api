@@ -1,32 +1,47 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from routes import ctx_routes, ops_routes, tools_routes, tools_routes
+from canal_a.routes import ctx_routes, ops_routes
 import os
 
 API_KEY = os.getenv("NATACHA_API_KEY", "dev-key")
-
 app = FastAPI(title="natacha-api-a")
 
-# ---- CORS ----
-origins = ["*"]  # podés restringir luego
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
 )
 
-# ---- Auth básica (solo en métodos mutables) ----
 @app.middleware("http")
-async def check_auth(request: Request, call_next):
-    if request.method in ("POST", "PATCH", "DELETE"):
-        key = request.headers.get("x-api-key")
-        if key != API_KEY:
+async def key_guard(request: Request, call_next):
+    if request.method in ("POST","PATCH","DELETE"):
+        if request.headers.get("x-api-key") != API_KEY:
             from starlette.responses import JSONResponse
             return JSONResponse({"ok": False, "error": "invalid API key"}, status_code=401)
     return await call_next(request)
 
-# ---- Routers ----
 app.include_router(ctx_routes.router)
-app.include_router(tools_routes.router)
 app.include_router(ops_routes.router)
+
+
+from fastapi import APIRouter
+import sys, inspect
+from canal_a.routes import ops_routes as _ops_mod, ctx_routes as _ctx_mod
+
+diag = APIRouter(prefix="/ops", tags=["ops"])
+
+@diag.get("/routes_dump")
+def routes_dump():
+    return {
+        "count": len(app.routes),
+        "paths": sorted([getattr(r, "path", str(r)) for r in app.routes]),
+    }
+
+@diag.get("/whoami")
+def whoami():
+    return {
+        "sys_path": sys.path,
+        "ops_routes_file": inspect.getsourcefile(_ops_mod),
+        "ctx_routes_file": inspect.getsourcefile(_ctx_mod),
+        "uvicorn_app": str(app.title),
+    }
+
+app.include_router(diag)

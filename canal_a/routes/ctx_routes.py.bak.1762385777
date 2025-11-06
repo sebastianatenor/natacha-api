@@ -1,0 +1,249 @@
+
+from fastapi import APIRouter, Response, HTTPException, Query
+from pydantic import BaseModel
+from typing import List, Optional, Dict, Any
+from google.cloud import firestore
+from datetime import datetime, timezone, timedelta
+
+router = APIRouter(prefix="/ctx")
+
+def _fs():
+    return firestore.Client()
+
+class AddNoteBody(BaseModel):
+    text: str
+    tags: Optional[List[str]] = None
+
+class UpdateNoteBody(BaseModel):
+    text: Optional[str] = None
+    tags: Optional[List[str]] = None
+
+def _to_iso(ts):
+    if ts is None:
+        return None
+    try:
+        return ts.isoformat()
+    except Exception:
+        return str(ts)
+
+@router.get("/ping")
+def ping():
+    return {"ok": True, "ns": "ctx", "firestore": "wired"}
+
+@router.post("/add_note/{owner}")
+def add_note(owner: str, body: AddNoteBody):
+    doc = {"text": body.text, "tags": body.tags or [], "ts": firestore.SERVER_TIMESTAMP}
+    _fs().collection("context").document(owner).collection("notes").add(doc)
+    return {"ok": True, "added": True}
+
+
+@router.get("/tools/export")
+def export_notes(owner: str, fmt: str = "jsonl", limit: int = 1000):
+    fs = _fs()
+    docs = (fs.collection("context").document(owner)
+                .collection("notes")
+                .order_by("ts", direction=firestore.Query.DESCENDING)
+                .limit(limit).stream())
+    rows = []
+    for d in docs:
+        data = d.to_dict() or {}
+        rows.append({
+            "id": d.id,
+            "text": data.get("text",""),
+            "tags": data.get("tags",[]),
+            "ts": (data.get("ts").isoformat() if data.get("ts") else None)
+        })
+    f = (fmt or "jsonl").lower()
+    if f == "csv":
+        buf = StringIO()
+        w = csv.DictWriter(buf, fieldnames=["id","text","tags","ts"])
+        w.writeheader()
+        for r in rows:
+            w.writerow({"id": r["id"], "text": r["text"],
+                        "tags": ",".join(r.get("tags",[])),
+                        "ts": r["ts"] or ""})
+    payload = "\\n".join(json.dumps(r, ensure_ascii=False) for r in rows)
+
+class ImportItem(BaseModel):
+    text: str
+    tags: Optional[List[str]] = None
+
+class ImportBody(BaseModel):
+    items: List[ImportItem]
+
+@router.post("/tools/import")
+def import_notes(owner: str, body: ImportBody):
+    fs = _fs()
+    batch = fs.batch()
+    col = fs.collection("context").document(owner).collection("notes")
+    count = 0
+    for it in body.items:
+        doc = col.document()
+        count += 1
+    batch.commit()
+
+@router.get("/{owner}")
+def list_notes(owner: str, limit: int = 10, cursor: Optional[str] = None):
+    notes_ref = _fs().collection("context").document(owner).collection("notes")
+    q = notes_ref.order_by("ts", direction=firestore.Query.DESCENDING).limit(limit)
+    if cursor:
+        try:
+            q = q.start_after({"ts": datetime.fromisoformat(cursor.replace("Z","+00:00"))})
+        except Exception:
+            pass
+    docs = list(q.stream())
+    items = []
+    next_cursor = None
+    for d in docs:
+        data = d.to_dict() or {}
+        items.append({"id": d.id, "text": data.get("text"), "tags": data.get("tags", []), "ts": _to_iso(data.get("ts"))})
+    if items:
+        next_cursor = items[-1]["ts"]
+    return {"owner": owner, "notes": items, "next_cursor": next_cursor}
+
+@router.get("/{owner}/{note_id}")
+def get_one(owner: str, note_id: str):
+    ref = _fs().collection("context").document(owner).collection("notes").document(note_id)
+    snap = ref.get()
+    if not snap.exists:
+        raise HTTPException(status_code=404, detail="Not Found")
+    data = snap.to_dict() or {}
+    return {"id": note_id, "text": data.get("text"), "tags": data.get("tags", []), "ts": _to_iso(data.get("ts"))}
+
+@router.patch("/{owner}/{note_id}")
+def update_one(owner: str, note_id: str, body: UpdateNoteBody):
+    ref = _fs().collection("context").document(owner).collection("notes").document(note_id)
+    if not ref.get().exists:
+        raise HTTPException(status_code=404, detail="Not Found")
+    upd = {}
+    if body.text is not None: upd["text"] = body.text
+    if body.tags is not None: upd["tags"] = body.tags
+    if not upd:
+        return {"ok": True, "updated": False}
+    ref.update(upd)
+    return {"ok": True, "updated": True}
+
+@router.delete("/{owner}/{note_id}")
+def delete_one(owner: str, note_id: str):
+    ref = _fs().collection("context").document(owner).collection("notes").document(note_id)
+    if not ref.get().exists:
+        raise HTTPException(status_code=404, detail="Not Found")
+    ref.delete()
+    return {"ok": True, "deleted": True}
+
+@router.get("/{owner}/search")
+def search(owner: str, q: str = Query(..., min_length=1)):
+    notes_ref = _fs().collection("context").document(owner).collection("notes")
+    docs = list(notes_ref.order_by("ts", direction=firestore.Query.DESCENDING).stream())
+    q_low = q.lower()
+    res = []
+    for d in docs:
+        data = d.to_dict() or {}
+        text = (data.get("text") or "")
+        if q_low in text.lower():
+            res.append({"id": d.id, "text": data.get("text"), "tags": data.get("tags", []), "ts": _to_iso(data.get("ts"))})
+    return {"owner": owner, "q": q, "results": res}
+
+
+@router.post("/compact/{owner}")
+def compact_day(owner: str, day: Optional[str] = Query(None, regex=r"^\d{4}-\d{2}-\d{2}$")):
+    """Compacta todas las notas del día en un resumen (subcolección summaries)."""
+    fs = _fs()
+    day = day or datetime.now(timezone.utc).date().isoformat()
+    start = datetime.fromisoformat(day).replace(tzinfo=timezone.utc)
+    end = start + timedelta(days=1)
+
+    notes_ref = fs.collection("context").document(owner).collection("notes")
+    q = notes_ref.where("ts", ">=", start).where("ts", "<", end).order_by("ts")
+    notes = []
+    for s in q.stream():
+        d = s.to_dict() or {}
+        ts = d.get("ts")
+        iso = ts.isoformat() if ts else None
+        tags = d.get("tags") or []
+        notes.append(f"- [{iso}] {d.get('text','')} ({', '.join(tags)})")
+
+    fs.collection("context").document(owner).collection("summaries").document(day).set({
+        "day": day,
+        "count": len(notes),
+        "summary": "\n".join(notes),
+        "created_ts": firestore.SERVER_TIMESTAMP,
+    }, merge=True)
+
+    return {"ok": True, "owner": owner, "day": day, "count": len(notes)}
+
+@router.get("/{owner}/summaries/{day}")
+def get_summary(owner: str, day: str):
+    fs = _fs()
+    snap = fs.collection("context").document(owner).collection("summaries").document(day).get()
+    if not snap.exists:
+        raise HTTPException(status_code=404, detail="Not Found")
+    data = snap.to_dict() or {}
+    return {
+        "owner": owner,
+        "day": data.get("day", day),
+        "count": data.get("count", 0),
+        "summary": data.get("summary", ""),
+        "created_ts": (data.get("created_ts").isoformat() if data.get("created_ts") else None),
+    }
+
+
+from fastapi import Response
+from io import StringIO
+import csv
+import json
+from datetime import datetime, timezone
+from pydantic import BaseModel
+from typing import List, Optional
+
+
+class ImportItem(BaseModel):
+    text: str
+    tags: Optional[List[str]] = None
+
+class ImportBody(BaseModel):
+    items: List[ImportItem]
+
+
+
+    fs = _fs()
+    docs = (fs.collection("context").document(owner)
+                .collection("notes")
+                .order_by("ts", direction=firestore.Query.DESCENDING)
+                .limit(limit).stream())
+    rows = []
+    for d in docs:
+        data = d.to_dict() or {}
+        rows.append({
+            "id": d.id,
+            "text": data.get("text",""),
+            "tags": data.get("tags",[]),
+            "ts": (data.get("ts").isoformat() if data.get("ts") else None)
+        })
+    f = (fmt or "jsonl").lower()
+    if f == "csv":
+        buf = StringIO()
+        w = csv.DictWriter(buf, fieldnames=["id","text","tags","ts"])
+        w.writeheader()
+        for r in rows:
+            w.writerow({"id": r["id"], "text": r["text"],
+                        "tags": ",".join(r.get("tags",[])),
+                        "ts": r["ts"] or ""})
+    payload = "\n".join(json.dumps(r, ensure_ascii=False) for r in rows)
+
+
+class ImportItem(BaseModel):
+    text: str
+    tags: Optional[List[str]] = None
+
+class ImportBody(BaseModel):
+    items: List[ImportItem]
+
+    fs = _fs()
+    batch = fs.batch()
+    col = fs.collection("context").document(owner).collection("notes")
+    count = 0
+    for it in body.items:
+        doc = col.document()
+        count += 1
+    batch.commit()
