@@ -45,3 +45,37 @@ def whoami():
     }
 
 app.include_router(diag)
+
+
+from importlib.metadata import version as _pkg_version
+import os, sys, json, platform
+from datetime import datetime
+
+@app.get("/ops/version", tags=["ops"])
+def ops_version():
+    # build_stamp si existe (lo copiamos al contenedor como /app/.build_stamp)
+    stamp = None
+    try:
+        with open("/app/.build_stamp","r") as f:
+            stamp = f.read().strip()
+    except Exception:
+        pass
+
+    pkgs = {}
+    for name in ("fastapi","uvicorn","google-cloud-firestore","google-auth","requests"):
+        try:
+            pkgs[name] = _pkg_version(name)
+        except Exception:
+            pkgs[name] = None
+
+    return {
+        "ok": True,
+        "service": os.getenv("K_SERVICE","unknown"),
+        "revision": os.getenv("K_REVISION","unknown"),
+        "stamp": stamp,
+        "python": sys.version.split()[0],
+        "platform": platform.platform(),
+        "packages": pkgs,
+        "utc": datetime.utcnow().isoformat() + "Z",
+    }
+
