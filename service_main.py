@@ -1,3 +1,4 @@
+from routes.health_routes import router as health_router
 from routes.cog_routes import router as cog_router
 from routes.actions_routes import router as actions_router
 from routes.tasks_routes import router as tasks_router
@@ -7,7 +8,8 @@ from fastapi.openapi.utils import get_openapi
 import os, hashlib, traceback
 from routes.auto_routes import router as auto_router
 
-app = FastAPI(title="Natacha API", version="1.0.0")
+app = FastAPI()
+app.include_router(health_router)
 app.include_router(cog_router)
 app.include_router(actions_router)
 
@@ -60,3 +62,83 @@ try:
     app.include_router(openapi_router)
 except Exception:
     pass
+# --- Health at root (idempotente) ---
+try:
+    app
+except NameError:
+    from fastapi import FastAPI
+#     app = FastAPI()  # DUPLICATE REMOVED
+
+@app.get("/health", include_in_schema=False)
+def _health():
+    return {"status": "ok"}
+
+# --- FINAL fallback health (direct on app) ---
+try:
+    app
+except NameError:
+    from fastapi import FastAPI
+#     app = FastAPI()  # DUPLICATE REMOVED
+
+@app.get("/health", include_in_schema=False)
+def health_final():
+    return {"status": "ok (fallback)"}
+
+# --- Canonical /health (must be after final app assignment) ---
+try:
+    app
+except NameError:
+    from fastapi import FastAPI
+#     app = FastAPI()  # DUPLICATE REMOVED
+
+@app.get("/health", include_in_schema=False)
+def health():
+    return {"status": "ok"}
+
+# === Debug: saber desde dónde corre Uvicorn y qué rutas hay ===
+from fastapi import APIRouter
+_debug_router = APIRouter()
+
+@_debug_router.get("/__whoami", include_in_schema=False)
+def __whoami():
+    import inspect
+    return {
+        "module": __name__,
+        "file": __file__,
+        "app_type": str(type(app)),
+        "routes_count": len(app.router.routes),
+    }
+
+@_debug_router.get("/__routes", include_in_schema=False)
+def __routes():
+    return [getattr(r, "path", str(r)) for r in app.router.routes]
+
+app.include_router(_debug_router)
+
+# ---- canonical health endpoint (direct on main app) ----
+try:
+    from fastapi import HTTPException
+    @app.get("/health", include_in_schema=False)
+    def _health():
+        # keep it super light & deterministic
+        return {"status": "ok", "source": "service_main"}
+except Exception as e:
+    # If something odd happens during import, fail visibly in logs
+    print("WARN: could not register /health on service_main:", e)
+# === injected diagnostics: health + route dump (idempotent) ===
+try:
+    from fastapi import APIRouter
+    _diag = APIRouter()
+
+    @_diag.get("/__routes2", include_in_schema=False)
+    def __routes2():
+        # listar paths para confirmar que /health existe
+        return [getattr(r, "path", str(r)) for r in app.router.routes]
+
+    @_diag.get("/health", include_in_schema=False)
+    def __health_main():
+        return {"status": "ok", "source": "service_main.inj"}
+
+    app.include_router(_diag)
+except Exception as _e:
+    print("WARN inject diag failed:", _e)
