@@ -1,214 +1,315 @@
-- URL: https://natacha-api-mkwskljrhq-uc.a.run.app
-- Revisión: natacha-api-00317-qip
-natacha-api-00151-wew
+# 🧭 REGISTRY – Proyecto Natacha (Snapshot 20251106T233555Z UTC)
 
-> Estado consolidado y verificado tras eliminación del entorno duplicado (gen-lang-client-0363543020).
-> Todas las URLs, secretos y cuentas de servicio apuntan a la infraestructura principal en Cloud Run (us-central1).
+## 📦 Proyecto GCP
+- **Project ID:** asistente-sebastian
+- **Número:** 422255208682
+- **Región principal:** us-central1
 
-## Estado actual (2025-10-31 - post deploy 00027-lkf)
-- Revisión activa: natacha-api-00036-87g
-- Service Account: natacha-firestore-access@asistente-sebastian.iam.gserviceaccount.com
-- Service Account (runtime): natacha-firestore-access@asistente-sebastian.iam.gserviceaccount.com
-- Secret montado: natacha-firestore-key
-
-## Historial de cambios
-
-### 2025-10-31 – `/memory/search` con `query` opcional
-- Cambio: `/memory/search` pasa a aceptar `query` **opcional** y permite listar las últimas memorias.
-- Motivo: alinear la API con el comportamiento del Agente Natacha (pedidos sin texto) y preparar integración futura con resúmenes automáticos y búsqueda semántica.
-- Impacto: integraciones (ChatGPT / Actions / consola interna) ya pueden hacer `.../memory/search?limit=5` sin error 422.
-- Código modificado: `routes/memory_routes.py`
-- Desplegado en: `natacha-api-00026-fdx` → **reafirmado en** `natacha-api-00027-lkf`
-- Verificado en:
-  - `curl -s "http://127.0.0.1:8000/memory/search?limit=5"`
-  - `curl -s "https://natacha-api-422255208682.us-central1.run.app/memory/search?limit=5"`
-
-### 2025-10-31 – `/ops/summary` publicado
-- Cambio: se publica `/ops/summary` para que el agente pueda leer **memorias + tareas + agrupadas por proyecto** en una sola llamada.
-- Motivo: facilitar resúmenes operativos y permitir que el GPT recupere contexto sin tener que hacer 3 requests.
-- Código modificado: `routes/ops.py`
-- Desplegado en: `natacha-api-00027-lkf`
-- Verificado en:
-  - `curl -s "http://127.0.0.1:8001/ops/summary?limit=5"`
-  - `curl -s "https://natacha-api-422255208682.us-central1.run.app/ops/summary?limit=5"`
-
+## ☁️ Cloud Run – Servicios activos
+```yaml
 ---
-
-✅ **Validación técnica final – 2025-10-31**
-- Estado: **Estable y operativo**
-- Revisión validada: `natacha-api-00027-lkf`
-- Infraestructura: Cloud Run + Firestore (us-central1)
-- Endpoints críticos: `/health`, `/memory/add`, `/memory/search`, `/ops/snapshot`, `/ops/snapshots`, `/ops/summary`
-- Resultado final: 🟢 **Infraestructura validada y lista para expansión del agente Natacha.**
-
-### 2025-10-31 – Unificación de OPS (fase 1)
-- Cambio: se movió `/ops/summary` al router **oficial** (`routes/ops_routes.py`) porque es el que carga la app de producción (`natacha_app.py`).
-- Motivo: evitar duplicaciones entre `routes/ops.py` (histórico) y `routes/ops_routes.py` (oficial) y que las integraciones (ChatGPT / consola / Actions) siempre vean el mismo endpoint.
-- Archivos tocados: `routes/ops_routes.py`, `app.py`
-- No se eliminó: `routes/ops.py` → queda en modo **compatibilidad** hasta revisar quién más lo usa.
-- Verificado en:
-  - `http://127.0.0.1:8001/ops/summary?limit=5`
-  - `https://natacha-api-422255208682.us-central1.run.app/ops/summary?limit=5`
-
-### 2025-10-31 – Unificación parcial de OPS
-- Cambio: se replica `/ops/summary` en `routes/ops_routes.py` (el que usa `natacha_app.py`).
-- Motivo: evitar que una futura limpieza de `routes/ops.py` deje al agente sin resumen operativo.
-- Código modificado: `routes/ops_routes.py`
-- Estado: `routes/ops.py` se mantiene **por compatibilidad** (no borrar todavía).
-- Verificado en local: `curl -s "http://127.0.0.1:8001/ops/summary?limit=5"`
-
-### 2025-10-31 – Conflicto de nombres `app` resuelto (local)
-- Problema: `uvicorn app:app` importaba el paquete `app/` en lugar del módulo `app.py`, ya que existía un `app/__init__.py`.
-- Cambio: se renombró `app/` a `app_support_$(date +%Y%m%d%H%M)` para que `app.py` quede como módulo principal y se cargue correctamente.
-- Motivo: evitar conflictos entre el paquete `app/` y el archivo principal `app.py` que usa FastAPI.
-- Alcance: **solo entorno local** (en Cloud Run ya se usa `natacha_app:app`).
-- Verificado con:
-  - `python3 - << 'PYCODE' ... import app ...`
-  - `uvicorn app:app --reload --port 8002`
-- Estado: ✅ corregido y estable
-
-### 2025-11-01 – Limpieza de ops_routes y agregado de /ops/insights
-- Cambio: se unificó `/ops/summary` en un solo handler dentro de `routes/ops_routes.py` (había dos).
-- Cambio: se agregó `/ops/insights` para entregar memorias + tareas + alertas + duplicados.
-- Motivo: evitar conflictos de rutas y darle al agente una vista más inteligente sin tocar endpoints ya usados por integraciones.
-- Código modificado: `routes/ops_routes.py`
-- Verificado en local:
-  - `curl -s "http://127.0.0.1:8002/ops/summary?limit=5"`
-  - `curl -s "http://127.0.0.1:8002/ops/insights?limit=20"`
-
-### 2025-11-01 – Arranque con contexto operativo
-- Cambio: se creó `intelligence/startup.py` para leer `/ops/insights` y guardar `last_context.json`.
-- Cambio: se enganchó el startup en `natacha_app.py` (bloque try/except, no rompe si falla).
-- Motivo: que el agente tenga a mano memorias, tareas y proyectos sin hacer 3 requests.
-- Verificado en local:
-  - `python3 - << 'PYCODE' ... load_operational_context(...) ...`
-  - `curl -s "http://127.0.0.1:8002/ops/insights?limit=20"`
-
-### 2025-11-01 – Deploy Cloud Run con contexto remoto
-- Servicio: natacha-api
-- Cambio: se agregó env `NATACHA_CONTEXT_API=https://natacha-api-422255208682.us-central1.run.app`
-- Motivo: que el startup (`intelligence/startup.py`) use directamente la URL pública en producción.
-- Verificado:
-  - `curl -s "https://natacha-api-422255208682.us-central1.run.app/ops/insights?limit=20"`
-  - `gcloud run services describe natacha-api --region=us-central1 --project=asistente-sebastian --format="value(spec.template.spec.containers[0].env)"`
-
-### 2025-11-01 – Fix local import y verificación completa
-- Commit: 08c388f
-- Cambio: se eliminó `from routes import memory` en `natacha_app.py`
-- Motivo: módulo `routes/memory.py` ya no existe (reemplazado por `memory_routes.py`)
-- Estado: ✅ validado en local (`uvicorn 8003`) y remoto (`Cloud Run`)
-- Contexto operativo cargado correctamente desde `NATACHA_CONTEXT_API`
-
+metadata:
+  name: auto-stop-vm
+status:
+  latestCreatedRevisionName: auto-stop-vm-00001-qec
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: auto-stop-vm-00001-qec
+  url: https://auto-stop-vm-mkwskljrhq-uc.a.run.app
 ---
-
-### 2025-11-01 — Endpoint `/dashboard/data`
-**Servicio:** natacha-api
-**Ruta:** `GET /dashboard/data`
-**Tipo:** Core / resumen operativo
-**Origen de datos:** Firestore (`assistant_memory`, `assistant_tasks`)
-**Dependencias:** `intelligence.startup.load_operational_context`
-**Uso:** Dashboard v0.9.3 (lectura de contexto remoto unificado)
-**Contexto API:** $NATACHA_CONTEXT_API
-**Validado en:**
-- Local (`http://127.0.0.1:8003/dashboard/data`) ✅
-- Cloud Run (`https://natacha-api-422255208682.us-central1.run.app/dashboard/data`) 🔄 pendiente de test
-**Estado:** ✅ estable
-**Notas:**
-- Requiere `routes/core_routes.py` y registro en `natacha_app.py`
-- Sustituye lecturas manuales de `/ops/insights` en el dashboard
-- Compatible con entorno `v0.9.3`
-
-#### 2025-11-01 – Deploy Cloud Run con /dashboard/data
-- Servicio: natacha-api
-- Cambio efectivo: incluye `routes/core_routes.py` y expone `GET /dashboard/data`
-- Motivo: endpoint estaba operativo en local pero no en la última imagen de Cloud Run
-- Verificado:
-  - `curl -s https://natacha-api-422255208682.us-central1.run.app/dashboard/data`
-## Dashboard Natacha
-- Servicio: natacha-dashboard
-- Imagen: us-central1-docker.pkg.dev/asistente-sebastian/natacha-docker/natacha-dashboard:secure
-- Auth: env (DASH_USER=llvc / DASH_PASS=LLVC-2025-dash)
-- Última actualización: 2025-11-01
-
-### 2025-11-01 – Baseline post-limpieza de proyectos
-- Proyecto: **asistente-sebastian** (ID 422255208682)
-- Servicio: **natacha-api**
-- URL pública única: https://natacha-api-422255208682.us-central1.run.app
-- Revisión activa validada: `natacha-api-00031-fhl`
-- Cuenta de servicio: `natacha-firestore-access@asistente-sebastian.iam.gserviceaccount.com`
-- Secret montado: natacha-firestore-key
-- Notas:
-  - Se eliminó el proyecto duplicado `gen-lang-client-0363543020`.
-  - Se corrigieron referencias antiguas a `...505068916737...` en el código.
-  - `scripts/registry_check.py` queda como **fuente de verdad** y debe ejecutarse antes de cambiar URLs en el registro.
-
-  kind: local-script
-  purpose: Lee last_context.json y muestra tareas con vencimiento + sin fecha
-  inputs:
-    - last_context.json
-  produces:
-    - consola
-  related:
-    - scripts/intelligence_summary.py
-    - BEGIN:CLOUD_RUN -->
-  kind: local-script
-  purpose: Lee last_context.json y muestra tareas con vencimiento + sin fecha
-  inputs:
-    - last_context.json
-  produces:
-    - consola
-  related:
-    - scripts/intelligence_summary.py
-    - END:CLOUD_RUN -->
-
-#### /ops/insights
-- Method: GET
-- Query: `limit` (int)
-- Response:
-```json
-{ "generated_at": "RFC3339|null",
-  "insights": [
-    { "id": "string", "timestamp": "RFC3339", "event": "string", "origin": "string|null", "detail": "string" }
-  ]
-}
+metadata:
+  name: autostart-vm
+status:
+  latestCreatedRevisionName: autostart-vm-00003-dov
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: autostart-vm-00003-dov
+  url: https://autostart-vm-mkwskljrhq-uc.a.run.app
+---
+metadata:
+  name: log-natacha-activity
+status:
+  latestCreatedRevisionName: log-natacha-activity-00001-bev
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: log-natacha-activity-00001-bev
+  url: https://log-natacha-activity-mkwskljrhq-uc.a.run.app
+---
+metadata:
+  name: natacha-api
+status:
+  latestCreatedRevisionName: natacha-api-00264-8lg
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: natacha-api-00263-cdr
+  - revisionName: natacha-api-00317-qip
+    tag: health-test
+    url: https://health-test---natacha-api-mkwskljrhq-uc.a.run.app
+  url: https://natacha-api-mkwskljrhq-uc.a.run.app
+---
+metadata:
+  name: natacha-api-a
+status:
+  latestCreatedRevisionName: natacha-api-a-00050-655
+  traffic:
+  - percent: 100
+    revisionName: natacha-api-a-00050-655
+  url: https://natacha-api-a-mkwskljrhq-uc.a.run.app
+---
+metadata:
+  name: natacha-api-stable
+status:
+  latestCreatedRevisionName: natacha-api-stable-00001-758
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: natacha-api-stable-00001-758
+  url: https://natacha-api-stable-mkwskljrhq-uc.a.run.app
+---
+metadata:
+  name: natacha-api-stg
+status:
+  latestCreatedRevisionName: natacha-api-stg-00006-2db
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: natacha-api-stg-00006-2db
+  url: https://natacha-api-stg-mkwskljrhq-uc.a.run.app
+---
+metadata:
+  name: natacha-command-endpoint
+status:
+  latestCreatedRevisionName: natacha-command-endpoint-00001-wgt
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: natacha-command-endpoint-00001-wgt
+  url: https://natacha-command-endpoint-mkwskljrhq-uc.a.run.app
+---
+metadata:
+  name: natacha-core
+status:
+  latestCreatedRevisionName: natacha-core-00042-lgr
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: natacha-core-00042-lgr
+  url: https://natacha-core-mkwskljrhq-uc.a.run.app
+---
+metadata:
+  name: natacha-dashboard
+status:
+  latestCreatedRevisionName: natacha-dashboard-00007-rd7
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: natacha-dashboard-00007-rd7
+  url: https://natacha-dashboard-mkwskljrhq-uc.a.run.app
+---
+metadata:
+  name: natacha-health-monitor
+status:
+  latestCreatedRevisionName: natacha-health-monitor-00033-mct
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: natacha-health-monitor-00033-mct
+  url: https://natacha-health-monitor-mkwskljrhq-uc.a.run.app
+---
+metadata:
+  name: natacha-memory-console
+status:
+  latestCreatedRevisionName: natacha-memory-console-00076-v7c
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: natacha-memory-console-00076-v7c
+  url: https://natacha-memory-console-mkwskljrhq-uc.a.run.app
+---
+metadata:
+  name: natacha-plugin-registry
+status:
+  latestCreatedRevisionName: natacha-plugin-registry-00004-dc4
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: natacha-plugin-registry-00004-dc4
+  url: https://natacha-plugin-registry-mkwskljrhq-uc.a.run.app
+---
+metadata:
+  name: natacha-whatsapp
+status:
+  latestCreatedRevisionName: natacha-whatsapp-00006-p2w
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: natacha-whatsapp-00006-p2w
+  url: https://natacha-whatsapp-mkwskljrhq-uc.a.run.app
+---
+metadata:
+  name: natachaspeak
+status:
+  latestCreatedRevisionName: natachaspeak-00013-b4b
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: natachaspeak-00013-b4b
+  url: https://natachaspeak-mkwskljrhq-uc.a.run.app
+---
+metadata:
+  name: stop-natacha-vm
+status:
+  latestCreatedRevisionName: stop-natacha-vm-00001-faz
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: stop-natacha-vm-00001-faz
+  url: https://stop-natacha-vm-mkwskljrhq-uc.a.run.app
+---
+metadata:
+  name: vm-proxy
+status:
+  latestCreatedRevisionName: vm-proxy-00002-lef
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: vm-proxy-00002-lef
+  url: https://vm-proxy-mkwskljrhq-uc.a.run.app
 ```
 
+## 🌍 Dominios personalizados
+```yaml
+### api.llvc-global.com
+metadata:
+  creationTimestamp: '2025-11-06T20:57:37.222507Z'
+status:
+  conditions:
+  - lastTransitionTime: '2025-11-06T21:53:51.596485Z'
+    status: 'True'
+    type: Ready
+  - lastTransitionTime: '2025-11-06T21:53:51.596485Z'
+    status: 'True'
+    type: CertificateProvisioned
+  - lastTransitionTime: '2025-11-06T20:57:43.209085Z'
+    status: 'True'
+    type: DomainRoutable
+
+### dashboard.llvc-global.com
+metadata:
+  creationTimestamp: '2025-11-06T20:57:46.816080Z'
+status:
+  conditions:
+  - lastTransitionTime: '2025-11-06T21:54:04.220751Z'
+    status: 'True'
+    type: Ready
+  - lastTransitionTime: '2025-11-06T21:54:04.220751Z'
+    status: 'True'
+    type: CertificateProvisioned
+  - lastTransitionTime: '2025-11-06T20:57:54.342698Z'
+    status: 'True'
+    type: DomainRoutable
+
+```
+
+## 🔐 Service Accounts relevantes
+```yaml
 ---
+disabled: false
+displayName: Natacha Scheduler SA
+email: natacha-scheduler-sa@asistente-sebastian.iam.gserviceaccount.com
+---
+disabled: false
+displayName: Natacha Cloud Executor
+email: natacha-cloud-executor@asistente-sebastian.iam.gserviceaccount.com
+---
+disabled: false
+displayName: natacha-firestore-access
+email: natacha-firestore-access@asistente-sebastian.iam.gserviceaccount.com
+---
+disabled: false
+displayName: GitHub Actions for Natacha
+email: natacha-github@asistente-sebastian.iam.gserviceaccount.com
+---
+disabled: false
+displayName: Natacha Service Checker
+email: natacha-checker@asistente-sebastian.iam.gserviceaccount.com
+---
+disabled: false
+displayName: natacha-service
+email: natacha-service@asistente-sebastian.iam.gserviceaccount.com
+---
+disabled: false
+displayName: natacha-memory-console
+email: natacha-memory-console@asistente-sebastian.iam.gserviceaccount.com
+---
+disabled: false
+displayName: natacha-service
+email: natacha-service-172@asistente-sebastian.iam.gserviceaccount.com
+---
+disabled: false
+displayName: Natacha Automation
+email: natacha-automation@asistente-sebastian.iam.gserviceaccount.com
+```
 
-### <0001f9e9> OpenAPI Schema (Cloud Run / Natacha API)
+## 🔑 Secrets en uso
+```yaml
+---
+name: projects/422255208682/secrets/AD_NUM
+---
+name: projects/422255208682/secrets/API_KEY
+---
+name: projects/422255208682/secrets/BUSINESS_ID
+---
+name: projects/422255208682/secrets/IMG_ID
+---
+name: projects/422255208682/secrets/META_ACCESS_TOKEN
+---
+name: projects/422255208682/secrets/META_TOKEN
+---
+name: projects/422255208682/secrets/META_WHATSAPP_TOKEN
+---
+name: projects/422255208682/secrets/NATACHA_TOKEN
+---
+name: projects/422255208682/secrets/NOTION_TOKEN
+---
+name: projects/422255208682/secrets/PAGE_ID
+---
+name: projects/422255208682/secrets/PAGE_TOKEN
+---
+name: projects/422255208682/secrets/PHONE_NUMBER_ID
+---
+name: projects/422255208682/secrets/SERVICE_ACCOUNT_KEY
+---
+name: projects/422255208682/secrets/SLACK_WEBHOOK
+---
+name: projects/422255208682/secrets/WABA
+---
+name: projects/422255208682/secrets/natacha-api-key
+---
+name: projects/422255208682/secrets/natacha-firestore-key
+```
 
-**Servicio:** `natacha-api`
-**Proyecto:** `asistente-sebastian`
-**Región:** `us-central1`
-**Revisión activa:** `natacha-api-00115-tf4`
-**URL público:** [https://natacha-api-422255208682.us-central1.run.app](https://natacha-api-422255208682.us-central1.run.app)
+## 🪵 Logging y Monitoring
+- Logging habilitado: Cloud Logging (roles/logging.viewer asignado)
+- Stackdriver Monitoring: roles/monitoring.viewer activo
 
-#### 📘 Endpoint de esquema (para Actions / herramientas externas)
-- JSON: `https://natacha-api-422255208682.us-central1.run.app/openapi.v1.json`
+## 🧰 Último build fallido
+- ID: 566f0b03-5925-4488-b6ea-45ff86c6971b
+- URL: https://console.cloud.google.com/cloud-build/builds;region=us-central1/566f0b03-5925-4488-b6ea-45ff86c6971b?project=422255208682
 
-#### <0001f9f1> Estructura técnica
-- **Base module serving:** `entrypoint_app.py`
-- **Router responsable:** `routes/openapi_compat.py`
-- **Versión de OpenAPI publicada:** `3.1.0`
-- **Servers:** `[{ "url": "https://natacha-api-422255208682.us-central1.run.app" }]`
-- **Env var usada:** `OPENAPI_PUBLIC_URL`
-- **Propósito:** Publicar un esquema OpenAPI compatible con Actions y otras integraciones externas.
+## 🗺️ Infraestructura relacionada
+- **Repositorio:** ~/natacha-api
+- **Branch actual:** main
+- **Último commit:** 2839ecc fix(registry): actualizar URL canónica a https://natacha-api-mkwskljrhq-uc.a.run.app
+- **Backup del Dockerfile:** Dockerfile.bak.1762471607
+- **Backup de requirements:** requirements.txt.bak.1762471607
 
-#### 🛠 Cómo actualizar solo la versión del esquema
-1. Editar `routes/openapi_compat.py` y ajustar: `schema["openapi"] = "3.1.0"` (o `"3.1.1"` si tu editor lo exige).
-2. Build & deploy normales del servicio.
-3. Verificar: `curl -fsS "https://natacha-api-422255208682.us-central1.run.app/openapi.v1.json" | jq '.openapi, .servers'`
-
-## natacha-memory-console
-- URL: https://natacha-api-mkwskljrhq-uc.a.run.app
-- Imagen: us-central1-docker.pkg.dev/asistente-sebastian/natacha-repo/memory_console:fix-port-v2
-- Revisión activa: natacha-memory-console-00049-s2d
-- Último deploy: 2025-11-06
-
-## natacha-memory-console
-- URL: https://natacha-api-mkwskljrhq-uc.a.run.app
-- Imagen: us-central1-docker.pkg.dev/asistente-sebastian/natacha-repo/memory_console:v1-mem3
-- Revisión activa: natacha-memory-console-00056-4t5
-- Service Account: natacha-firestore-access@asistente-sebastian.iam.gserviceaccount.com
-- Env: MEM_CONSOLE_TOKEN (guardado en Cloud Run)
-- Último deploy: 2025-11-06
+## 🧩 Estado general
+- API: ✅ en producción (revisión estable responde en /health)
+- Dashboard: ✅ dominio activo y HTML sirviendo
+- Último deploy fallido: contenedor no escuchó $PORT=8080 (sin impacto en tráfico)
+- Siguiente paso: implementar **memoria del agente (Firestore)**
