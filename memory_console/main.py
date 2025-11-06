@@ -16,10 +16,10 @@ def _check_auth(authorization: Optional[str]):
         raise HTTPException(status_code=403, detail="Invalid token")
 
 def _db():
-    # Uses default credentials from Cloud Run service account
-    # and GOOGLE_CLOUD_PROJECT from metadata.
+    # Prefer explicit project to avoid metadata edge cases
     try:
-        return firestore.Client()
+        project = os.getenv("GOOGLE_CLOUD_PROJECT")
+        return firestore.Client(project=project) if project else firestore.Client()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"firestore init error: {e}")
 
