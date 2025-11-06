@@ -224,3 +224,15 @@ def _tasks_snapshot(get_client, limit: int = 3):
         return {"count": len(items), "items": items}
     except Exception as e:
         return {"error": str(e)}
+
+# --- health endpoint liviano ---
+from fastapi import APIRouter
+
+try:
+    router  # si ya existe el router, no falla
+except NameError:
+    router = APIRouter()
+
+@router.get("/health", include_in_schema=False)
+def health():
+    return {"status": "ok"}
