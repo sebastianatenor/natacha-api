@@ -1,117 +1,93 @@
-SERVICE ?= natacha-memory-console
-PROJECT ?= asistente-sebastian
-REGION  ?= us-central1
-REPO    ?= natacha-repo
-IMAGE_NAME ?= memory_console
+# ===== Config por defecto (override con env o CLI) =====
+SERVICE        ?= natacha-memory-console
+PROJECT        ?= asistente-sebastian
+REGION         ?= us-central1
+REPO           ?= natacha-repo
+IMAGE_NAME     ?= memory_console
+PCT            ?= 10  # para canary
 
-# URL puede auto-descubrirse con `make url` si querés
-URL     ?= https://natacha-memory-console-422255208682.us-central1.run.app
+.PHONY: print-vars warmup check-image deploy deploy-digest promote promote-canary promote-revision rollback status logs
 
-# Si seteás el token, el deploy lo aplica
-MEM_CONSOLE_TOKEN ?=
-
-# Versionado automático: v1-YYYYmmdd-HHMMSS-gitsha
-GIT_SHA  := $(shell git rev-parse --short HEAD)
-STAMP    := $(shell date +%Y%m%d-%H%M%S)
-VERSION  ?= v1-$(STAMP)-$(GIT_SHA)
-
-IMG_PATH := $(REGION)-docker.pkg.dev/$(PROJECT)/$(REPO)/$(IMAGE_NAME):$(VERSION)
-
-.PHONY: help build submit deploy roll logs logs-10m logs-errors tail warmup health url describe revisions set-min1
-
-help:
-	@echo "Targets:"
-	@echo "  make build        - docker build local (etiqueta con VERSION)"
-	@echo "  make submit       - gcloud builds submit -> Artifact Registry"
-	@echo "  make deploy       - Cloud Run deploy imagen VERSION (aplica MEM_CONSOLE_TOKEN si está)"
-	@echo "  make roll         - submit + deploy"
-	@echo "  make set-min1     - min instances 1 + cpu boost"
-	@echo "  make warmup       - golpea /health 3 veces"
-	@echo "  make health       - muestra /health"
-	@echo "  make logs         - últimos 30m de logs"
-	@echo "  make logs-10m     - últimos 10m de logs"
-	@echo "  make logs-errors  - errores de la última hora"
-	@echo "  make tail         - tail en vivo de logs"
-	@echo "  make url          - URL del servicio"
-	@echo "  make describe     - describe del servicio"
-	@echo "  make revisions    - lista revisiones"
-
-build:
-	@echo ">> Building local image: $(IMG_PATH)"
-	docker build -t $(IMG_PATH) memory_console
-
-submit:
-	@echo ">> Submitting to Cloud Build -> $(IMG_PATH)"
-	gcloud builds submit memory_console \
-	  --project=$(PROJECT) \
-	  --tag $(IMG_PATH)
-
-deploy:
-	@echo ">> Deploying $(SERVICE) with image $(IMG_PATH)"
-	@if [ -n "$(strip $(MEM_CONSOLE_TOKEN))" ]; then \
-	  echo ">> Applying MEM_CONSOLE_TOKEN env var"; \
-	  gcloud run deploy $(SERVICE) \
-	    --project=$(PROJECT) \
-	    --region=$(REGION) \
-	    --image=$(IMG_PATH) \
-	    --set-env-vars=MEM_CONSOLE_TOKEN="$(MEM_CONSOLE_TOKEN)" \
-	    --allow-unauthenticated; \
-	else \
-	  gcloud run deploy $(SERVICE) \
-	    --project=$(PROJECT) \
-	    --region=$(REGION) \
-	    --image=$(IMG_PATH) \
-	    --allow-unauthenticated; \
-	fi
-	@$(MAKE) -s warmup
-
-roll: submit deploy
-
-set-min1:
-	gcloud run services update $(SERVICE) \
-	  --project=$(PROJECT) --region=$(REGION) \
-	  --min-instances=1 --cpu-boost
+print-vars:
+	@echo SERVICE=$(SERVICE)
+	@echo PROJECT=$(PROJECT)
+	@echo REGION=$(REGION)
+	@echo REPO=$(REPO)
+	@echo IMAGE_NAME=$(IMAGE_NAME)
+	@echo VERSION=$(VERSION)
+	@echo DIGEST=$(DIGEST)
 
 warmup:
-	@for i in 1 2 3; do curl -fsS "$(URL)/health" && echo || true; sleep 1; done
+	@curl -fsS https://$(SERVICE)-422255208682.$(REGION).run.app/health && echo || true
 
-health:
-	@curl -fsS "$(URL)/health" && echo
+# Verificar imagen por tag
+check-image:
+	@test -n "$(VERSION)" || (echo "Falta VERSION=vX-YYYYMMDD-..."; exit 1)
+	@gcloud artifacts docker images describe \
+	  $(REGION)-docker.pkg.dev/$(PROJECT)/$(REPO)/$(IMAGE_NAME):$(VERSION) \
+	  --project=$(PROJECT) >/dev/null \
+	  && echo "✅ Imagen existe: $(VERSION)"
 
+# Deploy usando tag (VERSION)
+deploy: check-image
+	@echo ">> Deploying $(SERVICE) with image tag $(VERSION)"
+	@gcloud run deploy $(SERVICE) \
+	  --project=$(PROJECT) --region=$(REGION) \
+	  --image=$(REGION)-docker.pkg.dev/$(PROJECT)/$(REPO)/$(IMAGE_NAME):$(VERSION) \
+	  --set-env-vars=MEM_CONSOLE_TOKEN="$(MEM_CONSOLE_TOKEN)" \
+	  --allow-unauthenticated
+	@$(MAKE) -s warmup
+
+# Deploy usando digest (DIGEST=sha256:...)
+deploy-digest:
+	@test -n "$(DIGEST)" || (echo "Falta DIGEST=sha256:..."; exit 1)
+	@echo ">> Deploying $(SERVICE) with image digest $(DIGEST)"
+	@gcloud run deploy $(SERVICE) \
+	  --project=$(PROJECT) --region=$(REGION) \
+	  --image=$(REGION)-docker.pkg.dev/$(PROJECT)/$(REPO)/$(IMAGE_NAME)@$(DIGEST) \
+	  --set-env-vars=MEM_CONSOLE_TOKEN="$(MEM_CONSOLE_TOKEN)" \
+	  --allow-unauthenticated
+	@$(MAKE) -s warmup
+
+# Mandar 100% a la última revisión lista
+promote:
+	@gcloud run services update-traffic $(SERVICE) \
+	  --project=$(PROJECT) --region=$(REGION) \
+	  --to-latest
+
+# Canary: $(PCT)% a la última, resto a estable actual
+promote-canary:
+	@rev=$$(gcloud run services describe $(SERVICE) --project=$(PROJECT) --region=$(REGION) --format='value(status.latestReadyRevisionName)'); \
+	stable=$$(gcloud run services describe $(SERVICE) --project=$(PROJECT) --region=$(REGION) --format='value(status.traffic[0].revisionName)'); \
+	echo "Canary $(PCT)% -> $$rev, $$((100-$(PCT)))% -> $$stable"; \
+	gcloud run services update-traffic $(SERVICE) \
+	  --project=$(PROJECT) --region=$(REGION) \
+	  --to-revisions=$$rev=$(PCT),$$stable=$$((100-$(PCT)))
+
+# Promocionar una revisión específica
+# Ej: make promote-revision REV=natacha-memory-console-00070-tcp
+promote-revision:
+	@test -n "$(REV)" || (echo "Falta REV=<revision-name>"; exit 1)
+	@gcloud run services update-traffic $(SERVICE) \
+	  --project=$(PROJECT) --region=$(REGION) \
+	  --to-revisions=$(REV)=100
+
+# Rollback al estable actual (la que hoy tiene tráfico)
+rollback:
+	@stable=$$(gcloud run services describe $(SERVICE) --project=$(PROJECT) --region=$(REGION) --format='value(status.traffic[0].revisionName)'); \
+	echo "Rollback -> $$stable (100%)"; \
+	gcloud run services update-traffic $(SERVICE) \
+	  --project=$(PROJECT) --region=$(REGION) \
+	  --to-revisions=$$stable=100
+
+# Estado rápido
+status:
+	@gcloud run services describe $(SERVICE) \
+	  --project=$(PROJECT) --region=$(REGION) \
+	  --format='value(status.traffic[].percent,status.traffic[].revisionName,status.latestReadyRevisionName)'
+
+# Logs últimos 10 minutos
 logs:
-	@gcloud logging read \
-	  'resource.type="cloud_run_revision" AND resource.labels.service_name="$(SERVICE)"' \
-	  --project=$(PROJECT) --freshness=30m --limit=200 \
-	  --format='value(severity, " ", timestamp, " ", textPayload)'
-
-logs-10m:
-	@gcloud logging read \
-	  'resource.type="cloud_run_revision" AND resource.labels.service_name="$(SERVICE)"' \
-	  --project=$(PROJECT) --freshness=10m --limit=200 \
-	  --format='value(severity, " ", timestamp, " ", textPayload)'
-
-logs-errors:
-	@gcloud logging read \
-	  'resource.type="cloud_run_revision" AND resource.labels.service_name="$(SERVICE)" AND severity>=ERROR' \
-	  --project=$(PROJECT) --freshness=60m --limit=200 \
-	  --format='value(textPayload)'
-
-tail:
-	@gcloud beta logging tail \
-	  'resource.type="cloud_run_revision" AND resource.labels.service_name="$(SERVICE)"' \
-	  --project=$(PROJECT)
-
-url:
-	@gcloud run services describe $(SERVICE) \
-	  --project=$(PROJECT) --region=$(REGION) \
-	  --format='value(status.url)'
-
-describe:
-	@gcloud run services describe $(SERVICE) \
-	  --project=$(PROJECT) --region=$(REGION)
-
-revisions:
-	@gcloud run revisions list \
-	  --project=$(PROJECT) --region=$(REGION) \
-	  --service=$(SERVICE)
-
+	@gcloud logs read "run.googleapis.com/service_name=$(SERVICE)" \
+	  --project=$(PROJECT) --freshness=10m --limit=100 --format=json \
+	  | jq -r '.[].textPayload' || true
