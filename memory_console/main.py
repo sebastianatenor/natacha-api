@@ -1,6 +1,6 @@
 import os
-from fastapi import FastAPI, HTTPException, Header
 from typing import Optional, Any, Dict
+from fastapi import FastAPI, HTTPException, Header, Body
 from google.cloud import firestore
 
 app = FastAPI()
@@ -17,7 +17,11 @@ def _check_auth(authorization: Optional[str]):
 
 def _db():
     # Uses default credentials from Cloud Run service account
-    return firestore.Client()
+    # and GOOGLE_CLOUD_PROJECT from metadata.
+    try:
+        return firestore.Client()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"firestore init error: {e}")
 
 @app.get("/health")
 def health():
@@ -29,35 +33,42 @@ def root():
 
 @app.post("/mem/set")
 def mem_set(
-    payload: Dict[str, Any],
+    payload: Dict[str, Any] = Body(...),
     collection: str = "natacha_memory",
     doc_id: Optional[str] = None,
-    authorization: Optional[str] = Header(default=None)
+    authorization: Optional[str] = Header(default=None),
 ):
     _check_auth(authorization)
-    db = _db()
-    if not doc_id:
-        # auto id
-        ref = db.collection(collection).document()
-        ref.set(payload)
-        return {"ok": True, "collection": collection, "doc_id": ref.id}
-    else:
-        ref = db.collection(collection).document(doc_id)
-        ref.set(payload, merge=True)
-        return {"ok": True, "collection": collection, "doc_id": doc_id}
+    try:
+        db = _db()
+        if not doc_id:
+            ref = db.collection(collection).document()
+            ref.set(payload)
+            return {"ok": True, "collection": collection, "doc_id": ref.id}
+        else:
+            ref = db.collection(collection).document(doc_id)
+            ref.set(payload, merge=True)
+            return {"ok": True, "collection": collection, "doc_id": doc_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"mem_set error: {e}")
 
 @app.get("/mem/get")
 def mem_get(
     collection: str,
     doc_id: str,
-    authorization: Optional[str] = Header(default=None)
+    authorization: Optional[str] = Header(default=None),
 ):
     _check_auth(authorization)
-    db = _db()
-    snap = db.collection(collection).document(doc_id).get()
-    if not snap.exists:
-        raise HTTPException(status_code=404, detail="not found")
-    return {"ok": True, "collection": collection, "doc_id": doc_id, "data": snap.to_dict()}
+    try:
+        db = _db()
+        snap = db.collection(collection).document(doc_id).get()
+        if not snap.exists:
+            raise HTTPException(status_code=404, detail="not found")
+        return {"ok": True, "collection": collection, "doc_id": doc_id, "data": snap.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"mem_get error: {e}")
 
 if __name__ == "__main__":
     import uvicorn
