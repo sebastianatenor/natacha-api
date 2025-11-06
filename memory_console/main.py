@@ -1,7 +1,23 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Header
+from typing import Optional, Any, Dict
+from google.cloud import firestore
 
 app = FastAPI()
+
+def _check_auth(authorization: Optional[str]):
+    expected = os.getenv("MEM_CONSOLE_TOKEN", "")
+    if not expected:
+        return
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing Bearer token")
+    token = authorization.split(" ", 1)[1]
+    if token != expected:
+        raise HTTPException(status_code=403, detail="Invalid token")
+
+def _db():
+    # Uses default credentials from Cloud Run service account
+    return firestore.Client()
 
 @app.get("/health")
 def health():
@@ -10,6 +26,38 @@ def health():
 @app.get("/")
 def root():
     return {"service": "natacha-memory-console"}
+
+@app.post("/mem/set")
+def mem_set(
+    payload: Dict[str, Any],
+    collection: str = "natacha_memory",
+    doc_id: Optional[str] = None,
+    authorization: Optional[str] = Header(default=None)
+):
+    _check_auth(authorization)
+    db = _db()
+    if not doc_id:
+        # auto id
+        ref = db.collection(collection).document()
+        ref.set(payload)
+        return {"ok": True, "collection": collection, "doc_id": ref.id}
+    else:
+        ref = db.collection(collection).document(doc_id)
+        ref.set(payload, merge=True)
+        return {"ok": True, "collection": collection, "doc_id": doc_id}
+
+@app.get("/mem/get")
+def mem_get(
+    collection: str,
+    doc_id: str,
+    authorization: Optional[str] = Header(default=None)
+):
+    _check_auth(authorization)
+    db = _db()
+    snap = db.collection(collection).document(doc_id).get()
+    if not snap.exists:
+        raise HTTPException(status_code=404, detail="not found")
+    return {"ok": True, "collection": collection, "doc_id": doc_id, "data": snap.to_dict()}
 
 if __name__ == "__main__":
     import uvicorn
