@@ -198,3 +198,9 @@ natacha-api-00151-wew
 1. Editar `routes/openapi_compat.py` y ajustar: `schema["openapi"] = "3.1.0"` (o `"3.1.1"` si tu editor lo exige).
 2. Build & deploy normales del servicio.
 3. Verificar: `curl -fsS "https://natacha-api-422255208682.us-central1.run.app/openapi.v1.json" | jq '.openapi, .servers'`
+
+## natacha-memory-console
+- URL: https://natacha-memory-console-422255208682.us-central1.run.app
+- Imagen: us-central1-docker.pkg.dev/asistente-sebastian/natacha-repo/memory_console:fix-port-v2
+- Revisión activa: natacha-memory-console-00049-s2d
+- Último deploy: 2025-11-06
