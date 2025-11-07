@@ -36,7 +36,7 @@
           "owner": "dev"
         },
         "prod-422": {
-          "base_url": "https://natacha-core-422255208682.us-central1.run.app",
+          "base_url": "{{CORE_CANONICAL}}",
           "owner": "asistente-sebastian"
         }
       },
@@ -50,7 +50,7 @@
       },
       "environments": {
         "prod-422": {
-          "base_url": "https://natacha-whatsapp-422255208682.us-central1.run.app",
+          "base_url": "{{WHATSAPP_CANONICAL}}",
           "owner": "asistente-sebastian"
         }
       },
