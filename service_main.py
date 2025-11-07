@@ -1,3 +1,5 @@
+from patches.limiter_safe_patch import safe_limit
+from patches.limiter_safe_patch import safe_limit
 
 
 
@@ -356,7 +358,7 @@ try:
 except NameError:
     limiter = (Limiter or (lambda *a, **k: None))(key_func=get_remote_address)
 
-@limiter.limit("30/minute")
+@safe_limit(limiter)("30/minute")
 @app.get("/memory/search")
 async def memory_search(request: Request, q: str = Query("", alias="q"),
                         topic: Optional[str] = None,
