@@ -1,5 +1,75 @@
+
+Limiter = None
+get_remote_address = None
+SlowAPIMiddleware = None
+RateLimitExceeded = Exception
+try:
+    # Try importing slowapi if available
+    Limiter = _Limiter
+    get_remote_address = _get_remote_address
+    SlowAPIMiddleware = _SlowAPIMiddleware
+    RateLimitExceeded = _RateLimitExceeded
+except Exception:
+    # slowapi no instalado: seguimos sin rate limiting
+    pass
+
 import uuid
 from fastapi import FastAPI, Request, HTTPException, Query
+
+# === optional SlowAPI integration (idempotent & safe) ===
+Limiter = None
+get_remote_address = None
+SlowAPIMiddleware = None
+RateLimitExceeded = Exception
+try:
+    # Try importing slowapi if available
+    from slowapi import Limiter as _Limiter
+    from slowapi.util import get_remote_address as _get_remote_address
+    from slowapi.middleware import SlowAPIMiddleware as _SlowAPIMiddleware
+    from slowapi.errors import RateLimitExceeded as _RateLimitExceeded
+    Limiter = _Limiter
+    get_remote_address = _get_remote_address
+    SlowAPIMiddleware = _SlowAPIMiddleware
+    RateLimitExceeded = _RateLimitExceeded
+except Exception:
+    # slowapi no instalado: seguimos sin rate limiting
+    pass
+
+
+try:
+    pass
+except ImportError:
+    Limiter = None
+    get_remote_address = None
+    SlowAPIMiddleware = None
+    RateLimitExceeded = Exception
+
+
+try:
+    pass
+except ImportError:
+    Limiter = None
+    get_remote_address = None
+    SlowAPIMiddleware = None
+    RateLimitExceeded = Exception
+
+
+try:
+    pass
+except ImportError:
+    Limiter = None
+    get_remote_address = None
+    SlowAPIMiddleware = None
+    RateLimitExceeded = Exception
+
+try:
+    pass
+except ImportError:
+    Limiter = None
+    get_remote_address = None
+    SlowAPIMiddleware = None
+    RateLimitExceeded = Exception
+
 from typing import Optional, List, Dict, Any
 from google.cloud import firestore
 from fastapi import FastAPI, Query, Request, HTTPException
@@ -48,9 +118,20 @@ def __debug_routes():
             })
     return {"count": len(items), "routes": items}
 
-    limiter = Limiter(key_func=get_remote_address)
+    limiter = (Limiter or (lambda *a, **k: None))(key_func=get_remote_address)
     app.state.limiter = limiter
-app.add_middleware(SlowAPIMiddleware)
+if SlowAPIMiddleware:
+    app.add_middleware(SlowAPIMiddleware)
+if SlowAPIMiddleware:
+    app.add_middleware(SlowAPIMiddleware)
+if SlowAPIMiddleware:
+    app.add_middleware(SlowAPIMiddleware)
+if SlowAPIMiddleware:
+    app.add_middleware(SlowAPIMiddleware)
+if SlowAPIMiddleware:
+    app.add_middleware(SlowAPIMiddleware)
+if SlowAPIMiddleware:
+    app.add_middleware(SlowAPIMiddleware)
 app.include_router(health_router)
 app.include_router(cog_router)
 app.include_router(actions_router)
@@ -222,7 +303,7 @@ async def memory_put(request: Request):
 try:
     limiter
 except NameError:
-    limiter = Limiter(key_func=get_remote_address)
+    limiter = (Limiter or (lambda *a, **k: None))(key_func=get_remote_address)
 
 @limiter.limit("30/minute")
 @app.get("/memory/search")
@@ -398,10 +479,7 @@ async def whoami():
     return {"service":"natacha-api", "sa": os.getenv("K_SERVICE","unknown"), "api_key_sha256_16": h}
 
 try:
-    from slowapi import Limiter
-    from slowapi.util import get_remote_address
-    from slowapi.middleware import SlowAPIMiddleware
-    from slowapi.errors import RateLimitExceeded
+    pass
 except ImportError:
     Limiter = None
     get_remote_address = None
@@ -409,7 +487,7 @@ except ImportError:
     RateLimitExceeded = Exception
 from fastapi.responses import JSONResponse
 
-limiter = Limiter(key_func=get_remote_address)
+limiter = (Limiter or (lambda *a, **k: None))(key_func=get_remote_address)
 # app = FastAPI()  # DUPLICATE REMOVED
 app.state.limiter = limiter
 
