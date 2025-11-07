@@ -222,7 +222,7 @@ except NameError:
 
 @limiter.limit("30/minute")
 @app.get("/memory/search")
-async def memory_search(q: str = Query("", alias="q"),
+async def memory_search(request: Request, q: str = Query("", alias="q"),
                         topic: Optional[str] = None,
                         limit: int = 20):
     limit = max(1, min(int(limit or 20), 100))
