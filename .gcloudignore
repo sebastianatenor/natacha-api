@@ -7,7 +7,7 @@ __pycache__/
 *.pyd
 .venv/
 venv/
-# NO excluir código fuente
+# No excluir código fuente
 !routes/**
 !service_main.py
 !Dockerfile
