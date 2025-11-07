@@ -78,19 +78,19 @@ except Exception as e:
 def __ops_import_status():
     return {"import_ok": IMPORT_ERR is None, "error": IMPORT_ERR}
 
-def custom_openapi():
-    if app.openapi_schema:
-        return app.openapi_schema
-    schema = get_openapi(title=app.title, version=app.version, routes=app.routes, description="Natacha API")
-    public = os.getenv("OPENAPI_PUBLIC_URL","").rstrip("/")
-    if public:
-        schema["servers"] = [{"url": public}]
-    schema["openapi"] = "3.1.0"
-    app.openapi_schema = schema
-    return app.openapi_schema
-
-app.openapi_schema = None
-app.openapi = custom_openapi
+# def custom_openapi():
+#     if app.openapi_schema:
+#         return app.openapi_schema
+#     schema = get_openapi(title=app.title, version=app.version, routes=app.routes, description="Natacha API")
+#     public = os.getenv("OPENAPI_PUBLIC_URL","").rstrip("/")
+#     if public:
+#         schema["servers"] = [{"url": public}]
+#     schema["openapi"] = "3.1.0"
+#     app.openapi_schema = schema
+#     return app.openapi_schema
+# 
+# app.openapi_schema = None
+# app.openapi = custom_openapi
 
 # /openapi.v1.json compat
 try:
