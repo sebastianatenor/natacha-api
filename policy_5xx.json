@@ -1,0 +1,20 @@
+{
+  "displayName": "Natacha API – 5xx rate high",
+  "combiner": "OR",
+  "conditions": [{
+    "displayName": "5xx ratio > 5% (5m)",
+    "conditionThreshold": {
+      "comparison": "COMPARISON_GT",
+      "thresholdValue": 0.05,
+      "duration": "300s",
+      "filter": "metric.type=\"run.googleapis.com/request_count\" resource.type=\"cloud_run_revision\" resource.label.\"service_name\"=\"natacha-api\" metric.label.\"response_code_class\"=\"5xx\"",
+      "aggregations": [{
+        "alignmentPeriod": "60s",
+        "crossSeriesReducer": "REDUCE_SUM",
+        "perSeriesAligner": "ALIGN_SUM"
+      }]
+    }
+  }],
+  "notificationChannels": [],
+  "enabled": true
+}

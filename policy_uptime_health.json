@@ -1,0 +1,23 @@
+{
+  "displayName": "Uptime – Natacha /health DOWN (bool safe)",
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "check_passed == 0 (2m)",
+      "conditionThreshold": {
+        "filter": "metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" resource.type=\"uptime_url\" resource.label.\"host\"=\"natacha-api-422255208682.us-central1.run.app\"",
+        "comparison": "COMPARISON_LT",
+        "thresholdValue": 1,
+        "duration": "120s",
+        "aggregations": [
+          {
+            "alignmentPeriod": "60s",
+            "perSeriesAligner": "ALIGN_FRACTION_TRUE"
+          }
+        ]
+      }
+    }
+  ],
+  "enabled": true,
+  "notificationChannels": []
+}
