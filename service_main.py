@@ -1,8 +1,52 @@
 
 
-# -- safe import for db_util (fallback if missing) --
+
+
+
+# --- safe import for get_db/get_client ---
 try:
     from routes.db_util import get_db, get_client
+except Exception:  # define fallbacks so the app can boot
+    from contextlib import contextmanager
+    def get_client():
+        return None
+    @contextmanager
+    def get_db():
+        yield None
+# --- end safe import block ---
+
+# === optional SlowAPI integration (safe) ===
+Limiter = None
+get_remote_address = None
+SlowAPIMiddleware = None
+RateLimitExceeded = Exception
+try:
+    from slowapi import Limiter as _Limiter
+    from slowapi.util import get_remote_address as _get_remote_address
+    from slowapi.middleware import SlowAPIMiddleware as _SlowAPIMiddleware
+    from slowapi.errors import RateLimitExceeded as _RateLimitExceeded
+    Limiter = _Limiter
+    get_remote_address = _get_remote_address
+    SlowAPIMiddleware = _SlowAPIMiddleware
+    RateLimitExceeded = _RateLimitExceeded
+except Exception:
+    pass
+# === end optional SlowAPI integration ===
+
+# --- safe import for get_db/get_client ---
+try:
+    pass  # auto-added to fix empty try
+except Exception:
+    from contextlib import contextmanager
+    def get_client():
+        return None
+    @contextmanager
+    def get_db():
+        yield None
+
+# -- safe import for db_util (fallback if missing) --
+try:
+    pass  # auto-added to fix empty try
 except Exception:  # define fallbacks so the app can boot
     from contextlib import contextmanager
     def get_client():
@@ -28,17 +72,12 @@ except Exception:
 import uuid
 from fastapi import FastAPI, Request, HTTPException, Query
 
-# === optional SlowAPI integration (idempotent & safe) ===
 Limiter = None
 get_remote_address = None
 SlowAPIMiddleware = None
 RateLimitExceeded = Exception
 try:
     # Try importing slowapi if available
-    from slowapi import Limiter as _Limiter
-    from slowapi.util import get_remote_address as _get_remote_address
-    from slowapi.middleware import SlowAPIMiddleware as _SlowAPIMiddleware
-    from slowapi.errors import RateLimitExceeded as _RateLimitExceeded
     Limiter = _Limiter
     get_remote_address = _get_remote_address
     SlowAPIMiddleware = _SlowAPIMiddleware
