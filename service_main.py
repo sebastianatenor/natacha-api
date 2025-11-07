@@ -301,7 +301,7 @@ def get_context(limit: int = Query(10, ge=1, le=100), topic: Optional[str] = Non
 
 
 # === API Key auth middleware (refined) ===
-EXEMPT_PATHS = {"/", "/health", "/openapi.json", "/docs", "/redoc", "/memory/test", "/__alive", "/__debug_routes", "/__ops_import_status", "/__sha"}
+EXEMPT_PATHS = {"/", "/health", "/openapi.json", "/docs", "/redoc", "/memory/test", "/__alive", "/__ops_import_status", "/__sha"}
 
 @app.middleware("http")
 async def require_api_key_mw(request: Request, call_next):
