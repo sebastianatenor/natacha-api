@@ -1,3 +1,18 @@
+# --- Clean Cloud Run ignore ---
+.gcloudignore
+.git
+.gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+backups/
+infra_snapshots/
+logs/
+
+# --- DO NOT ignore source code ---
 !routes/**
 !service_main.py
 !Dockerfile
