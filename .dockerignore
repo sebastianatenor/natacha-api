@@ -1,4 +1,4 @@
-# --- minimal dockerignore (NO excluir código fuente necesario) ---
+# --- CLEAN DOCKERIGNORE (minimal, allow all sources) ---
 .gcloudignore
 .git
 .gitignore
@@ -11,8 +11,7 @@ venv/
 logs/
 backups/
 infra_snapshots/
-
-# No ignores de código:
+# NO EXCLUIR CODIGO FUENTE
 !routes/**
 !service_main.py
 !Dockerfile
