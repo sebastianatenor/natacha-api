@@ -76,3 +76,9 @@ firestore-key.json
 # Local-only
 svc.json
 svc.patched.json
+# backups y artefactos locales
+*.bak.*
+SNAPSHOTS/
+*.tmp
+main
+main.py
