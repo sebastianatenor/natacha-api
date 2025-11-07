@@ -21,6 +21,12 @@ from routes.auto_routes import router as auto_router
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+# Configurar limitador global (por IP)
+limiter = Limiter(key_func=get_remote_address)
+
+# Configurar limitador global (por IP)
+limiter = Limiter(key_func=get_remote_address)
+
 from fastapi.responses import JSONResponse
 
 # Configurar limitador global (por IP)
@@ -32,6 +38,8 @@ async def ratelimit_handler(request, exc):
     return JSONResponse(status_code=429, content={"detail": "Too Many Requests – please wait a moment."})
 
 app = FastAPI()
+app.state.limiter = limiter
+app.state.limiter = limiter
 app.include_router(health_router)
 app.include_router(cog_router)
 app.include_router(actions_router)
