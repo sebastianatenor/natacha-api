@@ -23,6 +23,12 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 # Configurar limitador global (por IP)
 limiter = Limiter(key_func=get_remote_address)
+@app.exception_handler(RateLimitExceeded)
+async def ratelimit_handler(request, exc):
+    return JSONResponse(status_code=429, content={"detail": "Too Many Requests – please wait a moment."})
+
+# Configurar limitador global (por IP)
+limiter = Limiter(key_func=get_remote_address)
 
 # Configurar limitador global (por IP)
 limiter = Limiter(key_func=get_remote_address)
@@ -38,6 +44,7 @@ async def ratelimit_handler(request, exc):
     return JSONResponse(status_code=429, content={"detail": "Too Many Requests – please wait a moment."})
 
 app = FastAPI()
+app.state.limiter = limiter
 app.state.limiter = limiter
 app.state.limiter = limiter
 app.include_router(health_router)
