@@ -1,20 +1,10 @@
-from typing import Optional, Any, Dict
-from datetime import datetime, timezone
+from contextlib import contextmanager
+from typing import Iterator, Optional
 
-# Import perezoso de Firestore para no romper import-time si no está instalado
-def _lazy_firestore_client():
-    from google.cloud import firestore  # importa sólo cuando se usa
-    return firestore.Client()
-
-def get_client():
+@contextmanager
+def get_db() -> Iterator[Optional[object]]:
     """
-    Devuelve un cliente de Firestore.
-    En Cloud Run usará las credenciales del service account por defecto.
-    En local podés usar GOOGLE_APPLICATION_CREDENTIALS si querés.
+    Stub: mantiene compatibilidad con rutas que hacen 'from routes.db_util import get_db'.
+    Devuelve un contexto vacío. Reemplazar luego por conexión real si hace falta.
     """
-    return _lazy_firestore_client()
-
-def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
-__all__ = ["get_client", "now_iso"]
+    yield None
