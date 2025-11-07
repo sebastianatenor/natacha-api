@@ -20,33 +20,31 @@ from routes.auto_routes import router as auto_router
 
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
 # Configurar limitador global (por IP)
-limiter = Limiter(key_func=get_remote_address)
-@app.exception_handler(RateLimitExceeded)
 async def ratelimit_handler(request, exc):
     return JSONResponse(status_code=429, content={"detail": "Too Many Requests – please wait a moment."})
 
 # Configurar limitador global (por IP)
-limiter = Limiter(key_func=get_remote_address)
 
 # Configurar limitador global (por IP)
-limiter = Limiter(key_func=get_remote_address)
 
 from fastapi.responses import JSONResponse
 
 # Configurar limitador global (por IP)
-limiter = Limiter(key_func=get_remote_address)
-app.state.limiter = limiter
 
-@app.exception_handler(RateLimitExceeded)
 async def ratelimit_handler(request, exc):
     return JSONResponse(status_code=429, content={"detail": "Too Many Requests – please wait a moment."})
 
 app = FastAPI()
-app.state.limiter = limiter
-app.state.limiter = limiter
-app.state.limiter = limiter
+from slowapi.middleware import SlowAPIMiddleware
+try:
+    app.state.limiter = limiter
+except NameError:
+    from slowapi import Limiter
+    from slowapi.util import get_remote_address
+    limiter = Limiter(key_func=get_remote_address)
+    app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
 app.include_router(health_router)
 app.include_router(cog_router)
 app.include_router(actions_router)
@@ -213,6 +211,14 @@ async def memory_put(request: Request):
     db = _fs_client()
     ref = db.collection("natacha_memory").add(doc)[1]
     return {"ok": True, "id": ref.id, "stored": doc}
+
+# --- Limiter fallback (DEBE estar antes de cualquier @limiter.limit) ---
+try:
+    limiter
+except NameError:
+    from slowapi import Limiter
+    from slowapi.util import get_remote_address
+    limiter = Limiter(key_func=get_remote_address)
 
 @limiter.limit("30/minute")
 @app.get("/memory/search")
@@ -401,3 +407,16 @@ async def whoami():
     val = (os.getenv("API_KEY","")).strip().encode()
     h = hashlib.sha256(val).hexdigest()[:16]
     return {"service":"natacha-api", "sa": os.getenv("K_SERVICE","unknown"), "api_key_sha256_16": h}
+
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from fastapi.responses import JSONResponse
+
+limiter = Limiter(key_func=get_remote_address)
+app = FastAPI()
+app.state.limiter = limiter
+
+@app.exception_handler(RateLimitExceeded)
+async def ratelimit_handler(request, exc):
+    return JSONResponse(status_code=429, content={"detail": "Too Many Requests – please wait a moment."})
