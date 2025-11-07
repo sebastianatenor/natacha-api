@@ -19,3 +19,5 @@ def get_db() -> Iterator[Optional[object]]:
         pass
 
 __all__ = ["get_client", "get_db"]
+
+__stamp__ = "dbutil-20251107T191932Z"
