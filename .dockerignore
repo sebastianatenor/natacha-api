@@ -1,15 +1,19 @@
+# --- minimal dockerignore (NO excluir código fuente necesario) ---
+.gcloudignore
 .git
-.venv
-__pycache__
+.gitignore
+__pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.bak
-*~
-*.old
-*.backup
-REGISTRY.md.bak*
+.venv/
+venv/
+logs/
 backups/
 infra_snapshots/
-logs/
-venv/
+
+# No ignores de código:
+!routes/**
+!service_main.py
+!Dockerfile
+!requirements.txt
