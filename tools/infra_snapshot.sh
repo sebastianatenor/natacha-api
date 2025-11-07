@@ -21,7 +21,17 @@ LOCATION="us-central1"
 # === Auth for signed HTTP checks ===
 IMPERSONATE_SA="scheduler-invoker@asistente-sebastian.iam.gserviceaccount.com"
 HEALTH_AUD="https://natacha-health-monitor-422255208682.us-central1.run.app"
-API_HEALTH_URL="https://natacha-api-422255208682.us-central1.run.app/health"
+PROJ="${PROJ:-$(gcloud config get-value core/project 2>/dev/null)}"
+REG="${REG:-us-central1}"
+SVC="${SVC:-natacha-api}"
+CANONICAL="${NATACHA_CONTEXT_API:-}"
+if [ -z "$CANONICAL" ]; then
+  CANONICAL="$(gcloud run services describe "$SVC" --region "$REG" --project "$PROJ" --format="value(status.url)" 2>/dev/null || true)"
+fi
+API_HEALTH_URL="${CANONICAL:+$CANONICAL/health}"
+if [ -z "$API_HEALTH_URL" ]; then
+  API_HEALTH_URL="https://example.invalid/health"  # fallback vacío para no romper scripts
+fi
 AUTO_HEAL_URL="https://natacha-health-monitor-422255208682.us-central1.run.app/auto_heal"
 # === Auth for signed HTTP checks ===
 IMPERSONATE_SA="scheduler-invoker@asistente-sebastian.iam.gserviceaccount.com"
