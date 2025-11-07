@@ -299,7 +299,7 @@ name: projects/422255208682/secrets/natacha-firestore-key
 
 ## 🧰 Último build fallido
 - ID: 566f0b03-5925-4488-b6ea-45ff86c6971b
-- URL: https://console.cloud.google.com/cloud-build/builds;region=us-central1/566f0b03-5925-4488-b6ea-45ff86c6971b?project=422255208682
+- URL: https://natacha-api-mkwskljrhq-uc.a.run.app
 
 ## 🗺️ Infraestructura relacionada
 - **Repositorio:** ~/natacha-api
