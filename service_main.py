@@ -36,6 +36,20 @@ async def ratelimit_handler(request, exc):
     return JSONResponse(status_code=429, content={"detail": "Too Many Requests – please wait a moment."})
 
 app = FastAPI()
+
+@app.get("/__debug_routes")
+def __debug_routes():
+    from fastapi.routing import APIRoute
+    items = []
+    for r in app.routes:
+        if isinstance(r, APIRoute):
+            items.append({
+                "path": r.path,
+                "methods": sorted(list(r.methods)),
+                "in_schema": getattr(r, "include_in_schema", None)
+            })
+    return {"count": len(items), "routes": items}
+
 from slowapi.middleware import SlowAPIMiddleware
 try:
     app.state.limiter = limiter
