@@ -1,3 +1,6 @@
+- Secret montado: NATACHA_API_KEY
+- Service Account: natacha-firestore-access@asistente-sebastian.iam.gserviceaccount.com
+- Revisión: natacha-api-00283-hjk
 # 🧭 REGISTRY – Proyecto Natacha (Snapshot 20251106T233555Z UTC)
 
 ## 📦 Proyecto GCP
@@ -299,7 +302,7 @@ name: projects/422255208682/secrets/natacha-firestore-key
 
 ## 🧰 Último build fallido
 - ID: 566f0b03-5925-4488-b6ea-45ff86c6971b
-- URL: https://natacha-api-mkwskljrhq-uc.a.run.app
+- URL: https://natacha-api-422255208682.us-central1.run.app
 
 ## 🗺️ Infraestructura relacionada
 - **Repositorio:** ~/natacha-api
