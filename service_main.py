@@ -1,4 +1,16 @@
 
+
+# -- safe import for db_util (fallback if missing) --
+try:
+    from routes.db_util import get_db, get_client
+except Exception:  # define fallbacks so the app can boot
+    from contextlib import contextmanager
+    def get_client():
+        return None
+    @contextmanager
+    def get_db():
+        yield None
+
 Limiter = None
 get_remote_address = None
 SlowAPIMiddleware = None
