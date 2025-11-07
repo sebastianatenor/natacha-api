@@ -428,7 +428,7 @@ from slowapi.errors import RateLimitExceeded
 from fastapi.responses import JSONResponse
 
 limiter = Limiter(key_func=get_remote_address)
-app = FastAPI()
+# app = FastAPI()  # DUPLICATE REMOVED
 app.state.limiter = limiter
 
 @app.exception_handler(RateLimitExceeded)
