@@ -323,21 +323,6 @@ async def require_api_key_mw(request: Request, call_next):
 
     return await call_next(request)
 
-    expected = os.getenv("API_KEY", "").strip()
-    supplied = request.headers.get("X-API-Key") or (
-        request.headers.get("Authorization", "").replace("Bearer ", "").strip()
-    )
-
-    if not expected:
-        # Si no hay API_KEY configurada, permitimos pero avisamos (para no bloquear despliegues)
-        response = await call_next(request)
-        response.headers["X-Auth-Warning"] = "API_KEY not set on server"
-        return response
-
-    if supplied != expected:
-        return JSONResponse(status_code=401, content={"detail":"Unauthorized: invalid API key"})
-
-    return await call_next(request)
 
 # === AUTO PLANNER MIN ===
 def _fs():
