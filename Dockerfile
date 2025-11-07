@@ -18,4 +18,4 @@ COPY . /app
 EXPOSE 8080
 
 # 4. levantar la misma app que levantás en tu Mac
-CMD ["uvicorn", "service_main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "service_main:app", "--host", "0.0.0.0", "--port", "8080"]ENV PYTHONPATH=/app
