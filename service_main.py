@@ -1,3 +1,13 @@
+import uuid
+from fastapi import FastAPI, Request, HTTPException, Query
+from typing import Optional, List, Dict, Any
+from google.cloud import firestore
+from fastapi import FastAPI, Query, Request, HTTPException
+from typing import List, Optional
+from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
+from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Request
 from routes.health_routes import router as health_router
 from routes.cog_routes import router as cog_router
 from routes.actions_routes import router as actions_router
@@ -8,6 +18,19 @@ from fastapi.openapi.utils import get_openapi
 import os, hashlib, traceback
 from routes.auto_routes import router as auto_router
 
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from fastapi.responses import JSONResponse
+
+# Configurar limitador global (por IP)
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+
+@app.exception_handler(RateLimitExceeded)
+async def ratelimit_handler(request, exc):
+    return JSONResponse(status_code=429, content={"detail": "Too Many Requests – please wait a moment."})
+
 app = FastAPI()
 app.include_router(health_router)
 app.include_router(cog_router)
@@ -15,7 +38,7 @@ app.include_router(actions_router)
 
 app.include_router(tasks_router)
 
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["https://dashboard.llvc-global.com","https://natacha-dashboard-422255208682.us-central1.run.app"], allow_methods=["*"], allow_headers=["*"])
 app.include_router(auto_router)
 
 @app.get("/__alive")
@@ -67,20 +90,15 @@ try:
     app
 except NameError:
     from fastapi import FastAPI
-#     app = FastAPI()  # DUPLICATE REMOVED
-
-@app.get("/health", include_in_schema=False)
-def _health():
-    return {"status": "ok"}
+# #     app = FastAPI()  # DUPLICATE REMOVED  # DUPLICATE REMOVED
 
 # --- FINAL fallback health (direct on app) ---
 try:
     app
 except NameError:
     from fastapi import FastAPI
-#     app = FastAPI()  # DUPLICATE REMOVED
+# #     app = FastAPI()  # DUPLICATE REMOVED  # DUPLICATE REMOVED
 
-@app.get("/health", include_in_schema=False)
 def health_final():
     return {"status": "ok (fallback)"}
 
@@ -89,9 +107,8 @@ try:
     app
 except NameError:
     from fastapi import FastAPI
-#     app = FastAPI()  # DUPLICATE REMOVED
+# #     app = FastAPI()  # DUPLICATE REMOVED  # DUPLICATE REMOVED
 
-@app.get("/health", include_in_schema=False)
 def health():
     return {"status": "ok"}
 
@@ -109,36 +126,263 @@ def __whoami():
         "routes_count": len(app.router.routes),
     }
 
-@_debug_router.get("/__routes", include_in_schema=False)
-def __routes():
-    return [getattr(r, "path", str(r)) for r in app.router.routes]
-
-app.include_router(_debug_router)
-
-# ---- canonical health endpoint (direct on main app) ----
-try:
-    from fastapi import HTTPException
-    @app.get("/health", include_in_schema=False)
-    def _health():
-        # keep it super light & deterministic
-        return {"status": "ok", "source": "service_main"}
-except Exception as e:
     # If something odd happens during import, fail visibly in logs
     print("WARN: could not register /health on service_main:", e)
-# === injected diagnostics: health + route dump (idempotent) ===
-try:
-    from fastapi import APIRouter
-    _diag = APIRouter()
-
-    @_diag.get("/__routes2", include_in_schema=False)
-    def __routes2():
-        # listar paths para confirmar que /health existe
-        return [getattr(r, "path", str(r)) for r in app.router.routes]
-
-    @_diag.get("/health", include_in_schema=False)
-    def __health_main():
-        return {"status": "ok", "source": "service_main.inj"}
-
-    app.include_router(_diag)
-except Exception as _e:
     print("WARN inject diag failed:", _e)
+
+@app.get("/config")
+async def _config():
+    return {
+        "service": os.getenv("SERVICE_NAME","natacha-api"),
+        "project": os.getenv("GOOGLE_CLOUD_PROJECT","asistente-sebastian"),
+        "revision": os.getenv("K_REVISION","local"),
+        "status": "ok",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+@app.get("/logs")
+async def _logs(limit: int = 10):
+    now = datetime.now(timezone.utc).isoformat()
+    logs = [{"timestamp": now, "severity": "INFO", "message": f"stub log {i+1}"} for i in range(max(1, min(limit, 100)))]
+    return JSONResponse(logs)
+# === Memory Test Stub (idempotente) ===
+try:
+    app
+except NameError:
+    from fastapi import FastAPI
+#     app = FastAPI()  # DUPLICATE REMOVED
+
+if not any(getattr(r, "path", "") == "/memory/test" for r in getattr(app, "routes", [])):
+    @app.get("/memory/test")
+    def memory_test():
+        return {
+            "status": "memory-endpoints-available",
+            "backend": "stub",
+            "note": "replace with Firestore-backed endpoints later"
+        }
+
+
+# === Firestore-backed memory endpoints ===
+def _fs_client():
+    return firestore.Client(project=os.getenv("GOOGLE_CLOUD_PROJECT", "asistente-sebastian"))
+
+def _to_list(v):
+    if v is None: return []
+    if isinstance(v, list): return v
+    if isinstance(v, str): return [t.strip() for t in v.split(",") if t.strip()]
+    return [str(v)]
+
+@app.post("/memory/put")
+async def memory_put(request: Request):
+    ct = request.headers.get("content-type", "")
+    if "application/json" in ct:
+        data = await request.json()
+    else:
+        data = dict((await request.form()).items())
+
+    text  = (data.get("text") or "").strip()
+    topic = (data.get("topic") or "general").strip()
+    scope = (data.get("scope") or "global").strip()
+    tags  = _to_list(data.get("tags"))
+
+    if not text:
+        raise HTTPException(status_code=400, detail="text is required")
+
+    doc = {
+        "text": text,
+        "topic": topic,
+        "scope": scope,
+        "tags": tags,
+        "ts": datetime.utcnow().isoformat() + "Z",
+    }
+    db = _fs_client()
+    ref = db.collection("natacha_memory").add(doc)[1]
+    return {"ok": True, "id": ref.id, "stored": doc}
+
+@limiter.limit("30/minute")
+@app.get("/memory/search")
+async def memory_search(q: str = Query("", alias="q"),
+                        topic: Optional[str] = None,
+                        limit: int = 20):
+    limit = max(1, min(int(limit or 20), 100))
+    db = _fs_client()
+    qry = db.collection("natacha_memory").order_by("ts", direction=firestore.Query.DESCENDING).limit(200)
+    docs = [d.to_dict() | {"_id": d.id} for d in qry.stream()]
+    if topic:
+        docs = [d for d in docs if (d.get("topic") or "").lower() == topic.lower()]
+    if q:
+        ql = q.lower()
+        docs = [d for d in docs if ql in (d.get("text","").lower() + " " + " ".join(d.get("tags",[])).lower())]
+    return {"ok": True, "count": len(docs[:limit]), "items": docs[:limit]}
+
+def _fs():
+    # Usa credenciales por defecto de Cloud Run
+    return firestore.Client()
+
+@app.post("/think")
+async def think(req: Request):
+    """Guarda un 'pensamiento' simple para trazar decisiones/ideas del agente."""
+    try:
+        payload = await req.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
+    text = (payload or {}).get("input") or (payload or {}).get("text")
+    topic = (payload or {}).get("topic") or "general"
+    tags = (payload or {}).get("tags") or []
+    meta = (payload or {}).get("meta") or {}
+
+    if not text:
+        raise HTTPException(status_code=422, detail="Field 'input' (or 'text') is required")
+
+    doc = {
+        "kind": "thought",
+        "text": str(text),
+        "topic": str(topic),
+        "tags": list(tags) if isinstance(tags, list) else [str(tags)],
+        "meta": meta if isinstance(meta, dict) else {"_note": "meta not dict"},
+        "ts": datetime.now(timezone.utc).isoformat().replace("+00:00","Z"),
+    }
+    fs = _fs()
+    ref = fs.collection("agent_context").document()
+    ref.set(doc)
+    return {"ok": True, "id": ref.id, "stored": doc}
+
+@app.get("/context")
+def get_context(limit: int = Query(10, ge=1, le=100), topic: Optional[str] = None):
+    """Devuelve contexto reciente (últimos N); filtrable por topic."""
+    fs = _fs()
+    q = fs.collection("agent_context")
+    if topic:
+        q = q.where("topic", "==", topic)
+    # ordenar por ts descendente si está como string ISO
+    q = q.order_by("ts", direction=firestore.Query.DESCENDING).limit(limit)
+    docs = []
+    for d in q.stream():
+        data = d.to_dict()
+        data["_id"] = d.id
+        docs.append(data)
+    return {"ok": True, "count": len(docs), "items": docs}
+
+
+# === API Key auth middleware (refined) ===
+EXEMPT_PATHS = {"/", "/health", "/openapi.json", "/docs", "/redoc", "/memory/test"}
+
+@app.middleware("http")
+async def require_api_key_mw(request: Request, call_next):
+    if request.url.path in EXEMPT_PATHS:
+        return await call_next(request)
+
+    expected = os.getenv("API_KEY", "").strip()
+    authz = request.headers.get("Authorization", "")
+    bearer = authz.replace("Bearer ", "", 1).strip()
+    supplied = (request.headers.get("X-API-Key") or bearer or "").strip()
+
+    if not expected:
+        response = await call_next(request)
+        response.headers["X-Auth-Warning"] = "API_KEY not set on server"
+        return response
+
+    if not supplied or supplied != expected:
+        return JSONResponse(status_code=401, content={"detail": "Unauthorized: invalid API key"})
+
+    return await call_next(request)
+
+    expected = os.getenv("API_KEY", "").strip()
+    supplied = request.headers.get("X-API-Key") or (
+        request.headers.get("Authorization", "").replace("Bearer ", "").strip()
+    )
+
+    if not expected:
+        # Si no hay API_KEY configurada, permitimos pero avisamos (para no bloquear despliegues)
+        response = await call_next(request)
+        response.headers["X-Auth-Warning"] = "API_KEY not set on server"
+        return response
+
+    if supplied != expected:
+        return JSONResponse(status_code=401, content={"detail":"Unauthorized: invalid API key"})
+
+    return await call_next(request)
+
+# === AUTO PLANNER MIN ===
+def _fs():
+    return firestore.Client()
+
+def _iso_now():
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+# Crear un plan
+@app.post("/auto/plan")
+def auto_plan(payload: Dict[str, Any]):
+    payload = payload or {}
+    goal = payload.get("goal")
+    constraints = payload.get("constraints", [])
+    horizon = int(payload.get("horizon", 5))
+    if not goal:
+        raise HTTPException(status_code=400, detail="missing 'goal'")
+    plan_id = uuid.uuid4().hex[:16]
+    doc = {
+        "plan_id": plan_id,
+        "goal": goal,
+        "constraints": constraints,
+        "horizon": horizon,
+        "status": "draft",
+        "steps": [],
+        "ts": _iso_now(),
+    }
+    _fs().collection("agent_plans").document(plan_id).set(doc)
+    return { "ok": True, "plan_id": plan_id, "plan": doc }
+
+# Ver un plan
+@app.get("/auto/plan/{plan_id}")
+def auto_plan_get(plan_id: str):
+    snap = _fs().collection("agent_plans").document(plan_id).get()
+    if not snap.exists:
+        raise HTTPException(status_code=404, detail="plan not found")
+    return { "ok": True, "plan": snap.to_dict() }
+
+# Agregar un paso
+@app.post("/auto/plan/{plan_id}/step")
+def auto_plan_add_step(plan_id: str, payload: Dict[str, Any]):
+    payload = payload or {}
+    action = payload.get("action")
+    params = payload.get("params", {})
+    if not action:
+        raise HTTPException(status_code=400, detail="missing 'action'")
+    ref = _fs().collection("agent_plans").document(plan_id)
+    snap = ref.get()
+    if not snap.exists:
+        raise HTTPException(status_code=404, detail="plan not found")
+    doc = snap.to_dict()
+    step = {
+        "id": uuid.uuid4().hex[:8],
+        "action": action,
+        "params": params,
+        "ts": _iso_now(),
+        "status": "pending",
+    }
+    doc.setdefault("steps", []).append(step)
+    doc["ts"] = _iso_now()
+    ref.set(doc)
+    return { "ok": True, "step": step, "plan_id": plan_id }
+
+# Listar últimos planes (orden por ts desc)
+@app.get("/auto/list")
+def auto_plan_list(limit: int = 10):
+    q = (
+        _fs().collection("agent_plans")
+        .order_by("ts", direction=firestore.Query.DESCENDING)
+        .limit(max(1, min(limit, 50)))
+    )
+    items = [d.to_dict() for d in q.stream()]
+    return { "ok": True, "count": len(items), "items": items }
+
+
+import hashlib
+
+@app.get("/whoami")
+async def whoami():
+    # NO expone la API key; solo un hash para diagnóstico
+    val = (os.getenv("API_KEY","")).strip().encode()
+    h = hashlib.sha256(val).hexdigest()[:16]
+    return {"service":"natacha-api", "sa": os.getenv("K_SERVICE","unknown"), "api_key_sha256_16": h}
