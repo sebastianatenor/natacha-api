@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash
 . "$(dirname "$0")/../tools/canon_resolver.sh" || source tools/canon_resolver.sh
 #!/usr/bin/env bash
 set -euo pipefail

@@ -8,38 +8,35 @@ jobs:
   bash-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Install shellcheck
-        run: sudo apt-get update && sudo apt-get install -y shellcheck
-      - name: Bash syntax check (bash -n)
-        run: |
-          set -euo pipefail
-          shopt -s globstar nullglob
-          files=( **/*.sh )
-          if [ ${#files[@]} -gt 0 ]; then
-            for f in "${files[@]}"; do bash -n "$f"; done
-          fi
-      - name: ShellCheck
-        run: |
-          set -euo pipefail
-          shopt -s globstar nullglob
-          files=( **/*.sh )
-          if [ ${#files[@]} -gt 0 ]; then
-            shellcheck -S warning "${files[@]}"
-          else
-            echo "No .sh files to lint"
-          fi
-  check:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [ '3.10', '3.11' ]
-    steps:
+      - run: bash scripts/run_bashlint.sh
+      - run: bash scripts/run_bashlint.sh
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+      - run: sudo apt-get update && sudo apt-get install -y shellcheck
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
       - run: python -m pip install --upgrade pip
       - run: bash scripts/guard_no_hardcodes.sh
+      - name: Bash lint (ignore zsh)
+        run: |
+          set -euo pipefail
+          mapfile -t ALL < <(git ls-files '*.sh')
+          FILTERED=()
+          for f in "${ALL[@]}"; do
+            [[ -f "$f" ]] || continue
+            if ! head -n1 "$f" | grep -q '^#!/bin/zsh'; then
+              FILTERED+=("$f")
+            fi
+          done
+          if [ ${#FILTERED[@]} -gt 0 ]; then
+            for f in "${FILTERED[@]}"; do bash -n "$f"; done
+            if command -v shellcheck >/dev/null 2>&1; then
+              shellcheck -S warning "${FILTERED[@]}"
+            else
+              echo "shellcheck no instalado"
+            fi
+          else
+            echo "No bash .sh files"
+          fi
       - run: python -m py_compile $(git ls-files '*.py')

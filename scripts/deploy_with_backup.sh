@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash
 . "$(dirname "$0")/../tools/canon_resolver.sh" || source tools/canon_resolver.sh
 resolve_canon # exporta CANONICAL
 #!/usr/bin/env bash
@@ -14,7 +16,7 @@ gcloud run deploy "$SVC" \
   --image "$IMG" \
   --region "$REG" \
   --project "$PROJ" \
-  --labels=stage=canary,git_tag=$(git describe --tags --always --dirty) \
+  --labels=stage=canary,git_tag="$(git describe --tags --always --dirty)" \
   --quiet
 
 URL=$(gcloud run services describe "$SVC" --project "$PROJ" --region "$REG" --format='value(status.url)')
