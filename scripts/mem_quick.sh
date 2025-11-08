@@ -106,15 +106,15 @@ scheduler_run_compact () {
 # Ver últimos logs del endpoint /memory/v2/compact en Cloud Run
 logs_compact_recent () {
   gcloud logging read \
-  'resource.type="cloud_run_revision" AND httpRequest.requestUrl:"/memory/v2/compact"' \
-  --limit=20 --format="value(textPayload)"
+    'resource.type="cloud_run_revision" AND httpRequest.requestUrl:"/memory/v2/compact"' \
+    --limit=20 --format="value(textPayload)"
 }
 
 # Ver último resultado del Scheduler
 logs_scheduler_recent () {
   gcloud logging read \
-  "resource.type=cloud_scheduler_job AND resource.labels.job_id=\"$JOB_COMPACT\"" \
-  --limit=10 --format="value(textPayload,timestamp)"
+    "resource.type=cloud_scheduler_job AND resource.labels.job_id=\"$JOB_COMPACT\"" \
+    --limit=10 --format="value(textPayload,timestamp)"
 }
 
 ## =========[ Plantillas de guardado ]=========
@@ -164,27 +164,6 @@ mem_store_probe_ops () {
   }"
 }
 
-## =========[ Ejemplos de uso ]=========
-usage () {
-  cat <<'USAGE'
-Comandos útiles:
-  ./scripts/mem_quick.sh mem_info
-  ./scripts/mem_quick.sh mem_search_deck
-  ./scripts/mem_quick.sh mem_search_llvc
-  ./scripts/mem_quick.sh mem_search_memv2_decisions
-  ./scripts/mem_quick.sh mem_compact_now
-  ./scripts/mem_quick.sh scheduler_run_compact
-  ./scripts/mem_quick.sh logs_compact_recent
-  ./scripts/mem_quick.sh logs_scheduler_recent
-
-Plantillas:
-  ./scripts/mem_quick.sh mem_store_decision_compact_cron
-  ./scripts/mem_quick.sh mem_store_fact_llvc_deck
-  ./scripts/mem_quick.sh mem_store_task_deck_envio
-  ./scripts/mem_quick.sh mem_store_probe_ops
-USAGE
-}
-
 # =======[ Sugar: store rápido ]=======
 mem_store_quick() {
   local ns="${1:-$NAMESPACE_DEFAULT}"
@@ -192,7 +171,7 @@ mem_store_quick() {
   shift 2 || true
   local text="$*"
   [[ -z "$text" ]] && { echo "Uso: mem_store_quick [namespace] [type] <texto>"; return 1; }
-  curl -sS -H "X-API-Key: $KEY" -H "Content-Type: application/json" \
+  curl -fsS -H "X-API-Key: $KEY" -H "Content-Type: application/json" \
     -X POST "$BASE/memory/v2/store" -d "{
       \"namespace\":\"$ns\",
       \"items\":[{\"type\":\"$type\",\"text\":\"$text\",\"source\":\"chatgpt\"}]
@@ -205,11 +184,36 @@ mem_store_task_quick() {
   shift 2 || true
   local text="$*"
   [[ -z "$text" ]] && { echo "Uso: mem_store_task_quick [namespace] [deadline:YYYY-MM-DD] <texto>"; return 1; }
-  curl -sS -H "X-API-Key: $KEY" -H "Content-Type: application/json" \
+  curl -fsS -H "X-API-Key: $KEY" -H "Content-Type: application/json" \
     -X POST "$BASE/memory/v2/store" -d "{
       \"namespace\":\"$ns\",
       \"items\":[{\"type\":\"task\",\"text\":\"$text\",\"source\":\"chatgpt\",\"tags\":[\"task\"],\"meta\":{\"deadline\":\"$deadline\",\"owner\":\"Sebastián\"}}]
     }" | jq .
+}
+
+## =========[ Ayuda ]=========
+usage () {
+  cat <<'USAGE'
+Comandos útiles:
+  ./scripts/mem_quick.sh mem_info
+  ./scripts/mem_quick.sh mem_search_deck
+  ./scripts/mem_quick.sh mem_search_llvc
+  ./scripts/mem_quick.sh mem_search_memv2_decisions
+  ./scripts/mem_quick.sh mem_compact_now
+  ./scripts/mem_quick.sh scheduler_run_compact
+  ./scripts/mem_quick.sh logs_compact_recent
+  ./scripts/mem_quick.sh logs_scheduler_recent
+
+Atajos rápidos:
+  ./scripts/mem_quick.sh mem_store_quick [ns] [type] <texto>
+  ./scripts/mem_quick.sh mem_store_task_quick [ns] [YYYY-MM-DD] <texto>
+
+Plantillas:
+  ./scripts/mem_quick.sh mem_store_decision_compact_cron
+  ./scripts/mem_quick.sh mem_store_fact_llvc_deck
+  ./scripts/mem_quick.sh mem_store_task_deck_envio
+  ./scripts/mem_quick.sh mem_store_probe_ops
+USAGE
 }
 
 ## =========[ Dispatcher ]=========
@@ -219,7 +223,8 @@ case "$cmd" in
   mem_store|mem_search|mem_compact|mem_info|\
   mem_search_deck|mem_search_llvc|mem_search_memv2_decisions|\
   mem_compact_now|scheduler_run_compact|logs_compact_recent|logs_scheduler_recent|\
-  mem_store_decision_compact_cron|mem_store_fact_llvc_deck|mem_store_task_deck_envio|mem_store_probe_ops|usage)
+  mem_store_decision_compact_cron|mem_store_fact_llvc_deck|mem_store_task_deck_envio|mem_store_probe_ops|\
+  mem_store_quick|mem_store_task_quick|usage)
     "$cmd" "$@"
     ;;
   *)
