@@ -156,6 +156,29 @@ from fastapi.responses import JSONResponse
 async def ratelimit_handler(request, exc):
     return JSONResponse(status_code=429, content={"detail": "Too Many Requests – please wait a moment."})
 
+
+
+# === early mount: memory_v2 + diag (idempotent) ===
+try:
+    from routes.memory_v2 import router as _mv2_router
+    # Si aún no está montado, lo montamos
+    if not any(getattr(r, "path", "").startswith("/memory/v2") for r in getattr(app, "routes", [])):
+        app.include_router(_mv2_router)
+except Exception as _e:
+    @app.get("/__mv2_check", include_in_schema=False)
+    def __mv2_check_err():
+        return {"mounted": False, "error": str(_e)}
+else:
+    @app.get("/__mv2_check", include_in_schema=False)
+    def __mv2_check_ok():
+        try:
+            from routes import memory_v2 as _mv2_mod
+            pref = getattr(getattr(_mv2_mod, "router", None), "prefix", None)
+            routes = [getattr(r, "path", str(r)) for r in getattr(getattr(_mv2_mod, "router", None), "routes", [])]
+            mounted = any(getattr(r, "path", "").startswith("/memory/v2") for r in getattr(app, "routes", []))
+            return {"mounted": mounted, "prefix": pref, "router_routes": routes}
+        except Exception as _inner:
+            return {"mounted": False, "error": str(_inner)}
 app = FastAPI()
 
 @app.get("/__debug_routes")
