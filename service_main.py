@@ -547,3 +547,20 @@ app.state.limiter = limiter
 @app.exception_handler(RateLimitExceeded)
 async def ratelimit_handler(request, exc):
     return JSONResponse(status_code=429, content={"detail": "Too Many Requests – please wait a moment."})
+
+
+# --- mount memory_v2 (autopatch) ---
+try:
+    from routes.memory_v2 import router as memory_v2_router
+    app.include_router(memory_v2_router)
+except Exception as e:
+    print('memory_v2 not mounted:', e)
+
+
+@app.get('/health')
+def health():
+    import os, hashlib
+    raw = (os.getenv('API_KEY','').strip()).encode()
+    sig = (hashlib.sha256(raw).hexdigest()[:8]) if raw else ''
+    mode = 'dev' if os.getenv('DEV_NOAUTH')=='1' else 'locked'
+    return {'status':'ok','auth_mode':mode,'key_sig':sig}
