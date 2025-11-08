@@ -19,7 +19,7 @@ SAFE_DIRS = [BASE_DIR, BASE_DIR / "routes", BASE_DIR / "scripts"]
 # URL pública (fallback)
 PUBLIC_BASE = os.getenv(
     "NATACHA_PUBLIC_BASE",
-    "os.getenv(NATACHA_CONTEXT_API, os.getenv(NATACHA_CONTEXT_API, https://natacha-api-mkwskljrhq-uc.a.run.app))",
+    "os.getenv('NATACHA_CONTEXT_API', 'https://natacha-api-mkwskljrhq-uc.a.run.app')",
 )
 # URL interna (dentro del mismo servicio)
 LOCAL_BASE = os.getenv("NATACHA_LOCAL_BASE", "http://127.0.0.1:8080")

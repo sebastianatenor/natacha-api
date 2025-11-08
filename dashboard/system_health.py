@@ -13,7 +13,7 @@ INFRA_URL = os.getenv(
 
 # Fuente 2: modo operativo (tareas/memorias) desde Natacha API
 OPS_URL = os.getenv(
-    "NATACHA_CONTEXT_API", "os.getenv(NATACHA_CONTEXT_API, os.getenv(NATACHA_CONTEXT_API, https://natacha-api-mkwskljrhq-uc.a.run.app))"
+    "NATACHA_CONTEXT_API", "os.getenv('NATACHA_CONTEXT_API', 'https://natacha-api-mkwskljrhq-uc.a.run.app')"
 )
 
 
