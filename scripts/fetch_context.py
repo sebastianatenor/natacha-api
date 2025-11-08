@@ -1,8 +1,9 @@
+import os
 #!/usr/bin/env python3
 import json
 import urllib.request
 
-URL = "https://natacha-api-422255208682.us-central1.run.app/ops/insights?limit=50"
+URL = "os.getenv('NATACHA_CONTEXT_API', 'os.getenv('NATACHA_CONTEXT_API', 'https://natacha-api-mkwskljrhq-uc.a.run.app')')/ops/insights?limit=50"
 
 with urllib.request.urlopen(URL) as resp:
     data = json.load(resp)

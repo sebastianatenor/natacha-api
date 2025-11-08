@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
+import os
 import json
 import sys
 from pathlib import Path
+
+# Base de la API: primero NATACHA_CONTEXT_API, si no existe usa CANON (exportada en tu shell),
+# y como último fallback deja la URL LIVE conocida.
+BASE = os.getenv(
+    "NATACHA_CONTEXT_API",
+    os.environ.get("CANON", "https://natacha-api-mkwskljrhq-uc.a.run.app")
+)
 
 CTX = Path("last_context.json")
 
@@ -31,9 +39,7 @@ for d in dups:
     for i in ids:
         print(f"    • {i}")
     print("  👉 Para borrar una en la API (ejemplo):")
-    print(
-        '     curl -X DELETE "https://natacha-api-422255208682.us-central1.run.app/tasks/{ID}"'
-    )
+    print(f'     curl -X DELETE "{BASE}/tasks/{{ID}}"')
     print("     # reemplazar {ID} por uno de los de arriba")
     print()
 

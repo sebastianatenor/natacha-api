@@ -29,7 +29,7 @@ payload = {
 
 # Enviar a API
 requests.post(
-    "https://natacha-api-422255208682.us-central1.run.app/memory/add",
+    "os.getenv('NATACHA_CONTEXT_API', 'os.getenv('NATACHA_CONTEXT_API', 'https://natacha-api-mkwskljrhq-uc.a.run.app')')/memory/add",
     headers={"Content-Type": "application/json"},
     json=payload,
 )

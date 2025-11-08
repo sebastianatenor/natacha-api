@@ -1,10 +1,11 @@
+CANONICAL="${NATACHA_CONTEXT_API:-https://natacha-api-mkwskljrhq-uc.a.run.app}"
 #!/usr/bin/env bash
 set -euo pipefail
 
 SERVICE="natacha-api"
 PROJECT_ID="asistente-sebastian"
 REGION="us-central1"
-GOOD_URL="https://natacha-api-422255208682.us-central1.run.app"
+GOOD_URL="${CANONICAL}"
 
 REV="$(gcloud run services describe "$SERVICE" --project="$PROJECT_ID" --region="$REGION" --format='value(status.latestReadyRevisionName)')"
 

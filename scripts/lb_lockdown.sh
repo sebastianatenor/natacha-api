@@ -1,3 +1,4 @@
+CANONICAL="${NATACHA_CONTEXT_API:-https://natacha-api-mkwskljrhq-uc.a.run.app}"
 #!/usr/bin/env bash
 set -euo pipefail
 PROJ=${PROJ:-asistente-sebastian}
@@ -27,6 +28,6 @@ gcloud run services update $SVC --project $PROJ --region $REG \
 echo "== Smoke =="
 curl -I https://$DOMAIN/__alive || true
 curl -fsS https://$DOMAIN/openapi.v1.json | jq -r '.servers[].url' || true
-curl -I https://natacha-api-mkwskljrhq-uc.a.run.app || true
+curl -I ${CANONICAL} || true
 
 echo "✅ Listo."

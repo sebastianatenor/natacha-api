@@ -1,9 +1,10 @@
+CANONICAL="${NATACHA_CONTEXT_API:-https://natacha-api-mkwskljrhq-uc.a.run.app}"
 #!/usr/bin/env bash
 set -euo pipefail
 PROJ=${PROJ:-asistente-sebastian}
 REG=${REG:-us-central1}
 SVC=${SVC:-natacha-api}
-CANON=${CANON:-https://natacha-api-422255208682.us-central1.run.app}
+CANON=${CANON:-${CANONICAL}}
 
 echo "== status.url (puede variar) =="
 gcloud run services describe "$SVC" --project "$PROJ" --region "$REG" \

@@ -1,3 +1,4 @@
+CANONICAL="${NATACHA_CONTEXT_API:-https://natacha-api-mkwskljrhq-uc.a.run.app}"
 #!/usr/bin/env bash
 set -euo pipefail
 if [ $# -lt 1 ]; then

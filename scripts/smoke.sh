@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-CANONICAL="https://natacha-api-422255208682.us-central1.run.app"
+CANONICAL="${NATACHA_CONTEXT_API:-https://natacha-api-mkwskljrhq-uc.a.run.app}"
 KEY="$(gcloud secrets versions access latest --secret NATACHA_API_KEY --project asistente-sebastian | tr -d '\r\n')"
 
 echo "== /health =="

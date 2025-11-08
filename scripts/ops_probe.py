@@ -4,8 +4,8 @@ import os
 import sys
 import urllib.request
 
-PRIMARY = "https://natacha-api-422255208682.us-central1.run.app"
-SECONDARY = "https://natacha-api-422255208682.us-central1.run.app"
+PRIMARY = "os.getenv('NATACHA_CONTEXT_API', 'os.getenv('NATACHA_CONTEXT_API', 'https://natacha-api-mkwskljrhq-uc.a.run.app')')"
+SECONDARY = "os.getenv('NATACHA_CONTEXT_API', 'os.getenv('NATACHA_CONTEXT_API', 'https://natacha-api-mkwskljrhq-uc.a.run.app')')"
 
 
 def fetch(url):
