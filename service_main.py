@@ -72,7 +72,8 @@ except Exception:
     pass
 
 import uuid
-from fastapi import FastAPI, Request, HTTPException, Query
+from fastapi import FastAPI
+from routes import memory_v2, Request, HTTPException, Query
 
 Limiter = None
 get_remote_address = None
@@ -125,17 +126,20 @@ except ImportError:
 
 from typing import Optional, List, Dict, Any
 from google.cloud import firestore
-from fastapi import FastAPI, Query, Request, HTTPException
+from fastapi import FastAPI
+from routes import memory_v2, Query, Request, HTTPException
 from typing import List, Optional
 from datetime import datetime, timedelta, timezone
 from datetime import datetime, timezone
 from fastapi.responses import JSONResponse
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
+from routes import memory_v2, Request
 from routes.health_routes import router as health_router
 from routes.cog_routes import router as cog_router
 from routes.actions_routes import router as actions_router
 from routes.tasks_routes import router as tasks_router
 from fastapi import FastAPI
+from routes import memory_v2
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 import os, hashlib, traceback
@@ -595,3 +599,7 @@ except Exception as e:
         import sys
         return {"python": sys.version, "import_error": str(e)}
 
+
+
+# --- mount memory v2 ---
+app.include_router(memory_v2.router)
