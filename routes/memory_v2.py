@@ -159,16 +159,18 @@ def compact_store():
     return {"status":"ok","before": len(items), "after": len(seen)}
 
 
+
+
 @router.get("/ops/memory-info")
 def memory_info():
     path = DATA_FILE
     try:
-        if path.startswith("gs://"):
+        if str(path).startswith("gs://"):
             items = _gcs_read_all()
             backend = "gcs"
         else:
             items = _load_local()
             backend = "local"
-        return {"status":"ok","backend":backend,"memory_file":path,"count":len(items)}
+        return {"status":"ok","backend":backend,"memory_file":str(path),"count":len(items)}
     except Exception as e:
-        return {"status":"error","memory_file":path,"error":str(e)}
+        return {"status":"error","memory_file":str(path),"error":str(e)}
