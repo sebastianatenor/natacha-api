@@ -1,37 +1,22 @@
-# 🔐 Security & API Key Playbook – Natacha API
+# Security Policy
 
-_Last updated: '"$TS"' UTC_
+## Supported Versions
+- `main` protegido por CI “Sanity”.
+- Tags `stable-*` son snapshots inmutables.
 
----
+## Reporting a Vulnerability
+- Email: security@llvc-global.com (o tu correo operativo)
+- Asunto: `[SECURITY] Natacha API`
+- Incluí: versión/tag, endpoint afectado, PoC, impacto y severidad.
 
-## 🧩 Endpoints protegidos
+## Severity
+- **Critical**: RCE, auth bypass, credenciales expuestas → 24h
+- **High**: privilege escalation, data exfiltration → 72h
+- **Medium**: info leak, DoS limitado → 7 días
+- **Low**: mejores prácticas, hardening → próxima release
 
-**Protegidos por API key**
-- `/memory/*`
-- `/think`
-- `/context`
-
-**Exentos (públicos o diagnóstico)**
-- `/`
-- `/health`
-- `/openapi.json`
-- `/docs`
-- `/redoc`
-- `/memory/test`
-- *(opcional dev)* `/whoami`
-
----
-
-## 🧪 Cómo probar acceso
-
-```bash
-# 401 sin clave
-curl -s -o /dev/null -w "%{http_code}\n" https://api.llvc-global.com/memory/search
-
-# 200 con X-API-Key
-curl -s -H "X-API-Key: $KEY_FROM_SECRET" \
-  "https://api.llvc-global.com/context?topic=ai-core&limit=1" | jq .
-
-# Alternativa con Bearer
-curl -s -H "Authorization: Bearer $KEY_FROM_SECRET" \
-  "https://api.llvc-global.com/context?topic=ai-core&limit=1" | jq .
+## Handling
+1. Reproducir y aislar.
+2. Hotfix en branch `fix/security/<slug>` con pruebas.
+3. Revisión obligatoria (CODEOWNERS).
+4. Tag `stable-YYYYMMDD-HHMMSS` y changelog corto.
