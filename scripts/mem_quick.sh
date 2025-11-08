@@ -196,5 +196,8 @@ case "$cmd" in
     "$cmd" "$@"
     ;;
   *)
-    echo "Comando desconocido: $cmd"; usage; exit 1;;
+    echo "Comando desconocido: $cmd"
+    usage
+    exit 1
+    ;;
 esac
