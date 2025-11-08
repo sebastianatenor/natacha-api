@@ -598,12 +598,7 @@ except Exception as e:
 
 
 # --- mount memory v2 ---
+
 app.include_router(memory_v2.router)
 
-# --- safe mount for memory_v2 (lazy import) ---
-try:
-    from routes import memory_v2 as _memory_v2
-    app.include_router(_memory_v2.router)
-except Exception as e:
-    import logging
-    logging.exception("memory_v2 mount failed: %s", e)
+from routes import memory_v2
