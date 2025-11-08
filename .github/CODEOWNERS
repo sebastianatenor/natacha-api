@@ -7,7 +7,7 @@ scripts/run_bashlint.sh        @sebastianatenor
 app/**                         @sebastianatenor
 routes/**                      @sebastianatenor
 system/**                      @sebastianatenor
-n atacha_base/**               @sebastianatenor
+natacha_base/**               @sebastianatenor
 
 # Infra y salud
 health_*                       @sebastianatenor
