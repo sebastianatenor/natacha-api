@@ -44,3 +44,20 @@ deploy-gcs:
 	gcloud run deploy natacha-api --region us-central1 --source . \
 	  --set-secrets API_KEY=NATACHA_API_KEY:latest \
 	  --set-env-vars MEMORY_FILE=gs://natacha-memory-store/memory_store.jsonl,RATE_LIMIT_DISABLE=1
+
+.PHONY: memory-check
+memory-check:
+	@CANON=$$(gcloud run services describe natacha-api --region us-central1 --format='value(status.url)'); \
+	KEY=$$(gcloud secrets versions access latest --secret NATACHA_API_KEY --project asistente-sebastian | tr -d '\r\n'); \
+	echo "info:"; \
+	curl -s -H "X-API-Key: $$KEY" "$$CANON/memory/v2/ops/memory-info" | jq . || true; \
+	echo "store:"; \
+	curl -s -X POST "$$CANON/memory/v2/store" -H "Content-Type: application/json" -H "X-API-Key: $$KEY" \
+	     -d '{"items":[{"text":"consistency-check","tags":["probe","ci"]}]}' | jq .; \
+	echo "search:"; \
+	curl -s -X POST "$$CANON/memory/v2/search" -H "Content-Type: application/json" -H "X-API-Key: $$KEY" \
+	     -d '{"query":"consistency","top_k":3}' | jq .
+
+.PHONY: compact-now
+compact-now:
+	@gcloud run jobs execute natacha-compact --region us-central1 --wait
