@@ -18,6 +18,8 @@ RUN pip install --no-cache-dir \
 
 # 2. copiar TODO el proyecto
 COPY . /app
+RUN ls -la /app/routes || true
+RUN python -c 'import importlib,sys; print("[BUILD] trying import routes.memory_v2"); m=importlib.import_module("routes.memory_v2"); rp=getattr(getattr(m,"router",None),"prefix",None); print("[BUILD] memory_v2 import OK; prefix=", rp)'
 # registrar revisión para invalidar caché de capas
 RUN echo "$RUNTIME_REV" > /app/.rev
 

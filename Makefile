@@ -61,3 +61,15 @@ memory-check:
 .PHONY: compact-now
 compact-now:
 	@gcloud run jobs execute natacha-compact --region us-central1 --wait
+
+.PHONY: deploy-prod
+deploy-prod:
+	@gcloud run deploy natacha-api --region us-central1 --source . \
+	  --set-secrets API_KEY=NATACHA_API_KEY:latest \
+	  --env-vars-file env.prod
+
+.PHONY: deploy-prod
+deploy-prod:
+	@gcloud run deploy natacha-api --region us-central1 --source . \
+	  --set-secrets API_KEY=NATACHA_API_KEY:latest \
+	  --env-vars-file env.prod.yaml
