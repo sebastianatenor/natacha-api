@@ -551,8 +551,8 @@ async def ratelimit_handler(request, exc):
 
 # --- mount memory_v2 (autopatch) ---
 try:
-    from routes.memory_v2 import router as memory_v2_router
-    app.include_router(memory_v2_router)
+    pass
+
 except Exception as e:
     print('memory_v2 not mounted:', e)
 
@@ -595,10 +595,6 @@ except Exception as e:
         import sys
         return {"python": sys.version, "import_error": str(e)}
 
-
-
 # --- mount memory v2 ---
-
-app.include_router(memory_v2.router)
-
 from routes import memory_v2
+app.include_router(memory_v2.router)
