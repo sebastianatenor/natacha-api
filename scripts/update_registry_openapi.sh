@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
+# shellcheck shell=bash
+. "$(dirname "$0")/../tools/canon_resolver.sh" || source tools/canon_resolver.sh
+resolve_canon # exporta CANONICAL
+#!/usr/bin/env bash
 set -euo pipefail
 
 SERVICE="natacha-api"
 PROJECT_ID="asistente-sebastian"
 REGION="us-central1"
-GOOD_URL="https://natacha-api-422255208682.us-central1.run.app"
+GOOD_URL="${CANONICAL}"
 
 REV="$(gcloud run services describe "$SERVICE" --project="$PROJECT_ID" --region="$REGION" --format='value(status.latestReadyRevisionName)')"
 

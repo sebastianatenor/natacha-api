@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# shellcheck shell=bash
+. "$(dirname "$0")/../tools/canon_resolver.sh" || source tools/canon_resolver.sh
+resolve_canon # exporta CANONICAL
+#!/usr/bin/env bash
 set -euo pipefail
 
 have(){ command -v "$1" >/dev/null 2>&1; }
@@ -10,7 +14,7 @@ PROJECT="$(gcloud config get-value project 2>/dev/null || echo '-')"
 REGION_DEFAULT="${REGION_DEFAULT:-us-central1}"
 REG_FILE="knowledge/registry/REGISTRY.md"
 
-hr(){ printf '%*s\n' 60 | tr ' ' '─'; }
+hr(){ printf '%*s\n' 60 '' | tr ' ' '─'; }
 
 section(){
   echo

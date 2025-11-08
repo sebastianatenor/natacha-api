@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
+# shellcheck shell=bash
+. "$(dirname "$0")/../tools/canon_resolver.sh" || source tools/canon_resolver.sh
+resolve_canon # exporta CANONICAL
+#!/usr/bin/env bash
 set -euo pipefail
 PROJ=${PROJ:-asistente-sebastian}
 REG=${REG:-us-central1}
 SVC=${SVC:-natacha-api}
-CANON=${CANON:-https://natacha-api-422255208682.us-central1.run.app}
+CANON=${CANON:-${CANONICAL}}
 
 echo "== status.url (puede variar) =="
 gcloud run services describe "$SVC" --project "$PROJ" --region "$REG" \

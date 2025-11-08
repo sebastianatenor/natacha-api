@@ -14,7 +14,7 @@ sleep 2
 
 # 4️⃣ Reiniciar contenedores Docker
 echo "🐳 Reiniciando contenedores..."
-docker stop $(docker ps -q) 2>/dev/null || true
+docker ps -q | xargs -r docker stop 2>/dev/null || true
 sleep 5
 docker start natacha-core natacha-api natacha-health-monitor
 

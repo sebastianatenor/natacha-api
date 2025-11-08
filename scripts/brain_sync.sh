@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034  # HOST se usa indirectamente / reservado
+# shellcheck disable=SC2034  # HOST reservado / uso indirecto
+# shellcheck shell=bash
+. "$(dirname "$0")/../tools/canon_resolver.sh" || source tools/canon_resolver.sh
+resolve_canon # exporta CANONICAL
+#!/usr/bin/env bash
 set -euo pipefail
 
 REG="knowledge/registry/REGISTRY.md"

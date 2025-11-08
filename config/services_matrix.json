@@ -18,13 +18,12 @@
           "owner": "dev"
         },
         "prod-422": {
-          "base_url": "https://natacha-api-422255208682.us-central1.run.app",
+          "base_url": "{{CANONICAL}}",
           "owner": "asistente-sebastian"
         }
       },
       "canonical": "prod-422"
     },
-
     "natacha-core": {
       "description": "Core / auxiliares (si aplica)",
       "endpoints": {
@@ -37,13 +36,12 @@
           "owner": "dev"
         },
         "prod-422": {
-          "base_url": "https://natacha-core-422255208682.us-central1.run.app",
+          "base_url": "{{CORE_CANONICAL}}",
           "owner": "asistente-sebastian"
         }
       },
       "canonical": "prod-422"
     },
-
     "natacha-whatsapp": {
       "description": "Servicio WhatsApp",
       "endpoints": {
@@ -52,19 +50,23 @@
       },
       "environments": {
         "prod-422": {
-          "base_url": "https://natacha-whatsapp-422255208682.us-central1.run.app",
+          "base_url": "{{WHATSAPP_CANONICAL}}",
           "owner": "asistente-sebastian"
         }
       },
       "canonical": "prod-422"
     }
   },
-
   "rules": {
     "openapi_must_exist": true,
     "health_must_be_200": true,
-    "ops_insights_required_in": ["natacha-api"],
-    "public_endpoints": ["/health", "/openapi.json"],
+    "ops_insights_required_in": [
+      "natacha-api"
+    ],
+    "public_endpoints": [
+      "/health",
+      "/openapi.json"
+    ],
     "prefer_canonical": true
   }
 }

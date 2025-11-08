@@ -19,7 +19,7 @@ echo "⚙️  natacha-core: ${CORE:-no responde}" >> "$LOG_FILE"
 
 # Memory Console
 MEMORY=$(curl -s http://natacha-memory-console:8080/health | jq -r '.response.firestore' 2>/dev/null)
-if [[ "$MEMORY" == "true" ]]; then
+if [ "$MEMORY" = "true" ]; then
   echo "💾 natacha-memory-console: ✅ Firestore conectado"
   echo "💾 natacha-memory-console: Firestore OK" >> "$LOG_FILE"
 else

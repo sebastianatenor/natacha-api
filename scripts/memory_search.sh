@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# shellcheck shell=bash
+. "$(dirname "$0")/../tools/canon_resolver.sh" || source tools/canon_resolver.sh
+resolve_canon # exporta CANONICAL
+#!/usr/bin/env bash
 set -euo pipefail
 if [ $# -lt 1 ]; then
   echo "Uso: $0 \"termino a buscar\"" >&2

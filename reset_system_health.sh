@@ -6,7 +6,7 @@
 # ============================================================
 
 echo "🚀 Iniciando reseteo completo del sistema Natacha..."
-cd ~/Projects/natacha-api
+cd ~/Projects/natacha-api || exit 1
 source venv/bin/activate
 
 # --- Paso 1: Limpieza de registros Firestore ---
