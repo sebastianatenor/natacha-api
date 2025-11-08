@@ -185,6 +185,33 @@ Plantillas:
 USAGE
 }
 
+# =======[ Sugar: store rápido ]=======
+mem_store_quick() {
+  local ns="${1:-$NAMESPACE_DEFAULT}"
+  local type="${2:-fact}"
+  shift 2 || true
+  local text="$*"
+  [[ -z "$text" ]] && { echo "Uso: mem_store_quick [namespace] [type] <texto>"; return 1; }
+  curl -sS -H "X-API-Key: $KEY" -H "Content-Type: application/json" \
+    -X POST "$BASE/memory/v2/store" -d "{
+      \"namespace\":\"$ns\",
+      \"items\":[{\"type\":\"$type\",\"text\":\"$text\",\"source\":\"chatgpt\"}]
+    }" | jq .
+}
+
+mem_store_task_quick() {
+  local ns="${1:-$NAMESPACE_DEFAULT}"
+  local deadline="${2:-}"
+  shift 2 || true
+  local text="$*"
+  [[ -z "$text" ]] && { echo "Uso: mem_store_task_quick [namespace] [deadline:YYYY-MM-DD] <texto>"; return 1; }
+  curl -sS -H "X-API-Key: $KEY" -H "Content-Type: application/json" \
+    -X POST "$BASE/memory/v2/store" -d "{
+      \"namespace\":\"$ns\",
+      \"items\":[{\"type\":\"task\",\"text\":\"$text\",\"source\":\"chatgpt\",\"tags\":[\"task\"],\"meta\":{\"deadline\":\"$deadline\",\"owner\":\"Sebastián\"}}]
+    }" | jq .
+}
+
 ## =========[ Dispatcher ]=========
 cmd="${1:-usage}"
 shift || true
