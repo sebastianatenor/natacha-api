@@ -596,5 +596,34 @@ except Exception as e:
         return {"python": sys.version, "import_error": str(e)}
 
 # --- mount memory v2 ---
-from routes import memory_v2
-app.include_router(memory_v2.router)
+
+# --- mount memory v2 (ordered) ---
+
+# --- mount memory v2 (ordered) ---
+
+# --- mount memory v2 (explicit submodule) ---
+from routes.memory_v2 import router as memory_v2_router
+app.include_router(memory_v2_router)
+
+# === memory_v2 include + runtime check (idempotent) ===
+try:
+    from routes.memory_v2 import router as _mv2_router
+    if not any(getattr(r, "path", "").startswith("/memory/v2") for r in getattr(app, "routes", [])):
+        app.include_router(_mv2_router)
+except Exception as _e:
+    # make the reason visible at runtime
+    @app.get("/__mv2_check")
+    def __mv2_check_error():
+        return {"mounted": False, "error": str(_e)}
+
+else:
+    @app.get("/__mv2_check")
+    def __mv2_check_ok():
+        try:
+            from routes import memory_v2 as _mv2_mod
+            pref = getattr(getattr(_mv2_mod, "router", None), "prefix", None)
+            routes = [getattr(r, "path", str(r)) for r in getattr(getattr(_mv2_mod, "router", None), "routes", [])]
+            mounted = any(getattr(r, "path", "").startswith("/memory/v2") for r in getattr(app, "routes", []))
+            return {"mounted": mounted, "prefix": pref, "router_routes": routes}
+        except Exception as _inner:
+            return {"mounted": False, "error": str(_inner)}
