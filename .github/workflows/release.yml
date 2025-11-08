@@ -1,0 +1,15 @@
+name: Auto Release
+on:
+  push:
+    branches: [ main ]
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tag stable
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          TAG="stable-$(date +%Y%m%d-%H%M%S)"
+          git tag -a "$TAG" -m "auto stable release"
+          git push origin "$TAG"
