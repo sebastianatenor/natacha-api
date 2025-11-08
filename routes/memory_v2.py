@@ -123,3 +123,37 @@ def search(q: MemoryQuery):
         "score": round(float(sc), 4)
     } for sc, d in ranked[:topk]]
     return {"status": "ok", "items": results}
+
+# --- mantenimiento: compactar el store (dedup) ---
+@router.post("/compact")
+def compact_store():
+    # cargar todo
+    if DATA_FILE.startswith("gs://"):
+        items = _gcs_read_all()
+    else:
+        items = _load_local()
+
+    # dedup por _id (si falta _id, usamos hash del texto)
+    seen = {}
+    for d in items:
+        _id = d.get("_id") or stable_hash(d.get("text",""))
+        d["_id"] = _id
+        seen[_id] = d  # se queda con la última ocurrencia
+
+    # reescribir
+    payload = "\n".join(json.dumps(x, ensure_ascii=False) for x in seen.values())
+
+    if DATA_FILE.startswith("gs://"):
+        # subir a GCS
+        from google.cloud import storage
+        client = storage.Client()
+        bucket_name, blob_name = DATA_FILE.replace("gs://","",1).split("/",1)
+        bucket = client.bucket(bucket_name)
+        blob = bucket.blob(blob_name)
+        blob.upload_from_string(payload, content_type="application/jsonl")
+    else:
+        # escribir local
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            f.write(payload + ("\n" if payload else ""))
+
+    return {"status":"ok","before": len(items), "after": len(seen)}
