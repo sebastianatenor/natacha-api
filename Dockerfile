@@ -2,27 +2,32 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-# 1. instalar dependencias
-# si querés, después lo pasamos a requirements.txt
+# --- cache-buster / runtime marker ---
+ARG REV=dev
+ENV RUNTIME_REV=$REV
+ENV PYTHONPATH=/app
+
+# 1. deps base para levantar rápido (antes de copiar el repo)
 RUN pip install --no-cache-dir \
     fastapi \
     uvicorn[standard] \
     google-cloud-firestore \
     google-auth \
-    requests
+    requests \
+    google-cloud-storage==2.16.0
 
-# 2. copiar TODO el proyecto (no solo app.py)
+# 2. copiar TODO el proyecto
 COPY . /app
-# deps
+# registrar revisión para invalidar caché de capas
+RUN echo "$RUNTIME_REV" > /app/.rev
+
+# 3. si hay requirements.txt, instalarlos (idempotente)
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
-    && pip install --no-cache-dir -r requirements.txt \
+    && ( [ -f requirements.txt ] && pip install --no-cache-dir -r requirements.txt || true ) \
     && pip check || true
 
-# 3. exponer puerto
+# 4. puerto
 EXPOSE 8080
 
-# 4. levantar la misma app que levantás en tu Mac
-CMD ["uvicorn", "service_main:app", "--host", "0.0.0.0", "--port", "8080"]ENV PYTHONPATH=/app
-
-# harden: ensure gcs lib present (also breaks cache)
-RUN pip install --no-cache-dir google-cloud-storage==2.16.0
+# 5. comando
+CMD ["uvicorn", "service_main:app", "--host", "0.0.0.0", "--port", "8080"]
