@@ -1,4 +1,5 @@
 import os
+BASE = os.getenv('NATACHA_CONTEXT_API', 'https://natacha-api-mkwskljrhq-uc.a.run.app')
 from datetime import datetime, timezone
 
 import pandas as pd
