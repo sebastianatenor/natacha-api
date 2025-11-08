@@ -12,3 +12,7 @@ bashlint:
 	@bash scripts/run_bashlint.sh
 
 sanity: guard py bashlint
+
+.PHONY: health
+health:
+	@bash scripts/health_probe.sh
