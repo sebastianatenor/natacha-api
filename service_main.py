@@ -564,3 +564,15 @@ def health():
     sig = (hashlib.sha256(raw).hexdigest()[:8]) if raw else ''
     mode = 'dev' if os.getenv('DEV_NOAUTH')=='1' else 'locked'
     return {'status':'ok','auth_mode':mode,'key_sig':sig}
+
+
+# --- debug: expose rate_limit_mode in /health (no-op) ---
+try:
+    from fastapi import APIRouter
+    import os
+    _rl_flag = (os.getenv('RATE_LIMIT_DISABLE') == '1' or os.getenv('RATE_LIMIT_DISABLED') == '1')
+    @app.get('/ops/rl')
+    def rl_status():
+        return {'rate_limit_disabled': _rl_flag}
+except Exception as e:
+    print('rl_status not mounted:', e)
