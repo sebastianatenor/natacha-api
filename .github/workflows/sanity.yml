@@ -5,6 +5,30 @@ on:
   pull_request:
     branches: [ dev-canonicalize-urls, main ]
 jobs:
+  bash-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Bash syntax check (bash -n)
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+          files=( **/*.sh )
+          if [ ${#files[@]} -gt 0 ]; then
+            for f in "${files[@]}"; do bash -n "$f"; done
+          fi
+      - name: ShellCheck
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+          files=( **/*.sh )
+          if [ ${#files[@]} -gt 0 ]; then
+            shellcheck -S warning "${files[@]}"
+          else
+            echo "No .sh files to lint"
+          fi
   check:
     runs-on: ubuntu-latest
     strategy:
