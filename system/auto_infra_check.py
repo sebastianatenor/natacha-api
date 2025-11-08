@@ -51,7 +51,7 @@ payload = {
 
 # Enviar a API
 requests.post(
-    "os.getenv('NATACHA_CONTEXT_API', 'os.getenv('NATACHA_CONTEXT_API', 'https://natacha-api-mkwskljrhq-uc.a.run.app')')/memory/add",
+    f"{BASE}/memory/add",
     headers={"Content-Type": "application/json"},
     json=payload,
 )

@@ -29,7 +29,7 @@ BASE = _resolve_base()
 # y como último fallback deja la URL LIVE conocida.
 BASE = os.getenv(
     "NATACHA_CONTEXT_API",
-    os.environ.get("CANON", "https://natacha-api-mkwskljrhq-uc.a.run.app")
+    os.environ.get("CANON","")
 )
 
 CTX = Path("last_context.json")
