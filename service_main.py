@@ -72,7 +72,7 @@ except Exception:
     pass
 
 import uuid
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 
 Limiter = None
 get_remote_address = None
@@ -125,17 +125,17 @@ except ImportError:
 
 from typing import Optional, List, Dict, Any
 from google.cloud import firestore
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from typing import List, Optional
 from datetime import datetime, timedelta, timezone
 from datetime import datetime, timezone
 from fastapi.responses import JSONResponse
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from routes.health_routes import router as health_router
 from routes.cog_routes import router as cog_router
 from routes.actions_routes import router as actions_router
 from routes.tasks_routes import router as tasks_router
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 import os, hashlib, traceback
@@ -242,14 +242,14 @@ except Exception:
 try:
     app
 except NameError:
-    from fastapi import FastAPI
+    from fastapi import FastAPI, Request
 # #     app = FastAPI()  # DUPLICATE REMOVED  # DUPLICATE REMOVED
 
 # --- FINAL fallback health (direct on app) ---
 try:
     app
 except NameError:
-    from fastapi import FastAPI
+    from fastapi import FastAPI, Request
 # #     app = FastAPI()  # DUPLICATE REMOVED  # DUPLICATE REMOVED
 
 def health_final():
@@ -259,7 +259,7 @@ def health_final():
 try:
     app
 except NameError:
-    from fastapi import FastAPI
+    from fastapi import FastAPI, Request
 # #     app = FastAPI()  # DUPLICATE REMOVED  # DUPLICATE REMOVED
 
 def health():
@@ -302,7 +302,7 @@ async def _logs(limit: int = 10):
 try:
     app
 except NameError:
-    from fastapi import FastAPI
+    from fastapi import FastAPI, Request
 #     app = FastAPI()  # DUPLICATE REMOVED
 
 if not any(getattr(r, "path", "") == "/memory/test" for r in getattr(app, "routes", [])):
