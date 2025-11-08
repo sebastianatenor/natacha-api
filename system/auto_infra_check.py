@@ -1,4 +1,5 @@
 import datetime
+BASE = os.getenv('NATACHA_CONTEXT_API', 'https://natacha-api-mkwskljrhq-uc.a.run.app')
 import json
 import os
 import subprocess

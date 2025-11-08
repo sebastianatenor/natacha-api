@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 import json
+BASE = os.getenv('NATACHA_CONTEXT_API', 'https://natacha-api-mkwskljrhq-uc.a.run.app')
 import os
 import sys
 import urllib.request
-
-PRIMARY = "os.getenv('NATACHA_CONTEXT_API', 'os.getenv('NATACHA_CONTEXT_API', 'https://natacha-api-mkwskljrhq-uc.a.run.app')')"
-SECONDARY = "os.getenv('NATACHA_CONTEXT_API', 'os.getenv('NATACHA_CONTEXT_API', 'https://natacha-api-mkwskljrhq-uc.a.run.app')')"
+PRIMARY = BASE
+SECONDARY = BASE
 
 
 def fetch(url):

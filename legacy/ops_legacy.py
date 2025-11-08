@@ -1,4 +1,5 @@
 import os
+BASE = os.getenv('NATACHA_CONTEXT_API', 'https://natacha-api-mkwskljrhq-uc.a.run.app')
 from fastapi import APIRouter
 
 from natacha_base import observer  # si existe el módulo para aprendizaje
@@ -31,7 +32,7 @@ def sync_environment():
     job_ok = gcp_utils.ensure_scheduler_job(
         name="natacha-daily-learn",
         schedule="0 3 * * *",
-        uri="os.getenv('NATACHA_CONTEXT_API', 'os.getenv('NATACHA_CONTEXT_API', 'https://natacha-api-mkwskljrhq-uc.a.run.app')')/ops/force_learn",
+        uri = f"{BASE}/ops/force_learn",
         service_account="natacha-automation@asistente-sebastian.iam.gserviceaccount.com",
     )
     results.append(
