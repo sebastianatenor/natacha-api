@@ -25,3 +25,16 @@ memory-smoke:
 .PHONY: deploy
 deploy:
 	gcloud run deploy natacha-api --region us-central1 --source . --set-secrets API_KEY=NATACHA_API_KEY:latest
+
+.PHONY: memory-smoke-remote
+memory-smoke-remote:
+	@export CANON=$$(gcloud run services describe natacha-api --region us-central1 --format="value(status.url)"); \
+	KEY=$$(gcloud secrets versions access latest --secret NATACHA_API_KEY --project asistente-sebastian | tr -d '\r\n'); \
+	printf "Store...\n"; \
+	curl -s -X POST "$$CANON/memory/v2/store" \
+	  -H "Content-Type: application/json" -H "X-API-Key: $$KEY" \
+	  -d '{"items":[{"text":"Smoke item","tags":["smoke"]}]}' | jq .; \
+	printf "Search...\n"; \
+	curl -s -X POST "$$CANON/memory/v2/search" \
+	  -H "Content-Type: application/json" -H "X-API-Key: $$KEY" \
+	  -d '{"query":"Smoke","top_k":3}' | jq .
