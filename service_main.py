@@ -576,3 +576,22 @@ try:
         return {'rate_limit_disabled': _rl_flag}
 except Exception as e:
     print('rl_status not mounted:', e)
+
+
+try:
+    import pkgutil, sys
+    @app.get("/ops/packages")
+    def ops_packages():
+        mods = [m.name for m in pkgutil.iter_modules()]
+        has_gcs = "google" in mods or any(x.startswith("google") for x in mods)
+        return {
+            "python": sys.version,
+            "has_google_pkg": has_gcs,
+            "google_cloud_storage_import": __import__("google.cloud.storage", fromlist=["storage"]) and "ok"
+        }
+except Exception as e:
+    @app.get("/ops/packages")
+    def ops_packages():
+        import sys
+        return {"python": sys.version, "import_error": str(e)}
+
