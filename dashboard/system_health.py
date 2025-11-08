@@ -1,5 +1,26 @@
 import os
-BASE = os.getenv('NATACHA_CONTEXT_API', 'https://natacha-api-mkwskljrhq-uc.a.run.app')
+# == Canonical resolver (no hardcodes) ==
+import os
+from pathlib import Path
+
+def _resolve_base() -> str:
+    # 1) env
+    v = os.getenv("NATACHA_CONTEXT_API") or os.getenv("CANON")
+    if v: return v
+    # 2) REGISTRY.md
+    reg = os.path.expanduser("~/REGISTRY.md")
+    try:
+        with open(reg, "r", encoding="utf-8") as fh:
+            for line in fh:
+                if line.startswith("- URL producción:"):
+                    return line.split(":",1)[1].strip()
+    except Exception:
+        pass
+    # 3) vacío: que el caller falle visiblemente si intenta usarlo
+    return ""
+BASE = _resolve_base()
+# == end resolver ==
+BASE = _resolve_base()
 from datetime import datetime, timezone
 
 import pandas as pd
@@ -14,7 +35,7 @@ INFRA_URL = os.getenv(
 
 # Fuente 2: modo operativo (tareas/memorias) desde Natacha API
 OPS_URL = os.getenv(
-    "NATACHA_CONTEXT_API", "os.getenv('NATACHA_CONTEXT_API', 'https://natacha-api-mkwskljrhq-uc.a.run.app')"
+    "NATACHA_CONTEXT_API", BASE
 )
 
 

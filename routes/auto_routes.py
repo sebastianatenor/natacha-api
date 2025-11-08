@@ -1,5 +1,26 @@
 from typing import Optional
-BASE = os.getenv('NATACHA_CONTEXT_API', 'https://natacha-api-mkwskljrhq-uc.a.run.app')
+# == Canonical resolver (no hardcodes) ==
+import os
+from pathlib import Path
+
+def _resolve_base() -> str:
+    # 1) env
+    v = os.getenv("NATACHA_CONTEXT_API") or os.getenv("CANON")
+    if v: return v
+    # 2) REGISTRY.md
+    reg = os.path.expanduser("~/REGISTRY.md")
+    try:
+        with open(reg, "r", encoding="utf-8") as fh:
+            for line in fh:
+                if line.startswith("- URL producción:"):
+                    return line.split(":",1)[1].strip()
+    except Exception:
+        pass
+    # 3) vacío: que el caller falle visiblemente si intenta usarlo
+    return ""
+BASE = _resolve_base()
+# == end resolver ==
+BASE = _resolve_base()
 import os
 from datetime import datetime, timezone
 from pathlib import Path
@@ -20,7 +41,7 @@ SAFE_DIRS = [BASE_DIR, BASE_DIR / "routes", BASE_DIR / "scripts"]
 # URL pública (fallback)
 PUBLIC_BASE = os.getenv(
     "NATACHA_PUBLIC_BASE",
-    "os.getenv('NATACHA_CONTEXT_API', 'https://natacha-api-mkwskljrhq-uc.a.run.app')",
+    BASE,
 )
 # URL interna (dentro del mismo servicio)
 LOCAL_BASE = os.getenv("NATACHA_LOCAL_BASE", "http://127.0.0.1:8080")

@@ -1,6 +1,7 @@
+. "$(dirname "$0")/../tools/canon_resolver.sh" || source tools/canon_resolver.sh
 #!/usr/bin/env bash
 set -euo pipefail
-CANONICAL="${NATACHA_CONTEXT_API:-https://natacha-api-mkwskljrhq-uc.a.run.app}"
+resolve_canon # exporta CANONICAL
 KEY="$(gcloud secrets versions access latest --secret NATACHA_API_KEY --project asistente-sebastian | tr -d '\r\n')"
 
 echo "== /health =="
