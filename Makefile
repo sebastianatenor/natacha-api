@@ -38,3 +38,9 @@ memory-smoke-remote:
 	curl -s -X POST "$$CANON/memory/v2/search" \
 	  -H "Content-Type: application/json" -H "X-API-Key: $$KEY" \
 	  -d '{"query":"Smoke","top_k":3}' | jq .
+
+.PHONY: deploy-gcs
+deploy-gcs:
+	gcloud run deploy natacha-api --region us-central1 --source . \
+	  --set-secrets API_KEY=NATACHA_API_KEY:latest \
+	  --set-env-vars MEMORY_FILE=gs://natacha-memory-store/memory_store.jsonl,RATE_LIMIT_DISABLE=1
