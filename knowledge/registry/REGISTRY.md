@@ -1,5 +1,5 @@
 # REGISTRY — Natacha Capabilities
-_Última actualización: 2025-11-09 20:37:34 -0300_
+_Última actualización: 2025-11-09 20:47:50 -0300_
 
 ## Uptime Check
 displayName: Natacha API /health

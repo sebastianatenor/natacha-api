@@ -13,7 +13,7 @@ substitutions:
   _CONCURRENCY: "80"
   _MIN_INSTANCES: "0"
   _MAX_INSTANCES: "4"
-  _ALLOW_UNAUTH: "false"
+  _ALLOW_UNAUTH: "true"
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -79,6 +79,19 @@ steps:
         code=$(curl -s -o /dev/null -w "%{http_code}" "$$URL/health")
         test "$$code" = "200" || { echo "❌ /health devolvió $code"; exit 1; }
         echo "✅ /health OK"
+
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk:slim"
+    id: "Make public (optional)"
+    entrypoint: bash
+    args:
+      - "-c"
+      - |
+        set -euo pipefail
+        if [[ "${_ALLOW_UNAUTH}" == "true" ]]; then
+          gcloud run services add-iam-policy-binding ${_SERVICE} \
+            --project ${_PROJECT} --region ${_REGION} \
+            --member="allUsers" --role="roles/run.invoker"
+        fi
 
 images:
   - "us-central1-docker.pkg.dev/${_PROJECT}/${_REPO}/${_DOCKER_IMAGE}:${BUILD_ID}"
