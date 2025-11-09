@@ -1,0 +1,30 @@
+{
+  "displayName": "Cloud Run · mean latency > 1s (5m)",
+  "enabled": true,
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "mean latency > 1s (5m)",
+      "conditionThreshold": {
+        "filter": "resource.type=\"cloud_run_revision\" AND resource.label.\"service_name\"=\"natacha-api\" AND resource.label.\"location\"=\"us-central1\" AND metric.type=\"run.googleapis.com/request_latencies\"",
+        "aggregations": [
+          {
+            "alignmentPeriod": "60s",
+            "perSeriesAligner": "ALIGN_MEAN"
+          },
+          {
+            "alignmentPeriod": "60s",
+            "perSeriesAligner": "ALIGN_MEAN",
+            "crossSeriesReducer": "REDUCE_MEAN",
+            "groupByFields": [ "resource.label.\"service_name\"" ]
+          }
+        ],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 1.0,
+        "duration": "300s",
+        "trigger": { "count": 1 }
+      }
+    }
+  ],
+  "notificationChannels": []
+}
