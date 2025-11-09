@@ -75,9 +75,9 @@ steps:
       - |
         set -euo pipefail
         URL=$(gcloud run services describe ${_SERVICE} --project ${_PROJECT} --region ${_REGION} --format='value(status.url)' )
-        echo "Smoke test -> $URL/health"
-        code=$(curl -s -o /dev/null -w "%{http_code}" "$URL/health")
-        test "$code" = "200" || { echo "❌ /health devolvió $code"; exit 1; }
+        echo "Smoke test -> $$URL/health"
+        code=$(curl -s -o /dev/null -w "%{http_code}" "$$URL/health")
+        test "$$code" = "200" || { echo "❌ /health devolvió $code"; exit 1; }
         echo "✅ /health OK"
 
 images:
