@@ -76,3 +76,8 @@ firestore-key.json
 # Local-only
 svc.json
 svc.patched.json
+
+# local
+34.8.179.162
+out_tts.mp3
+routes/ops_routes.py.bak.*
