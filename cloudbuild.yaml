@@ -67,5 +67,18 @@ steps:
             --to-latest
         fi
 
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk:slim"
+    id: "Smoke test /health"
+    entrypoint: bash
+    args:
+      - "-c"
+      - |
+        set -euo pipefail
+        URL=$(gcloud run services describe ${_SERVICE} --project ${_PROJECT} --region ${_REGION} --format='value(status.url)' )
+        echo "Smoke test -> $URL/health"
+        code=$(curl -s -o /dev/null -w "%{http_code}" "$URL/health")
+        test "$code" = "200" || { echo "❌ /health devolvió $code"; exit 1; }
+        echo "✅ /health OK"
+
 images:
   - "us-central1-docker.pkg.dev/${_PROJECT}/${_REPO}/${_DOCKER_IMAGE}:${BUILD_ID}"
