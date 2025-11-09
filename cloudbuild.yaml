@@ -47,7 +47,6 @@ steps:
           --min-instances ${_MIN_INSTANCES} \
           --max-instances ${_MAX_INSTANCES} \
           --port 8080 \
-          --ingress internal-and-cloud-load-balancing \
           --quiet
 
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk:slim"
