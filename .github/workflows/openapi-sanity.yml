@@ -1,30 +1,28 @@
 name: OpenAPI Sanity Check
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      SERVICE_URL:
+        description: "Base URL del runtime (https://host)"
+        required: true
+        default: "https://natacha-api-mkwskljrhq-uc.a.run.app"
 
 jobs:
-  openapi-sanity:
-    name: Validate OpenAPI schema on runtime
+  sanity:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y jq curl
-
-      - name: Resolve runtime URL from REGISTRY.md
+      - name: Instalar jq y curl
         run: |
-          URL=$(awk '/^\*\*Runtime URL:\*\*/{print $3}' REGISTRY.md)
-          echo "SERVICE_URL=$URL" >> $GITHUB_ENV
-          echo "Runtime URL resolved: $URL"
+          sudo apt-get update -y
+          sudo apt-get install -y jq curl
 
-      - name: Wait until OpenAPI schema stabilizes
+      - name: Esperar a que el OpenAPI tenga suficientes paths
+        env:
+          SERVICE_URL: ${{ github.event.inputs.SERVICE_URL }}
         run: |
           set -e
           for i in {1..5}; do
@@ -36,6 +34,8 @@ jobs:
           test "$N" -ge 6
 
       - name: Assert canonical endpoints exist
+        env:
+          SERVICE_URL: ${{ github.event.inputs.SERVICE_URL }}
         run: |
           curl -fsSL "$SERVICE_URL/openapi.json" \
             | jq -e '.paths | has("/health") and has("/ops/summary")'
