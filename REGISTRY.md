@@ -3,7 +3,7 @@
 ## Canonical API (Core Contract)
 
 **Project:** `asistente-sebastian`  
-**Stable Revision:** `natacha-api-00421-sdw`
+**Stable Revision:** `natacha-api-00422-qcw`
 **Runtime URL:** https://natacha-api-mkwskljrhq-uc.a.run.app
 **Legacy Runtime URL:** https://natacha-api-422255208682.us-central1.run.app
 **Last Verified:** 2025-11-10
