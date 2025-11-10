@@ -24,3 +24,13 @@ if ops and hasattr(ops, 'router'):
 @app.get("/health")
 def health():
     return {"status": "ok", "message": "Natacha API base funcionando correctamente 🚀"}
+
+
+@app.get("/live")
+def live():
+    return {"ok": True}
+
+@app.get("/ready")
+def ready():
+    # acá podrías chequear dependencia mínima (p.ej. variable obligatoria)
+    return {"ok": True}
