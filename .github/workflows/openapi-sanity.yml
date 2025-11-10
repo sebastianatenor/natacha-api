@@ -1,0 +1,41 @@
+name: OpenAPI Sanity Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  openapi-sanity:
+    name: Validate OpenAPI schema on runtime
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y jq curl
+
+      - name: Resolve runtime URL from REGISTRY.md
+        run: |
+          URL=$(awk '/^\*\*Runtime URL:\*\*/{print $3}' REGISTRY.md)
+          echo "SERVICE_URL=$URL" >> $GITHUB_ENV
+          echo "Runtime URL resolved: $URL"
+
+      - name: Wait until OpenAPI schema stabilizes
+        run: |
+          set -e
+          for i in {1..5}; do
+            N=$(curl -fsSL "$SERVICE_URL/openapi.json" | jq '.paths|keys|length' || echo 0)
+            echo "paths=$N"
+            [ "$N" -ge 6 ] && break
+            sleep 2
+          done
+          test "$N" -ge 6
+
+      - name: Assert canonical endpoints exist
+        run: |
+          curl -fsSL "$SERVICE_URL/openapi.json" \
+            | jq -e '.paths | has("/health") and has("/ops/summary")'
