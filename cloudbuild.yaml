@@ -4,7 +4,7 @@ substitutions:
 
 steps:
   # Build & push con Kaniko (más robusto que docker build en Cloud Build)
-  - name: 'gcr.io/kaniko-project/executor:latest'
+  - name: 'gcr.io/kaniko-project/executor:v1.23.2'
     args:
       - --destination=us-central1-docker.pkg.dev/$PROJECT_ID/natacha/natacha-api:$BUILD_ID
       - --cache=true
@@ -15,7 +15,7 @@ steps:
     # Si tu Dockerfile NO está en la raíz, agrega: - --dockerfile=path/Dockerfile
 
   # Deploy a Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:467.0.0'
     entrypoint: 'bash'
     args:
       - -c
@@ -27,7 +27,7 @@ steps:
           --quiet
 
   # Smoke tests (falla el build si no hay 200)
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:467.0.0'
     entrypoint: 'bash'
     args:
       - -c
