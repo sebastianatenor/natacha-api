@@ -4,25 +4,25 @@ on:
   workflow_dispatch:
     inputs:
       SERVICE_URL:
-        description: "Base URL del runtime (https://host)"
-        required: true
-        default: "https://natacha-api-mkwskljrhq-uc.a.run.app"
+        description: "Service base URL (override)"
+        required: false
+  schedule:
+    - cron: "0 12 * * 1"   # Lunes 12:00 UTC (09:00 AR)
 
 jobs:
   sanity:
     runs-on: ubuntu-latest
+    env:
+      SERVICE_URL: ${{ github.event.inputs.SERVICE_URL || 'https://natacha-api-mkwskljrhq-uc.a.run.app' }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Instalar jq y curl
+      - name: Ensure jq & curl
         run: |
           sudo apt-get update -y
           sudo apt-get install -y jq curl
 
-      - name: Esperar a que el OpenAPI tenga suficientes paths
-        env:
-          SERVICE_URL: ${{ github.event.inputs.SERVICE_URL }}
+      - name: Wait until OpenAPI schema stabilizes
         run: |
           set -e
           for i in {1..5}; do
@@ -34,8 +34,6 @@ jobs:
           test "$N" -ge 6
 
       - name: Assert canonical endpoints exist
-        env:
-          SERVICE_URL: ${{ github.event.inputs.SERVICE_URL }}
         run: |
           curl -fsSL "$SERVICE_URL/openapi.json" \
             | jq -e '.paths | has("/health") and has("/ops/summary")'

@@ -1,7 +1,4 @@
+# Natacha API
 
-## CI Status
-![Sanity](https://github.com/sebastianatenor/natacha-api/actions/workflows/sanity.yml/badge.svg?branch=dev-canonicalize-urls)
+[![OpenAPI Sanity](https://github.com/sebastianatenor/natacha-api/actions/workflows/openapi-sanity.yml/badge.svg)](https://github.com/sebastianatenor/natacha-api/actions/workflows/openapi-sanity.yml)
 
-## CI Status
-![Sanity (main)](https://github.com/sebastianatenor/natacha-api/actions/workflows/sanity.yml/badge.svg?branch=main)
-![Tag Sanity](https://github.com/sebastianatenor/natacha-api/actions/workflows/tag-sanity.yml/badge.svg)
