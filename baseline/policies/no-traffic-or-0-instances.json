@@ -1,0 +1,24 @@
+{
+  "displayName": "Cloud Run · No traffic or 0 active instances",
+  "documentation": { "content": "Detecta 10m sin tráfico o sin instancias activas.", "mimeType": "text/markdown" },
+  "userLabels": { "env": "prod", "service": "natacha-api" },
+  "conditions": [
+    {
+      "displayName": "No traffic for 10m",
+      "conditionMonitoringQueryLanguage": {
+        "duration": "600s",
+        "query": "fetch cloud_run_revision\n| metric 'run.googleapis.com/request_count'\n| filter resource.service_name == \"natacha-api\" && resource.location == \"us-central1\"\n| align delta(1m)\n| every 1m\n| group_by [resource.service_name], [reqs: sum(value)]\n| condition reqs < 0.1"
+      }
+    },
+    {
+      "displayName": "Zero active instances 10m",
+      "conditionMonitoringQueryLanguage": {
+        "duration": "600s",
+        "query": "fetch cloud_run_revision\n| metric 'run.googleapis.com/container/active_instances'\n| filter resource.service_name == \"natacha-api\" && resource.location == \"us-central1\"\n| every 1m\n| group_by [resource.service_name], [inst: mean(value)]\n| condition inst < 0.1"
+      }
+    }
+  ],
+  "notificationChannels": [],
+  "enabled": true,
+  "combiner": "OR"
+}

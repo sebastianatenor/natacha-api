@@ -1,19 +1,21 @@
 # REGISTRY — Natacha Capabilities
-_Última actualización: 2025-11-05 00:34:29 -0300_
+_Última actualización: 2025-11-10 14:48:46 -0300_
 
 ## Uptime Check
-displayName: HealthMonitor /
+displayName: Natacha API /health
 httpCheck:
-  path: /
+  acceptedResponseStatusCodes:
+  - statusClass: STATUS_CLASS_2XX
+  path: /health
   port: 443
   requestMethod: GET
   useSsl: true
 monitoredResource:
   labels:
-    host: natacha-health-monitor-422255208682.us-central1.run.app
+    host: natacha-api-422255208682.us-central1.run.app
     project_id: asistente-sebastian
   type: uptime_url
-name: projects/asistente-sebastian/uptimeCheckConfigs/healthmonitor-mertgzh6hJg
+name: projects/asistente-sebastian/uptimeCheckConfigs/natacha-api-health-M4kG08U-oxY
 
 ## Alert Policies (Uptime)
 NAME                                                             DISPLAY_NAME                                      ENABLED
@@ -72,7 +74,9 @@ projects/asistente-sebastian/alertPolicies/5980311962589578804   CRun | HealthMo
 
 ## Notification Channels
 NAME                                                                    DISPLAY_NAME                   TYPE   EMAIL_ADDRESS
+projects/asistente-sebastian/notificationChannels/10743624015608252796  Alerts Sebastián               email  sebastianatenor@gmail.com
 projects/asistente-sebastian/notificationChannels/16131789610057042414  Notificaciones Meta Token      email  sebastianatenor@gmail.com
 projects/asistente-sebastian/notificationChannels/17012733904319805436  Alertas LLVC Global - Natacha  email  sebastianatenor@gmail.com
 projects/asistente-sebastian/notificationChannels/306082373074028591    Seba Email                     email  sebastianatenor@gmail.com
+projects/asistente-sebastian/notificationChannels/4622801830383863550   Ops Email (Natacha)            email  tu.email@dominio.com
 projects/asistente-sebastian/notificationChannels/5941256893092102238   Ops Alerts (Seba)              email  sebastianatenor@gmail.com

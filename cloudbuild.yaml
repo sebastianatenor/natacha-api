@@ -1,0 +1,41 @@
+substitutions:
+  _REGION: us-central1
+  _SERVICE: natacha-api
+
+steps:
+  # Build & push con Kaniko (más robusto que docker build en Cloud Build)
+  - name: 'gcr.io/kaniko-project/executor:latest'
+    args:
+      - --destination=us-central1-docker.pkg.dev/$PROJECT_ID/natacha/natacha-api:$BUILD_ID
+      - --cache=true
+      - --cache-repo=us-central1-docker.pkg.dev/$PROJECT_ID/natacha/natacha-api/cache
+      - --use-new-run
+      - --snapshotMode=time
+      - --compressed-caching=true
+    # Si tu Dockerfile NO está en la raíz, agrega: - --dockerfile=path/Dockerfile
+
+  # Deploy a Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        gcloud run deploy "${_SERVICE}" \
+          --region "${_REGION}" \
+          --image "us-central1-docker.pkg.dev/${PROJECT_ID}/natacha/natacha-api:${BUILD_ID}" \
+          --quiet
+
+  # Smoke tests (falla el build si no hay 200)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        SERVICE_URL="$(gcloud run services describe "${_SERVICE}" --region "${_REGION}" --format='value(status.url)')"
+        export SERVICE_URL
+        ./ci/smoke.sh
+
+options:
+  logging: CLOUD_LOGGING_ONLY

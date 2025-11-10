@@ -5,12 +5,19 @@ from google.cloud import firestore
 
 import os
 
-from routes.db_util import get_db
+try:
+    from routes.db_util import get_db
+except Exception:
+    def _fallback_get_db():
+        return None
+    get_db = _fallback_get_db
 from datetime import datetime, timezone
 
 from fastapi import APIRouter
 import logging
 from google.oauth2 import service_account
+import inspect
+import hashlib
 router = APIRouter(tags=["ops"])
 
 PROJECT_ID = os.getenv("GCP_PROJECT", "asistente-sebastian")
@@ -21,7 +28,24 @@ def take_snapshot():
     Toma un snapshot simple de assistant_memory y assistant_tasks
     y lo guarda en assistant_snapshots. No altera nada existente.
     """
+
     db = get_db()
+    if db is None:
+        logging.error("ops_insights: backend Firestore no disponible")
+        return JSONResponse({
+            "status": "unavailable",
+            "backend": "firestore",
+            "hint": "ver credenciales/roles o variable OPS_DISABLE_FIRESTORE",
+            "route": "ops_insights"
+        }, status_code=503)
+    if db is None:
+        logging.error("ops_summary: backend Firestore no disponible")
+        return JSONResponse({
+            "status": "unavailable",
+            "backend": "firestore",
+            "hint": "ver credenciales/roles o variable OPS_DISABLE_FIRESTORE",
+            "route": "ops_summary"
+        }, status_code=503)
 
     # 1. leer memorias
     memories_ref = db.collection("assistant_memory").limit(200)
@@ -52,22 +76,28 @@ def take_snapshot():
     db.collection("assistant_snapshots").add(snapshot_doc)
 
     return {
-        "status": "ok",
-        "message": "snapshot creado",
-        "memories": len(memories),
-        "tasks": len(tasks),
-    
-    'tasks': _tasks_snapshot(get_client),
+    "status": "ok",
+    "message": "snapshot creado",
+    "memories": len(memories),
+    "tasks": len(tasks),
+    "tasks_preview": _tasks_snapshot(get_client)
 }
-
-
 @router.get("/ops/snapshots")
 def list_snapshots(limit: int = 10):
     """
     Lista los últimos snapshots tomados por Natacha.
     Sirve para que el GPT pueda ver el estado histórico.
     """
+
     db = get_db()
+    if db is None:
+        logging.error("ops_summary: backend Firestore no disponible")
+        return JSONResponse({
+            "status": "unavailable",
+            "backend": "firestore",
+            "hint": "ver credenciales/roles o variable OPS_DISABLE_FIRESTORE",
+            "route": "ops_summary"
+        }, status_code=503)
     snaps_ref = (
         db.collection("assistant_snapshots")
         .order_by("created_at", direction=FireQuery.DESCENDING)
@@ -90,7 +120,16 @@ def ops_summary(limit: int = 10):
     - últimas tareas
     - agrupadas por proyecto
     """
+
     db = get_db()
+    if db is None:
+        logging.error("ops_summary: backend Firestore no disponible")
+        return JSONResponse({
+            "status": "unavailable",
+            "backend": "firestore",
+            "hint": "ver credenciales/roles o variable OPS_DISABLE_FIRESTORE",
+            "route": "ops_summary"
+        }, status_code=503)
 
     # 1) últimas memorias
     mem_docs = (
@@ -145,7 +184,16 @@ def ops_insights(limit: int = 20):
     - agrupación por proyecto
     - conteos y flags útiles
     """
+
     db = get_db()
+    if db is None:
+        logging.error("ops_summary: backend Firestore no disponible")
+        return JSONResponse({
+            "status": "unavailable",
+            "backend": "firestore",
+            "hint": "ver credenciales/roles o variable OPS_DISABLE_FIRESTORE",
+            "route": "ops_summary"
+        }, status_code=503)
 
     # Memorias
     mem_docs = (
@@ -224,15 +272,3 @@ def _tasks_snapshot(get_client, limit: int = 3):
         return {"count": len(items), "items": items}
     except Exception as e:
         return {"error": str(e)}
-
-# --- health endpoint liviano ---
-from fastapi import APIRouter
-
-try:
-    router  # si ya existe el router, no falla
-except NameError:
-    router = APIRouter()
-
-@router.get("/health", include_in_schema=False)
-def health():
-    return {"status": "ok"}
