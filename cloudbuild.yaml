@@ -41,6 +41,7 @@ steps:
           --region ${_REGION} \
           --platform ${_PLATFORM} \
           --image us-central1-docker.pkg.dev/${_PROJECT}/${_REPO}/${_DOCKER_IMAGE}:${BUILD_ID} \
+          --service-account "natacha-firestore-access@${_PROJECT}.iam.gserviceaccount.com" \
           --cpu ${_CPU} \
           --memory ${_MEM} \
           --concurrency ${_CONCURRENCY} \
