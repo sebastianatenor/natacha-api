@@ -76,6 +76,7 @@ firestore-key.json
 # Local-only
 svc.json
 svc.patched.json
+<<<<<<< HEAD
 
 # local
 34.8.179.162
@@ -85,3 +86,11 @@ routes/ops_routes.py.bak.*
 # Local backups y experimentales
 *.bak.*
 routes/health_ext.py
+=======
+# backups y artefactos locales
+*.bak.*
+SNAPSHOTS/
+*.tmp
+main
+main.py
+>>>>>>> origin/main

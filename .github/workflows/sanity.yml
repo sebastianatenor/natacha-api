@@ -1,0 +1,22 @@
+name: Sanity
+on:
+  push:
+    branches: [ dev-canonicalize-urls, main ]
+  pull_request:
+    branches: [ dev-canonicalize-urls, main ]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.10', '3.11' ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      - run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - run: bash scripts/guard_no_hardcodes.sh
+      - run: python -m py_compile $(git ls-files '*.py')
+      - run: bash scripts/run_bashlint.sh

@@ -1,0 +1,4 @@
+.github/workflows/sanity.yml merge=ours
+Makefile merge=ours
+.github/workflows/sanity.yml merge=ours
+Makefile merge=ours

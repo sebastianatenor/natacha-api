@@ -1,4 +1,6 @@
 #!/bin/bash
+# shellcheck disable=SC2034  # variable reservada para estilos/emoji
+# shellcheck disable=SC2034  # variable reservada / uso indirecto
 set -e
 
 # === 🎨 COLORES Y EMOJIS ===

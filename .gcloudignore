@@ -1,3 +1,13 @@
+.gcloudignore
+.git
+.gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+# No excluir código fuente
 !routes/**
 !service_main.py
 !Dockerfile

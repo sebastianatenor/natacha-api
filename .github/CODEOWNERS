@@ -1,0 +1,15 @@
+# CI y lint
+.github/workflows/sanity.yml   @sebastianatenor
+Makefile                       @sebastianatenor
+scripts/run_bashlint.sh        @sebastianatenor
+
+# Núcleo app
+app/**                         @sebastianatenor
+routes/**                      @sebastianatenor
+system/**                      @sebastianatenor
+natacha_base/**               @sebastianatenor
+
+# Infra y salud
+health_*                       @sebastianatenor
+dashboard/**                   @sebastianatenor
+tools/**                       @sebastianatenor

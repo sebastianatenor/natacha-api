@@ -1,15 +1,10 @@
+.gcloudignore
 .git
-.venv
-__pycache__
+.gitignore
+__pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.bak
-*~
-*.old
-*.backup
-REGISTRY.md.bak*
-backups/
-infra_snapshots/
-logs/
+.venv/
 venv/
+# (NO excluir código fuente)

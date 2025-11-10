@@ -1,0 +1,39 @@
+name: Changelog & Release
+on: { push: { tags: [ 'stable-*' ] } }
+permissions: { contents: write }
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - id: tags
+        run: |
+          echo "current=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          prev="$(git tag --list 'stable-*' --sort=-v:refname | sed -n '2p' || true)"
+          echo "previous=${prev}" >> "$GITHUB_OUTPUT"
+      - run: |
+          mkdir -p .changelog
+          scripts/gen_changelog.sh \
+            --current "${{ steps.tags.outputs.current }}" \
+            --previous "${{ steps.tags.outputs.previous }}" \
+            --outfile ".changelog/${{ steps.tags.outputs.current }}.md"
+      - run: |
+          git config user.name  "github-actions"
+          git config user.email "actions@github.com"
+          git fetch origin main
+          git checkout main
+          touch CHANGELOG.md
+          { echo "# Changelog"; echo; cat ".changelog/${{ steps.tags.outputs.current }}.md"; echo; sed -n '2,$p' CHANGELOG.md || true; } > CHANGELOG.new
+          mv CHANGELOG.new CHANGELOG.md
+          git add CHANGELOG.md
+          git commit -m "chore(changelog): update for ${{ steps.tags.outputs.current }}" || echo "Nada que commitear"
+          git push origin main
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tags.outputs.current }}
+          body_path: .changelog/${{ steps.tags.outputs.current }}.md
+          generate_release_notes: false

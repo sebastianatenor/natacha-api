@@ -1,0 +1,22 @@
+apiVersion: run.googleapis.com/v1
+kind: Job
+metadata:
+  name: rotate-api-key
+  namespace: projects/asistente-sebastian/locations/us-central1
+spec:
+  template:
+    template:
+      containers:
+      - image: gcr.io/cloudrun/hello  # se reemplaza por la imagen actual del servicio
+        command: ["/bin/bash","-lc","/workspace/rotate_api_key.sh"]
+        volumeMounts:
+        - name: work
+          mountPath: /workspace
+      serviceAccountName: natacha-firestore-access@asistente-sebastian.iam.gserviceaccount.com
+      volumes:
+      - name: work
+        projected:
+          sources:
+          - secret:
+              name: NATACHA_API_KEY
+      restartPolicy: Never

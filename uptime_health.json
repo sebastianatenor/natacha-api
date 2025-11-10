@@ -1,0 +1,17 @@
+{
+  "displayName": "Uptime – Natacha /health",
+  "monitoredResource": {
+    "type": "uptime_url",
+    "labels": {
+      "project_id": "asistente-sebastian"
+    }
+  },
+  "httpCheck": {
+    "useSsl": true,
+    "path": "/health",
+    "port": 443
+  },
+  "timeout": "10s",
+  "period": "60s",
+  "selectedRegions": ["SOUTH_AMERICA","USA"]
+}

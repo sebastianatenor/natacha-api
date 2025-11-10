@@ -1,41 +1,75 @@
-PROJ ?= asistente-sebastian
-REG  ?= us-central1
-SVC  ?= natacha-api
-URL  ?= https://natacha-api-422255208682.us-central1.run.app
+SHELL := /usr/bin/env bash
 
-.PHONY: sanity deploy check rollback list logs
+.PHONY: guard py bashlint sanity
 
-sanity:
-	bash scripts/traffic_sanity.sh
+guard:
+	@bash scripts/guard_no_hardcodes.sh
 
+py:
+	@python3 -m py_compile $(shell git ls-files '*.py')
+
+bashlint:
+	@bash scripts/run_bashlint.sh
+
+sanity: guard py bashlint
+
+.PHONY: health
+health:
+	@bash scripts/health_probe.sh
+
+.PHONY: memory-smoke
+memory-smoke:
+	@echo Storing sample... && curl -s -X POST "$${CANON:-http://127.0.0.1:8080}/memory/v2/store" -H "Content-Type: application/json" -d '{"items":[{"text":"Client Nubicom asks for CAT 320D","tags":["lead","excavator"]},{"text":"Aguas del Norte prefers proforma before VIN","tags":["lead","invoice"]}]}' | jq . && \
+	echo Searching... && curl -s -X POST "$${CANON:-http://127.0.0.1:8080}/memory/v2/search" -H "Content-Type: application/json" -d '{"query":"proforma VIN","top_k":5,"use_semantic":true}' | jq .
+
+.PHONY: deploy
 deploy:
-	find . -type f -not -newermt '1980-01-02' -print -exec touch -t 198001020000 {} +
-	gcloud run deploy $(SVC) --project $(PROJ) --region $(REG) \
-	  --source . --allow-unauthenticated \
-	  --revision-suffix="a$$(date +%s)" \
-	  --set-env-vars OPENAPI_PUBLIC_URL=$(URL),REV_BUMP="$$(date +%s)"
+	gcloud run deploy natacha-api --region us-central1 --source . --set-secrets API_KEY=NATACHA_API_KEY:latest
 
-check:
-	@echo "== latestReady / traffic =="
-	gcloud run services describe $(SVC) --project $(PROJ) --region $(REG) \
-	  --format='value(status.latestReadyRevisionName,status.traffic)'
-	@echo "== OpenAPI (/actions /cog) =="
-	curl -fsS $(URL)/openapi.v1.json | jq -r '.paths | keys[]' | grep -E '^/(actions|cog)'
+.PHONY: memory-smoke-remote
+memory-smoke-remote:
+	@export CANON=$$(gcloud run services describe natacha-api --region us-central1 --format="value(status.url)"); \
+	KEY=$$(gcloud secrets versions access latest --secret NATACHA_API_KEY --project asistente-sebastian | tr -d '\r\n'); \
+	printf "Store...\n"; \
+	curl -s -X POST "$$CANON/memory/v2/store" \
+	  -H "Content-Type: application/json" -H "X-API-Key: $$KEY" \
+	  -d '{"items":[{"text":"Smoke item","tags":["smoke"]}]}' | jq .; \
+	printf "Search...\n"; \
+	curl -s -X POST "$$CANON/memory/v2/search" \
+	  -H "Content-Type: application/json" -H "X-API-Key: $$KEY" \
+	  -d '{"query":"Smoke","top_k":3}' | jq .
 
-list:
-	gcloud run revisions list --service $(SVC) --project $(PROJ) --region $(REG) \
-	  --format='table(name,trafficPercent,tags.list(),status.conditions[-1].type,status.conditions[-1].status,createTime)'
+.PHONY: deploy-gcs
+deploy-gcs:
+	gcloud run deploy natacha-api --region us-central1 --source . \
+	  --set-secrets API_KEY=NATACHA_API_KEY:latest \
+	  --set-env-vars MEMORY_FILE=gs://natacha-memory-store/memory_store.jsonl,RATE_LIMIT_DISABLE=1
 
-rollback:
-	@rev=$$(gcloud run revisions list --service $(SVC) --project $(PROJ) --region $(REG) \
-	  --limit=2 --format='value(name)' | tail -n1); \
-	echo "🔙 Rollback a $$rev"; \
-	gcloud run services update-traffic $(SVC) --project $(PROJ) --region $(REG) \
-	  --to-revisions $$rev=100
+.PHONY: memory-check
+memory-check:
+	@CANON=$$(gcloud run services describe natacha-api --region us-central1 --format='value(status.url)'); \
+	KEY=$$(gcloud secrets versions access latest --secret NATACHA_API_KEY --project asistente-sebastian | tr -d '\r\n'); \
+	echo "info:"; \
+	curl -s -H "X-API-Key: $$KEY" "$$CANON/memory/v2/ops/memory-info" | jq . || true; \
+	echo "store:"; \
+	curl -s -X POST "$$CANON/memory/v2/store" -H "Content-Type: application/json" -H "X-API-Key: $$KEY" \
+	     -d '{"items":[{"text":"consistency-check","tags":["probe","ci"]}]}' | jq .; \
+	echo "search:"; \
+	curl -s -X POST "$$CANON/memory/v2/search" -H "Content-Type: application/json" -H "X-API-Key: $$KEY" \
+	     -d '{"query":"consistency","top_k":3}' | jq .
 
-logs:
-	@rev=$$(gcloud run services describe $(SVC) --project $(PROJ) --region $(REG) \
-	  --format='value(status.latestReadyRevisionName)'); \
-	echo "== Logs (ERROR) de $$rev =="; \
-	gcloud logging read 'resource.type="cloud_run_revision" AND resource.labels.service_name="$(SVC)" AND resource.labels.revision_name="'$$rev'" AND severity>=ERROR' \
-	  --project="$(PROJ)" --freshness=30m --limit=100 --format='value(textPayload)'
+.PHONY: compact-now
+compact-now:
+	@gcloud run jobs execute natacha-compact --region us-central1 --wait
+
+.PHONY: deploy-prod
+deploy-prod:
+	@gcloud run deploy natacha-api --region us-central1 --source . \
+	  --set-secrets API_KEY=NATACHA_API_KEY:latest \
+	  --env-vars-file env.prod
+
+.PHONY: deploy-prod
+deploy-prod:
+	@gcloud run deploy natacha-api --region us-central1 --source . \
+	  --set-secrets API_KEY=NATACHA_API_KEY:latest \
+	  --env-vars-file env.prod.yaml

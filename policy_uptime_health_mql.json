@@ -1,0 +1,15 @@
+{
+  "displayName": "Uptime – Natacha /health DOWN (MQL)",
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "check_passed == 0 (2m, MQL)",
+      "conditionMonitoringQueryLanguage": {
+        "duration": "120s",
+        "query": "fetch uptime_url | metric 'monitoring.googleapis.com/uptime_check/check_passed' | filter resource.labels.\"host\" == 'natacha-api-422255208682.us-central1.run.app' | group_by 1m, [val: mean(value.check_passed)] | condition val < 1"
+      }
+    }
+  ],
+  "enabled": true,
+  "notificationChannels": []
+}
