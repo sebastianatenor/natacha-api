@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# --- header: contexto de smoke ---
+HOST="${SERVICE_URL#https://}"
+if [ -n "${_SERVICE:-}" ] && [ -n "${_REGION:-}" ]; then
+  ACTIVE_REV="$(gcloud run services describe "${_SERVICE}" --region "${_REGION}" --format="value(status.traffic[0].revisionName)" 2>/dev/null || true)"
+fi
+echo "Smoke against: ${SERVICE_URL:-<unset>}"
+[ -n "$HOST" ] && echo "Host: $HOST"
+[ -n "${ACTIVE_REV:-}" ] && echo "Active revision: ${ACTIVE_REV}"
+# --- end header ---
 
 SERVICE_URL="${SERVICE_URL:?missing SERVICE_URL}"
 echo "Smoke tests contra: ${SERVICE_URL}"
