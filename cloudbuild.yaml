@@ -60,11 +60,11 @@ steps:
         if [[ -n "$$CURRENT_STABLE" ]]; then
           gcloud run services update-traffic ${_SERVICE} \
             --project ${_PROJECT} --region ${_REGION} \
-            --to-revisions $$CURRENT_STABLE=80,LATEST=20
+            --to-revisions $$CURRENT_STABLE=80,LATEST=20 || true
         else
           gcloud run services update-traffic ${_SERVICE} \
             --project ${_PROJECT} --region ${_REGION} \
-            --to-latest
+            --to-latest || true
         fi
 
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk:slim"
