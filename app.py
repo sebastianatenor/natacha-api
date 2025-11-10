@@ -34,3 +34,14 @@ def live():
 def ready():
     # acá podrías chequear dependencia mínima (p.ej. variable obligatoria)
     return {"ok": True}
+
+@app.get("/meta")
+def meta():
+    import os
+    return {
+        "ok": True,
+        "revision": os.getenv("K_REVISION"),
+        "service": os.getenv("K_SERVICE"),
+        "configuration": os.getenv("K_CONFIGURATION"),
+        "port": os.getenv("PORT"),
+    }
