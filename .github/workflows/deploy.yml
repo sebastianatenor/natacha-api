@@ -1,49 +1,66 @@
 name: Deploy to Cloud Run
 
 on:
+  workflow_dispatch: {}
   push:
     branches: [ main ]
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  id-token: write
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-24.04
+    env:
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GCP_REGION: ${{ secrets.GCP_REGION || 'us-central1' }}
+      GAR_REPO: ${{ secrets.GAR_REPO || 'natacha' }}
+      GAR_IMAGE: ${{ secrets.GAR_IMAGE || 'natacha-api' }}
+      CLOUD_RUN_SERVICE: ${{ secrets.CLOUD_RUN_SERVICE || 'natacha-api' }}
+      CLOUD_RUN_SA: ${{ secrets.CLOUD_RUN_SA || 'natacha-runtime@asistente-sebastian.iam.gserviceaccount.com' }}
+
     steps:
       - uses: actions/checkout@v4
 
+      # 1) AUTENTICACIÓN (WIF)
+      - id: auth
+        name: Auth to Google Cloud (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+          token_format: 'access_token'
+
+      # 2) Instalar gcloud con project seteado
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
-          service_account: ${{ secrets.GCP_SA_EMAIL }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
 
+      # 3) Docker auth contra GAR
       - name: Configure Docker auth to GAR
-        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
 
+      # 4) Build & Push (incluye PROJECT en la imagen y en gcloud)
       - name: Build & Push
         run: |
+          if [ -z "${GCP_PROJECT_ID}" ]; then
+            echo "❌ GCP_PROJECT_ID vacío (seteá el secret GCP_PROJECT_ID)"; exit 1
+          fi
           SHA=$(git rev-parse --short HEAD)
-          IMAGE="us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GAR_REPO || 'natacha' }}/${{ secrets.GAR_IMAGE || 'natacha-api' }}:${SHA}"
+          IMAGE="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPO}/${GAR_IMAGE}:${SHA}"
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
-          gcloud builds submit --tag "$IMAGE"
+          gcloud builds submit --project "${GCP_PROJECT_ID}" --tag "${IMAGE}"
 
+      # 5) Deploy a Cloud Run con SA de runtime
       - name: Deploy to Cloud Run
+        env:
+          IMAGE: ${{ env.IMAGE }}
         run: |
-          IMAGE="$IMAGE"
-          gcloud run deploy "${{ secrets.CLOUD_RUN_SERVICE || 'natacha-api' }}" \
-            --image "$IMAGE" --region "${{ secrets.GCP_REGION || 'us-central1' }}" \
-            --platform managed --allow-unauthenticated
+          gcloud run deploy "${CLOUD_RUN_SERVICE}"             --project "${GCP_PROJECT_ID}"             --image "${IMAGE}"             --region "${GCP_REGION}"             --platform managed             --service-account "${CLOUD_RUN_SA}"             --allow-unauthenticated
 
+      # 6) Smoke tests
       - name: Post-deploy smoke tests
         run: |
-          URL=$(gcloud run services describe "${{ secrets.CLOUD_RUN_SERVICE || 'natacha-api' }}" \
-            --region "${{ secrets.GCP_REGION || 'us-central1' }}" --format='value(status.url)')
+          URL=$(gcloud run services describe "${CLOUD_RUN_SERVICE}"             --project "${GCP_PROJECT_ID}"             --region "${GCP_REGION}"             --format='value(status.url)')
           echo "URL=$URL"
           curl -sS "$URL/health" | tee /tmp/health.json
-          curl -sS "$URL/health" | grep -E '"status"\s*:\s*"ok"' >/dev/null
+          grep -E '"status"\s*:\s*"ok"' /tmp/health.json >/dev/null
           curl -sS "$URL/openapi.json" | jq '.paths | length'
