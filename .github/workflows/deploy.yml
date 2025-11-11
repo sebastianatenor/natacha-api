@@ -14,9 +14,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-
     runs-on: ubuntu-24.04
-
     env:
       GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
       GCP_REGION: ${{ secrets.GCP_REGION || 'us-central1' }}
@@ -47,20 +45,17 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
-          install_components: 'beta'
 
       - name: Configure Docker auth to GAR
         run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
 
-      - name: Build & Push
+      - name: Build & Push (Docker → GAR)
+        env:
+          IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/${{ env.GAR_IMAGE }}:${{ github.sha }}
         run: |
-          SHA=$(git rev-parse --short HEAD)
-          IMAGE="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPO}/${GAR_IMAGE}:${SHA}"
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
-          gcloud builds submit \
-            --project="${GCP_PROJECT_ID}" \
-            --gcs-source-staging-dir="gs://${GCP_PROJECT_ID}_cloudbuild/source" \
-            --tag="${IMAGE}"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
 
       - name: Deploy to Cloud Run
         env:
