@@ -1,70 +1,49 @@
-name: "🚀 Natacha CI/CD"
+name: Deploy to Cloud Run
 
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
-env:
-  PROJECT_ID: asistente-sebastian
-  REGION: us-central1
-  AR_REPO: natacha-repo
-  MEMORY_SERVICE: natacha-memory-console
-  CORE_SERVICE: natacha-core
-  API_SERVICE: natacha-api
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-24.04
     steps:
-      # 1. Checkout
-      - name: "🧩 Checkout repo"
-        uses: actions/checkout@v4
-      - name: "🛑 Fail if secret is empty"
-        run: |
-          if [ -z "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" ]; then
-            echo "❌ GCP_SERVICE_ACCOUNT_KEY is empty. Set it in GitHub → Settings → Secrets → Actions."
-            exit 1
-          fi
+      - uses: actions/checkout@v4
 
-      # 2. Guardar secret como archivo JSON
-      - name: "🔐 Write GCP key from secret"
-        run: |
-          echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > $HOME/gcp-key.json
-
-      # 3. Autenticarse en Google Cloud
-      - name: "🔐 Auth with Google Cloud"
-        uses: google-github-actions/auth@v2
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
         with:
-          credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}'
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
 
-      # 4. Configurar gcloud
-      - name: "⚙️ Configure gcloud"
+      - name: Configure Docker auth to GAR
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+      - name: Build & Push
         run: |
-          gcloud config set project $PROJECT_ID
-          gcloud config set artifacts/location $REGION
-          gcloud config set artifacts/repository $AR_REPO
+          SHA=$(git rev-parse --short HEAD)
+          IMAGE="us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GAR_REPO || 'natacha' }}/${{ secrets.GAR_IMAGE || 'natacha-api' }}:${SHA}"
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+          gcloud builds submit --tag "$IMAGE"
 
-      # 5. Configurar Docker para Artifact Registry
-      - name: "🐳 Auth Docker to Artifact Registry"
+      - name: Deploy to Cloud Run
         run: |
-          gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+          IMAGE="$IMAGE"
+          gcloud run deploy "${{ secrets.CLOUD_RUN_SERVICE || 'natacha-api' }}" \
+            --image "$IMAGE" --region "${{ secrets.GCP_REGION || 'us-central1' }}" \
+            --platform managed --allow-unauthenticated
 
-      # 6. Build & Push memory_console
-      - name: "🏗️ Build & Push memory_console"
+      - name: Post-deploy smoke tests
         run: |
-          docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/memory_console:latest \
-            -f memory_console/Dockerfile \
-            memory_console
-
-          docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/memory_console:latest
-
-      # 7. Deploy to Cloud Run
-      - name: "🚀 Deploy memory_console"
-        run: |
-          gcloud run deploy $MEMORY_SERVICE \
-            --image ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/memory_console:latest \
-            --region $REGION \
-            --platform managed \
-            --allow-unauthenticated
+          URL=$(gcloud run services describe "${{ secrets.CLOUD_RUN_SERVICE || 'natacha-api' }}" \
+            --region "${{ secrets.GCP_REGION || 'us-central1' }}" --format='value(status.url)')
+          echo "URL=$URL"
+          curl -sS "$URL/health" | tee /tmp/health.json
+          curl -sS "$URL/health" | grep -E '"status"\s*:\s*"ok"' >/dev/null
+          curl -sS "$URL/openapi.json" | jq '.paths | length'
