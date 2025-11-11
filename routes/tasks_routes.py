@@ -1,3 +1,5 @@
+from google.cloud import firestore
+from app.utils.task_dedupe import stable_key
 from fastapi import APIRouter, Body, HTTPException, Query
 from datetime import datetime, timezone
 from typing import Optional
@@ -13,25 +15,82 @@ def now_iso():
 @router.post("/tasks/add")
 def tasks_add(payload: dict = Body(...)):
     """
-    Crea una tarea mínima en Firestore.
-    Espera (sugerido, no obligatorio): title, detail, project, channel, state, due, user_id
+    Crea/actualiza una tarea en Firestore con deduplicación por (project,title,paths).
+    Si existe una tarea 'pending' o 'vigente' con la misma key, hace append único de 'evidence'.
     """
     try:
         db = get_client()
-        doc = {
-            "title": payload.get("title") or "(untitled)",
-            "detail": payload.get("detail") or "",
-            "project": payload.get("project") or "Natacha",
-            "channel": payload.get("channel") or "api",
-            "state": payload.get("state") or "pending",
-            "due": payload.get("due") or "",
-            "user_id": payload.get("user_id") or "system",
-            "created_at": now_iso(),
-            "source": "tasks_routes",
+        project = payload.get("project") or "Natacha"
+        title = payload.get("title") or "(untitled)"
+        detail = payload.get("detail") or ""
+        channel = payload.get("channel") or "api"
+        state = payload.get("state") or "pending"
+        due = payload.get("due") or ""
+        user_id = payload.get("user_id") or "system"
+
+        # paths opcionales para generar clave estable (puede venir como 'suspect_paths' o 'paths')
+        suspect_paths = payload.get("suspect_paths") or payload.get("paths") or []
+        if not isinstance(suspect_paths, list):
+            suspect_paths = [str(suspect_paths)]
+
+        # dedupe key estable (project + title + paths normalizados/ordenados)
+        key = stable_key(project, title, suspect_paths)
+
+        col = db.collection("assistant_tasks")
+
+        # Buscar si existe abierta (pending/vigente) con la misma key
+        q = (col.where("key", "==", key)
+                .where("state", "in", ["pending", "vigente"])
+                .limit(1))
+        matches = list(q.stream())
+
+        # Campos base del documento
+        base_doc = {
+            "title": title,
+            "detail": detail,
+            "project": project,
+            "channel": channel,
+            "state": state,
+            "due": due,
+            "user_id": user_id,
+            "key": key,
+            "updated_at": now_iso(),
         }
-        ref = db.collection("assistant_tasks").add(doc)
-        task_id = ref[1].id if isinstance(ref, tuple) and len(ref) == 2 else getattr(ref, "id", "")
-        return {"status": "ok", "id": task_id, "task": doc}
+
+        if matches:
+            # Ya existe una abierta → append único de evidencia
+            doc_ref = matches[0].reference
+            update_payload = {
+                **base_doc,
+                "evidence": firestore.ArrayUnion(sorted(set(suspect_paths))) if suspect_paths else firestore.ArrayUnion([]),
+            }
+            # Si querés preservar 'created_at' original, solo actualizamos campos mutables:
+            update_payload.pop("title", None)  # opcional: evitar sobreescribir si no querés
+            update_payload.pop("project", None)
+            update_payload.pop("channel", None)
+            update_payload.pop("user_id", None)
+            update_payload.pop("key", None)
+
+            # Evitar ArrayUnion vacío (Firestore lo permite, pero por prolijidad):
+            if suspect_paths:
+                doc_ref.update(update_payload)
+            else:
+                # sin nueva evidencia: solo marca updated_at/state/detail
+                doc_ref.update({k: v for k, v in update_payload.items() if k != "evidence"})
+
+            return {"status": "ok", "id": matches[0].id, "deduped": True}
+        else:
+            # No existe → crear nueva
+            doc = {
+                **base_doc,
+                "created_at": now_iso(),
+                "source": "tasks_routes",
+                "evidence": sorted(set(suspect_paths)) if suspect_paths else [],
+            }
+            ref = col.add(doc)
+            task_id = ref[1].id if isinstance(ref, tuple) and len(ref) == 2 else getattr(ref, "id", "")
+            return {"status": "ok", "id": task_id, "deduped": False, "task": doc}
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"tasks_add error: {e}")
 
