@@ -1,3 +1,6 @@
+permissions:
+  contents: read
+  id-token: write
 name: Deploy to Cloud Run
 
 on:
