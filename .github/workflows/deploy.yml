@@ -14,9 +14,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-
     runs-on: ubuntu-24.04
-
     env:
       GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
       GCP_REGION: ${{ secrets.GCP_REGION || 'us-central1' }}
@@ -47,24 +45,26 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
-          install_components: 'beta'
 
       - name: Configure Docker auth to GAR
         run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
 
-      - name: Build & Push
+      - name: Build & Push (Docker → GAR)
+        env:
+          IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/${{ env.GAR_IMAGE }}:${{ github.sha }}
         run: |
-          SHA=$(git rev-parse --short HEAD)
-          IMAGE="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPO}/${GAR_IMAGE}:${SHA}"
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
-          gcloud builds submit \
-            --project="${GCP_PROJECT_ID}" \
-            --gcs-source-staging-dir="gs://${GCP_PROJECT_ID}_cloudbuild/source" \
-            --tag="${IMAGE}"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+          # Capturamos digest publicado por Docker local (RepoDigests)
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE" || true)
+          echo "DIGEST=$DIGEST" | tee -a $GITHUB_ENV
 
       - name: Deploy to Cloud Run
         env:
           IMAGE: ${{ env.IMAGE }}
+          SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
         run: |
           gcloud run deploy "${CLOUD_RUN_SERVICE}" \
             --project "${GCP_PROJECT_ID}" \
@@ -72,7 +72,27 @@ jobs:
             --region "${GCP_REGION}" \
             --platform managed \
             --service-account "${CLOUD_RUN_SA}" \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --labels=commit="$SHA",deployer="$ACTOR",source="github-actions"
+          # Guardamos URL y revisión para el summary
+          URL=$(gcloud run services describe "${CLOUD_RUN_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --format='value(status.url)')
+          REV=$(gcloud run services describe "${CLOUD_RUN_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --format='value(status.latestReadyRevisionName)')
+          echo "URL=$URL" | tee -a $GITHUB_ENV
+          echo "REV=$REV" | tee -a $GITHUB_ENV
+          {
+            echo "### Cloud Run deploy"
+            echo "- Service: \`${CLOUD_RUN_SERVICE}\`"
+            echo "- URL: ${URL}"
+            echo "- Revision: \`${REV}\`"
+            echo "- Image: \`${IMAGE}\`"
+            echo "- Digest: \`${DIGEST:-n/a}\`"
+          } >> $GITHUB_STEP_SUMMARY
 
       - name: Smoke test /health
         run: |
