@@ -1,5 +1,6 @@
 name: Router Wirecheck & OpenAPI Test
 on:
+  workflow_dispatch:
   push:
     branches: [ main, chore/**, feat/**, fix/** ]
   pull_request:
