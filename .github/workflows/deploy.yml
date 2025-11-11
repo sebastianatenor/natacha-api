@@ -94,6 +94,17 @@ jobs:
             echo "- Digest: \`${DIGEST:-n/a}\`"
           } >> $GITHUB_STEP_SUMMARY
 
+      - name: Register runtime in /ops/self_register
+        if: success()
+        env:
+          SERVICE_URL: ${{ env.URL || env.CLOUD_RUN_URL }}
+        run: |
+          echo "Registering runtime metadata to $SERVICE_URL ..."
+          curl -sS -X POST "$SERVICE_URL/ops/self_register" \
+            -H "Content-Type: application/json" \
+            -d "{\"url\":\"$SERVICE_URL\",\"runtime\":{\"primary\":\"cloud_run\",\"legacy\":\"github-actions\"}}" \
+            | jq .
+
       - name: Smoke test /health
         run: |
           URL=$(gcloud run services describe "${CLOUD_RUN_SERVICE}" \
