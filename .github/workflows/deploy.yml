@@ -1,7 +1,7 @@
 name: Deploy to Cloud Run
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
   push:
     branches: [ main ]
 
@@ -19,48 +19,56 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1) AUTENTICACIÓN (WIF)
-      - id: auth
-        name: Auth to Google Cloud (WIF)
+      # 1️⃣ Autenticación correcta
+      - name: Authenticate to Google Cloud (WIF)
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_SA_EMAIL }}
-          token_format: 'access_token'
 
-      # 2) Instalar gcloud con project seteado
+      # 2️⃣ Setup gcloud con project
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
+          install_components: 'beta'
 
-      # 3) Docker auth contra GAR
+      # 3️⃣ Configurar Docker para GAR
       - name: Configure Docker auth to GAR
         run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
 
-      # 4) Build & Push (incluye PROJECT en la imagen y en gcloud)
+      # 4️⃣ Build & Push
       - name: Build & Push
         run: |
           if [ -z "${GCP_PROJECT_ID}" ]; then
-            echo "❌ GCP_PROJECT_ID vacío (seteá el secret GCP_PROJECT_ID)"; exit 1
+            echo "❌ Faltan secrets: GCP_PROJECT_ID"; exit 1
           fi
           SHA=$(git rev-parse --short HEAD)
           IMAGE="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPO}/${GAR_IMAGE}:${SHA}"
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
-          gcloud builds submit --project "${GCP_PROJECT_ID}" --tag "${IMAGE}"
+          gcloud builds submit --project="${GCP_PROJECT_ID}" --tag="${IMAGE}"
 
-      # 5) Deploy a Cloud Run con SA de runtime
+      # 5️⃣ Deploy a Cloud Run
       - name: Deploy to Cloud Run
         env:
           IMAGE: ${{ env.IMAGE }}
         run: |
-          gcloud run deploy "${CLOUD_RUN_SERVICE}"             --project "${GCP_PROJECT_ID}"             --image "${IMAGE}"             --region "${GCP_REGION}"             --platform managed             --service-account "${CLOUD_RUN_SA}"             --allow-unauthenticated
+          gcloud run deploy "${CLOUD_RUN_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --image "${IMAGE}" \
+            --region "${GCP_REGION}" \
+            --platform managed \
+            --service-account "${CLOUD_RUN_SA}" \
+            --allow-unauthenticated
 
-      # 6) Smoke tests
-      - name: Post-deploy smoke tests
+      # 6️⃣ Smoke test
+      - name: Smoke test /health
         run: |
-          URL=$(gcloud run services describe "${CLOUD_RUN_SERVICE}"             --project "${GCP_PROJECT_ID}"             --region "${GCP_REGION}"             --format='value(status.url)')
+          URL=$(gcloud run services describe "${CLOUD_RUN_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --format='value(status.url)')
           echo "URL=$URL"
           curl -sS "$URL/health" | tee /tmp/health.json
-          grep -E '"status"\s*:\s*"ok"' /tmp/health.json >/dev/null
-          curl -sS "$URL/openapi.json" | jq '.paths | length'
+          grep -E '"status"\s*:\s*"ok"' /tmp/health.json
