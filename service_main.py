@@ -17,3 +17,6 @@ else:
     app = getattr(mod, "app", None)
     if app is None:
         raise RuntimeError("app.py existe pero no define variable `app`")
+
+from routes.ops_self import router as ops_self_router
+app.include_router(ops_self_router)
