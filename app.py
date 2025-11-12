@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from routes.memory_routes import router as memory_router, v1_router as memory_v1_router
 from routes.health_route import router as health_router
 
 from routes import memory_routes
@@ -12,6 +13,8 @@ except Exception:
         ops = None  # 👈 Asegurate de incluir memory_routes
 
 app = FastAPI()
+app.include_router(memory_v1_router, prefix="/v1")
+
 app.include_router(health_router)
 
 # Registrar los routers
@@ -45,3 +48,5 @@ def meta():
         "configuration": os.getenv("K_CONFIGURATION"),
         "port": os.getenv("PORT"),
     }
+from routes.v1_routes import router as v1_router
+app.include_router(v1_router)
