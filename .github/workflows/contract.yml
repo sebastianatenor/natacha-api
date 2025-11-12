@@ -1,11 +1,11 @@
-name: Router Wirecheck & OpenAPI Test
+name: Contract Checks
 
 on:
   push:
   pull_request:
 
 jobs:
-  wirecheck:
+  contract:
     runs-on: ubuntu-latest
     env:
       NATACHA_BASE_URL: ${{ secrets.NATACHA_BASE_URL }}
@@ -25,7 +25,7 @@ jobs:
         run: echo "BASE=$BASE"
 
       - name: Ensure executable
-        run: chmod +x scripts/router_wire_check.sh || true
+        run: chmod +x scripts/openapi_selfcheck.sh || true
 
-      - name: Run wirecheck
-        run: ./scripts/router_wire_check.sh
+      - name: Run contract selfcheck
+        run: ./scripts/openapi_selfcheck.sh

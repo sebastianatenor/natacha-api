@@ -1,3 +1,4 @@
+BASE ?= http://localhost:8080
 SHELL := /usr/bin/env bash
 
 .PHONY: guard py bashlint sanity
@@ -76,6 +77,39 @@ deploy-prod:
 health-memory:
 	BASE=${BASE:-http://localhost:8080} scripts/health_memory.sh
 .PHONY: health-memory
+health-all: health-memory health-tasks health-ops
+	@echo "✅ All subsystems healthy"
+.PHONY: health-all
+health-tasks:
+	BASE=${BASE:-http://localhost:8080} scripts/health_tasks.sh
+.PHONY: health-tasks
+
+health-ops:
+	BASE=${BASE:-http://localhost:8080} scripts/health_ops.sh
+.PHONY: health-ops
+
+health-all: health-memory health-tasks health-ops
+	@echo "✅ All subsystems healthy"
+.PHONY: health-all
+
+# ===== Health targets (override seguro) =====
+BASE ?= http://localhost:8080
+
+health-memory:
+	@echo "Using BASE=$(BASE)"
+	BASE=$(BASE) scripts/health_memory.sh
+.PHONY: health-memory
+
+health-tasks:
+	@echo "Using BASE=$(BASE)"
+	BASE=$(BASE) scripts/health_tasks.sh
+.PHONY: health-tasks
+
+health-ops:
+	@echo "Using BASE=$(BASE)"
+	BASE=$(BASE) scripts/health_ops.sh
+.PHONY: health-ops
+
 health-all: health-memory health-tasks health-ops
 	@echo "✅ All subsystems healthy"
 .PHONY: health-all

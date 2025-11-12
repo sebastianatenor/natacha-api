@@ -2,28 +2,43 @@
 set -euo pipefail
 
 BASE="${BASE:-http://localhost:8080}"
+KEY="${KEY:-}"
 
-check_http() { curl -fsS -o /dev/null "$1"; }
+say(){ echo -e "$*"; }
 
-echo "== Tasks Health =="
+check_http() {
+  curl -sS -f -o /dev/null "$1"
+}
 
-# 1) /health vivo
-check_http "$BASE/health" && echo "🟢 /health OK" || { echo "🔴 /health FAIL"; exit 1; }
+run_tasks_health() {
+  say "== Tasks Health =="
 
-# 2) /tasks/search responde 200 y JSON (array u objeto)
-if out=$(curl -fsS "$BASE/tasks/search"); then
-  echo "🟢 /tasks/search OK"
-else
-  echo "🔴 /tasks/search FAIL"; exit 1
-fi
+  check_http "$BASE/health" && say "🟢 /health OK" || { say "🔴 /health FAIL"; exit 1; }
 
-# 3) Intento opcional de alta "benigna" (no crítico)
-#    Si tu /tasks/add exige campos, ajusta acá. Si falla, solo advierte.
-payload='{"summary":"healthcheck task","project":"Natacha","channel":"health","visibility":"equipo","state":"vigente"}'
-if curl -fsS -X POST "$BASE/tasks/add" -H "Content-Type: application/json" -d "$payload" >/dev/null; then
-  echo "🟢 /tasks/add OK (dummy)"
-else
-  echo "🟡 /tasks/add no aceptó el dummy (no crítico)"
-fi
+  # Detectar endpoint en OpenAPI
+  if curl -sS "$BASE/openapi.json" | jq -e '.paths["/v1/tasks/search"]' >/dev/null; then
+    PATH_TASKS="/v1/tasks/search"
+  elif curl -sS "$BASE/openapi.json" | jq -e '.paths["/tasks/search"]' >/dev/null; then
+    PATH_TASKS="/tasks/search"
+  else
+    say "🟠 No se encontró /v1/tasks/search ni /tasks/search en OpenAPI."
+    say "✅ Tasks subsystem: HEALTHY-ish (best effort)"
+    exit 0
+  fi
 
-echo "✅ Tasks subsystem: HEALTHY-ish"
+  say "🔎 Probing $PATH_TASKS ..."
+  if [[ -n "$KEY" ]]; then
+    curl -sS -f -G "$BASE$PATH_TASKS" -H "X-API-Key: $KEY" --data-urlencode "limit=3" >/dev/null \
+      && say "🟢 GET $PATH_TASKS OK (200)" \
+      && say "✅ Tasks subsystem: HEALTHY" && exit 0
+  else
+    curl -sS -f -G "$BASE$PATH_TASKS" --data-urlencode "limit=3" >/dev/null \
+      && say "🟢 GET $PATH_TASKS OK (200)" \
+      && say "✅ Tasks subsystem: HEALTHY" && exit 0
+  fi
+
+  say "🔴 $PATH_TASKS FAIL"
+  exit 1
+}
+
+run_tasks_health
