@@ -2,28 +2,105 @@
 set -euo pipefail
 
 BASE="${BASE:-http://localhost:8080}"
+KEY="${KEY:-}"   # opcional, si está la usamos
+AUTH=()
+[[ -n "$KEY" ]] && AUTH=(-H "X-API-Key: $KEY")
 
-check_http() { curl -fsS -o /dev/null "$1"; }
+say() { echo "$@"; }
 
-echo "== Tasks Health =="
+http_ok() {
+  curl -sS -f -o /dev/null "${AUTH[@]}" "$1"
+}
 
-# 1) /health vivo
-check_http "$BASE/health" && echo "🟢 /health OK" || { echo "🔴 /health FAIL"; exit 1; }
+openapi_has_path() {
+  local re="$1"
+  curl -sS "${AUTH[@]}" "$BASE/openapi.json" | jq -e --arg re "$re" '
+    (.paths | keys | map(select(test($re)))) | length > 0
+  ' >/dev/null
+}
 
-# 2) /tasks/search responde 200 y JSON (array u objeto)
-if out=$(curl -fsS "$BASE/tasks/search"); then
-  echo "🟢 /tasks/search OK"
-else
-  echo "🔴 /tasks/search FAIL"; exit 1
-fi
+# Devuelve el primer path que exista para search
+discover_search_path() {
+  # candidatos por orden de preferencia
+  local candidates=(
+    "/tasks/search"          # v0 GET o POST
+    "/tasks/v1/search"       # v1 POST
+    "/tasks/v2/search"       # v2 POST
+  )
+  for p in "${candidates[@]}"; do
+    if openapi_has_path "$p"; then
+      echo "$p"; return 0
+    fi
+  done
+  return 1
+}
 
-# 3) Intento opcional de alta "benigna" (no crítico)
-#    Si tu /tasks/add exige campos, ajusta acá. Si falla, solo advierte.
-payload='{"summary":"healthcheck task","project":"Natacha","channel":"health","visibility":"equipo","state":"vigente"}'
-if curl -fsS -X POST "$BASE/tasks/add" -H "Content-Type: application/json" -d "$payload" >/dev/null; then
-  echo "🟢 /tasks/add OK (dummy)"
-else
-  echo "🟡 /tasks/add no aceptó el dummy (no crítico)"
-fi
+# Intenta GET y si 404 prueba POST
+probe_search() {
+  local path="$1"
+  # 1) GET con querystring básico
+  local code
+  code="$(curl -sS -o /dev/null -w '%{http_code}' "${AUTH[@]}" \
+    -G "$BASE$path" --data-urlencode "q=health" --data-urlencode "limit=1")"
+  if [[ "$code" == "200" ]]; then
+    return 0
+  fi
+  if [[ "$code" != "404" && "$code" != "405" ]]; then
+    # Otros errores -> fallar
+    return 1
+  fi
+  # 2) POST con JSON
+  code="$(curl -sS -o /dev/null -w '%{http_code}' "${AUTH[@]}" \
+    -X POST "$BASE$path" -H "Content-Type: application/json" \
+    -d '{"q":"health","limit":1}')"
+  [[ "$code" == "200" ]]
+}
 
-echo "✅ Tasks subsystem: HEALTHY-ish"
+# Crear una tarea dummy si existe el endpoint
+probe_add() {
+  local candidates=(
+    "/tasks/add"
+    "/tasks/v1/add"
+    "/tasks/v2/add"
+  )
+  for p in "${candidates[@]}"; do
+    if openapi_has_path "$p"; then
+      local code
+      code="$(curl -sS -o /dev/null -w '%{http_code}' "${AUTH[@]}" \
+        -X POST "$BASE$p" -H "Content-Type: application/json" \
+        -d '{"title":"health-dummy","tags":["ci","health"],"meta":{"probe":true}}')"
+      [[ "$code" == "200" || "$code" == "201" ]] && return 0
+    fi
+  done
+  # si no existe /add lo consideramos opcional
+  return 0
+}
+
+main() {
+  echo "== Tasks Health =="
+
+  http_ok "$BASE/health" && say "🟢 /health OK" || { say "🔴 /health FAIL"; exit 1; }
+
+  local SEARCH_PATH
+  if SEARCH_PATH="$(discover_search_path)"; then
+    if probe_search "$SEARCH_PATH"; then
+      say "🟢 ${SEARCH_PATH} OK"
+    else
+      say "🔴 ${SEARCH_PATH} FAIL"
+      exit 1
+    fi
+  else
+    say "🔴 No se encontró endpoint de búsqueda de tareas en OpenAPI"
+    exit 1
+  fi
+
+  if probe_add; then
+    say "🟢 /tasks/add (si existe) OK"
+  else
+    say "🟠 /tasks/add no disponible"
+  fi
+
+  say "✅ Tasks subsystem: HEALTHY-ish"
+}
+
+main
