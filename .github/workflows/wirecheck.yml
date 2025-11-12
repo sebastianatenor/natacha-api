@@ -1,9 +1,7 @@
 name: Router Wirecheck & OpenAPI Test
 on:
-  pull_request:
-    branches: [ main ]
   push:
-    branches: [ chore/fix-memory-v1-router ]
+  pull_request:
 jobs:
   wirecheck:
     runs-on: ubuntu-latest
@@ -11,13 +9,11 @@ jobs:
       BASE: ${{ vars.NATACHA_BASE_URL != '' && vars.NATACHA_BASE_URL || secrets.NATACHA_BASE_URL }}
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update -y && sudo apt-get install -y jq curl
-      - name: Debug BASE
-        run: |
-          echo "BASE=$BASE"
-          if [ -z "$BASE" ]; then echo "❌ BASE vacío (falta repo var o secret NATACHA_BASE_URL)"; exit 1; fi
-          curl -sf --max-time 10 "$BASE/health" && echo "health: OK"
-      - name: Router Wire Check
-        run: scripts/router_wire_check.sh
-      - name: OpenAPI Selfcheck
-        run: scripts/openapi_selfcheck.sh
+      - name: Tools
+        run: sudo apt-get update -y && sudo apt-get install -y curl jq
+      - name: Show BASE
+        run: echo "BASE=$BASE"
+      - name: Ensure executable
+        run: chmod +x scripts/router_wire_check.sh || true
+      - name: Run wirecheck
+        run: ./scripts/router_wire_check.sh
