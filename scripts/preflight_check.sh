@@ -49,3 +49,9 @@ if [ -f "scripts/intelligence_due.py" ]; then
 else
   echo "⚠️ scripts/intelligence_due.py no existe todavía"
 fi
+
+# Memory health
+BASE=${BASE:-http://localhost:8080} scripts/health_memory.sh
+
+# Routes snapshot (no-blocking)
+BASE=${BASE:-http://localhost:8080} scripts/list_routes.sh || true
