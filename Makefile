@@ -79,9 +79,3 @@ health-memory:
 health-all: health-memory health-tasks health-ops
 	@echo "✅ All subsystems healthy"
 .PHONY: health-all
-health-tasks:
-	BASE=${BASE:-http://localhost:8080} scripts/health_tasks.sh
-.PHONY: health-tasks
-health-ops:
-	BASE=${BASE:-http://localhost:8080} scripts/health_ops.sh
-.PHONY: health-ops
