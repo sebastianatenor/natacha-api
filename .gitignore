@@ -95,3 +95,5 @@ main
 main.py
 >>>>>>> origin/main
 .archive_bak/
+.github/workflows/*.ym
+.github/workflows/*.bak*
