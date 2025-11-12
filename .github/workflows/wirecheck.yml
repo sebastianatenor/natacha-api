@@ -1,19 +1,31 @@
 name: Router Wirecheck & OpenAPI Test
+
 on:
   push:
   pull_request:
+
 jobs:
   wirecheck:
     runs-on: ubuntu-latest
     env:
-      BASE: ${{ vars.NATACHA_BASE_URL != '' && vars.NATACHA_BASE_URL || secrets.NATACHA_BASE_URL }}
+      NATACHA_BASE_URL: ${{ secrets.NATACHA_BASE_URL }}
+      REPO_BASE_URL: ${{ vars.NATACHA_BASE_URL }}
     steps:
       - uses: actions/checkout@v4
+
       - name: Tools
         run: sudo apt-get update -y && sudo apt-get install -y curl jq
+
+      - name: Export BASE
+        run: |
+          BASE="${NATACHA_BASE_URL:-${REPO_BASE_URL:-https://natacha-api-mkwskljrhq-uc.a.run.app}}"
+          echo "BASE=$BASE" >> "$GITHUB_ENV"
+
       - name: Show BASE
         run: echo "BASE=$BASE"
+
       - name: Ensure executable
         run: chmod +x scripts/router_wire_check.sh || true
+
       - name: Run wirecheck
         run: ./scripts/router_wire_check.sh
