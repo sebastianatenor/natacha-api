@@ -5,14 +5,18 @@ on:
 jobs:
   health:
     runs-on: ubuntu-latest
+    env:
+      # Usa repo variable si existe; si no, cae al secreto
+      BASE: ${{ vars.NATACHA_BASE_URL != '' && vars.NATACHA_BASE_URL || secrets.NATACHA_BASE_URL }}
     steps:
       - uses: actions/checkout@v4
       - name: Install deps
         run: |
           sudo apt-get update -y
           sudo apt-get install -y jq curl
-      - name: Run health-all
-        env:
-          BASE: ${{ secrets.NATACHA_BASE_URL }}   # ej: https://natacha-api-....run.app
+      - name: Debug BASE
         run: |
-          make health-all
+          echo "BASE=$BASE"
+          curl -sf "$BASE/health" && echo "health: OK" || (echo "health: FAIL"; exit 1)
+      - name: Run health-all
+        run: make health-all
