@@ -2,105 +2,140 @@
 set -euo pipefail
 
 BASE="${BASE:-http://localhost:8080}"
-KEY="${KEY:-}"   # opcional, si está la usamos
+KEY="${KEY:-}"   # opcional (usamos si está)
 AUTH=()
 [[ -n "$KEY" ]] && AUTH=(-H "X-API-Key: $KEY")
 
 say() { echo "$@"; }
 
-http_ok() {
-  curl -sS -f -o /dev/null "${AUTH[@]}" "$1"
+http_code() {
+  # imprime solo el código HTTP
+  curl -sS -o /dev/null -w '%{http_code}' "${AUTH[@]}" "$@"
 }
 
-openapi_has_path() {
-  local re="$1"
-  curl -sS "${AUTH[@]}" "$BASE/openapi.json" | jq -e --arg re "$re" '
-    (.paths | keys | map(select(test($re)))) | length > 0
-  ' >/dev/null
+fetch_openapi_paths() {
+  # devuelve lista de paths (uno por línea); si falla, imprime vacío
+  curl -sS "${AUTH[@]}" "$BASE/openapi.json" \
+    | jq -r '.paths | keys[]?' 2>/dev/null || true
 }
 
-# Devuelve el primer path que exista para search
-discover_search_path() {
-  # candidatos por orden de preferencia
-  local candidates=(
-    "/tasks/search"          # v0 GET o POST
-    "/tasks/v1/search"       # v1 POST
-    "/tasks/v2/search"       # v2 POST
-  )
-  for p in "${candidates[@]}"; do
-    if openapi_has_path "$p"; then
-      echo "$p"; return 0
-    fi
-  done
+discover_search_paths() {
+  # 1) preferir los que efectivamente existan en OpenAPI
+  local paths; paths="$(fetch_openapi_paths || true)"
+  if [[ -n "$paths" ]]; then
+    # candidatos por regex amplios: tasks? + (opcional api/) + (vN/) + search
+    # ejemplos válidos: /tasks/search, /task/search, /api/tasks/v1/search, /tasks/v2/search
+    grep -E '^/(api/)?tasks?(/v[0-9]+)?/search$' <<<"$paths" || true
+  fi
+}
+
+fallback_search_candidates() {
+  cat <<EOF
+/tasks/search
+/tasks/v1/search
+/tasks/v2/search
+/task/search
+/api/tasks/search
+/api/tasks/v1/search
+/api/tasks/v2/search
+EOF
+}
+
+try_search_endpoint() {
+  local ep="$1"
+  # intentos en orden: GET con q, GET con query, POST con q, POST con query
+  local code
+
+  code="$(http_code -G "$BASE$ep" --data-urlencode "q=health" --data-urlencode "limit=1")"
+  [[ "$code" == "200" ]] && { say "🟢 $ep GET(q) -> 200"; return 0; }
+  [[ "$code" != "404" ]] && [[ "$code" != "405" ]] && say "ℹ️  $ep GET(q) -> $code"
+
+  code="$(http_code -G "$BASE$ep" --data-urlencode "query=health" --data-urlencode "limit=1")"
+  [[ "$code" == "200" ]] && { say "🟢 $ep GET(query) -> 200"; return 0; }
+  [[ "$code" != "404" ]] && [[ "$code" != "405" ]] && say "ℹ️  $ep GET(query) -> $code"
+
+  code="$(curl -sS -o /dev/null -w '%{http_code}' "${AUTH[@]}" \
+            -X POST "$BASE$ep" -H "Content-Type: application/json" \
+            -d '{"q":"health","limit":1}')" 
+  [[ "$code" == "200" ]] && { say "🟢 $ep POST(q) -> 200"; return 0; }
+  [[ "$code" != "404" ]] && [[ "$code" != "405" ]] && say "ℹ️  $ep POST(q) -> $code"
+
+  code="$(curl -sS -o /dev/null -w '%{http_code}' "${AUTH[@]}" \
+            -X POST "$BASE$ep" -H "Content-Type: application/json" \
+            -d '{"query":"health","limit":1}')" 
+  [[ "$code" == "200" ]] && { say "🟢 $ep POST(query) -> 200"; return 0; }
+  [[ "$code" != "404" ]] && [[ "$code" != "405" ]] && say "ℹ️  $ep POST(query) -> $code"
+
   return 1
 }
 
-# Intenta GET y si 404 prueba POST
-probe_search() {
-  local path="$1"
-  # 1) GET con querystring básico
-  local code
-  code="$(curl -sS -o /dev/null -w '%{http_code}' "${AUTH[@]}" \
-    -G "$BASE$path" --data-urlencode "q=health" --data-urlencode "limit=1")"
-  if [[ "$code" == "200" ]]; then
-    return 0
-  fi
-  if [[ "$code" != "404" && "$code" != "405" ]]; then
-    # Otros errores -> fallar
-    return 1
-  fi
-  # 2) POST con JSON
-  code="$(curl -sS -o /dev/null -w '%{http_code}' "${AUTH[@]}" \
-    -X POST "$BASE$path" -H "Content-Type: application/json" \
-    -d '{"q":"health","limit":1}')"
-  [[ "$code" == "200" ]]
-}
-
-# Crear una tarea dummy si existe el endpoint
 probe_add() {
-  local candidates=(
-    "/tasks/add"
-    "/tasks/v1/add"
-    "/tasks/v2/add"
-  )
-  for p in "${candidates[@]}"; do
-    if openapi_has_path "$p"; then
-      local code
-      code="$(curl -sS -o /dev/null -w '%{http_code}' "${AUTH[@]}" \
-        -X POST "$BASE$p" -H "Content-Type: application/json" \
-        -d '{"title":"health-dummy","tags":["ci","health"],"meta":{"probe":true}}')"
-      [[ "$code" == "200" || "$code" == "201" ]] && return 0
+  # Crear tarea dummy si existe algún /tasks.../add
+  local paths; paths="$(fetch_openapi_paths || true)"
+  local candidates=()
+  if [[ -n "$paths" ]]; then
+    while IFS= read -r p; do
+      grep -qE '^/(api/)?tasks?(/v[0-9]+)?/add$' <<<"$p" && candidates+=("$p")
+    done <<<"$paths"
+  fi
+  if [[ ${#candidates[@]} -eq 0 ]]; then
+    # fallbacks razonables
+    candidates=(/tasks/add /tasks/v1/add /tasks/v2/add /task/add /api/tasks/add)
+  fi
+
+  for ep in "${candidates[@]}"; do
+    local code
+    code="$(curl -sS -o /dev/null -w '%{http_code}' "${AUTH[@]}" \
+      -X POST "$BASE$ep" -H "Content-Type: application/json" \
+      -d '{"title":"health-dummy","tags":["ci","health"],"meta":{"probe":true}}')"
+    if [[ "$code" == "200" || "$code" == "201" ]]; then
+      say "🟢 $ep -> $code"
+      return 0
     fi
+    [[ "$code" != "404" ]] && [[ "$code" != "405" ]] && say "ℹ️  $ep -> $code"
   done
-  # si no existe /add lo consideramos opcional
+
+  # no lo consideramos crítico
+  say "🟠 /tasks add endpoint no disponible"
   return 0
 }
 
 main() {
   echo "== Tasks Health =="
 
-  http_ok "$BASE/health" && say "🟢 /health OK" || { say "🔴 /health FAIL"; exit 1; }
+  local hc; hc="$(http_code "$BASE/health")"
+  if [[ "$hc" != "200" ]]; then
+    say "🔴 /health -> $hc"; exit 1
+  fi
+  say "🟢 /health OK"
 
-  local SEARCH_PATH
-  if SEARCH_PATH="$(discover_search_path)"; then
-    if probe_search "$SEARCH_PATH"; then
-      say "🟢 ${SEARCH_PATH} OK"
-    else
-      say "🔴 ${SEARCH_PATH} FAIL"
-      exit 1
+  # 1) descubrir
+  local discovered; discovered="$(discover_search_paths || true)"
+  local tried=()
+
+  if [[ -n "$discovered" ]]; then
+    say "🔎 Paths de búsqueda detectados en OpenAPI:"
+    echo "$discovered" | sed 's/^/   • /'
+  else
+    say "🟡 No se detectaron paths de búsqueda en OpenAPI, usando fallbacks."
+  fi
+
+  # 2) probar descubiertos primero, luego fallbacks
+  while IFS= read -r ep; do
+    [[ -z "$ep" ]] && continue
+    tried+=("$ep")
+    if try_search_endpoint "$ep"; then
+      say "✅ Tasks search OK en: $ep"
+      probe_add
+      say "✅ Tasks subsystem: HEALTHY-ish"
+      return 0
     fi
-  else
-    say "🔴 No se encontró endpoint de búsqueda de tareas en OpenAPI"
-    exit 1
-  fi
+  done < <( (printf '%s\n' "$discovered"; fallback_search_candidates) | awk 'NF' | awk '!x[$0]++' )
 
-  if probe_add; then
-    say "🟢 /tasks/add (si existe) OK"
-  else
-    say "🟠 /tasks/add no disponible"
-  fi
-
-  say "✅ Tasks subsystem: HEALTHY-ish"
+  say "🔴 Ningún endpoint de búsqueda funcionó."
+  say "   Probados:"
+  printf '   - %s\n' "${tried[@]}"
+  exit 1
 }
 
 main
