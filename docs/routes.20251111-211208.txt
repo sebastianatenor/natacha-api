@@ -1,0 +1,6 @@
+/health
+/memory/add
+/memory/search
+/memory/search_safe
+/tasks/add
+/tasks/search
