@@ -297,3 +297,6 @@ def memory_search_safe(
         ]
 
     return results[:limit]
+
+# --- Back-compat alias ---
+v1_router = router
