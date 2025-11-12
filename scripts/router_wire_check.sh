@@ -13,10 +13,12 @@ hit() {
   local m="$1" p="$2" d="${3:-}"
   local url="${BASE%/}${p}"
   say "→ ${m} ${p}"
+  local resp code
+  resp="$(mktemp)"
   if [[ -n "$d" ]]; then
-    resp="$(mktemp)"; code="$(curl -sS -w '%{http_code}' -o "$resp" -H 'Content-Type: application/json' -X "$m" --data "$d" "$url" || true)"
+    code="$(curl -sS -w '%{http_code}' -o "$resp" -H 'Content-Type: application/json' -X "$m" --data "$d" "$url" || true)"
   else
-    resp="$(mktemp)"; code="$(curl -sS -w '%{http_code}' -o "$resp" -X "$m" "$url" || true)"
+    code="$(curl -sS -w '%{http_code}' -o "$resp" -X "$m" "$url" || true)"
   fi
 
   if [[ "$code" =~ ^2[0-9][0-9]$ ]]; then
@@ -24,9 +26,7 @@ hit() {
     return 0
   else
     say "🔴 ${m} ${p} (${code})"
-    say "── body ──"
-    cat "$resp" || true
-    say "──────────"
+    say "── body ──"; cat "$resp" || true; say "──────────"
     return 1
   fi
 }
@@ -36,8 +36,12 @@ say "🔎 Wirecheck contra BASE=$BASE"
 # 1) health
 hit GET /health
 
-# 2) memory/add
-hit POST /memory/add '{"text":"wirecheck ping","tags":["ci","wirecheck"],"meta":{"source":"router_wire_check"}}' || exit 1
+# 2) memory/add (payload válido + fallback a /v1/memory/add)
+PAYLOAD='{"summary":"ci-wirecheck","detail":"wirecheck probe","project":"Natacha","channel":"ci"}'
+if ! hit POST /memory/add "$PAYLOAD"; then
+  say "⚠️ fallback a /v1/memory/add"
+  hit POST /v1/memory/add "$PAYLOAD" || exit 1
+fi
 
 # 3) memory/search (fallback a v1)
 if ! hit GET "/memory/search?limit=1&query=wirecheck"; then
