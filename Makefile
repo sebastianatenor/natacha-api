@@ -91,3 +91,25 @@ health-ops:
 health-all: health-memory health-tasks health-ops
 	@echo "✅ All subsystems healthy"
 .PHONY: health-all
+
+# ===== Health targets (override seguro) =====
+BASE ?= http://localhost:8080
+
+health-memory:
+	@echo "Using BASE=$(BASE)"
+	BASE=$(BASE) scripts/health_memory.sh
+.PHONY: health-memory
+
+health-tasks:
+	@echo "Using BASE=$(BASE)"
+	BASE=$(BASE) scripts/health_tasks.sh
+.PHONY: health-tasks
+
+health-ops:
+	@echo "Using BASE=$(BASE)"
+	BASE=$(BASE) scripts/health_ops.sh
+.PHONY: health-ops
+
+health-all: health-memory health-tasks health-ops
+	@echo "✅ All subsystems healthy"
+.PHONY: health-all
