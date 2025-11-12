@@ -113,3 +113,14 @@ health-ops:
 health-all: health-memory health-tasks health-ops
 	@echo "✅ All subsystems healthy"
 .PHONY: health-all
+
+.PHONY: secret-check
+secret-check:
+	@WF=".github/workflows/secret-checks.yml"; \
+	echo "Dispatching $${WF} on main…"; \
+	gh workflow run "$${WF}" --ref main; \
+	echo "Waiting for run id…"; \
+	RUN_ID=$$(gh run list --workflow "$${WF}" --limit 1 --json databaseId --jq '.[0].databaseId'); \
+	echo "RUN_ID=$$RUN_ID"; \
+	gh run watch "$$RUN_ID"; \
+	gh run view "$$RUN_ID" --json status,conclusion,displayTitle,jobs --jq '{displayTitle,status,conclusion,jobs:(.jobs|length),names:[.jobs[].name]}'
