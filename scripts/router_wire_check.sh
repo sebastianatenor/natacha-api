@@ -1,38 +1,54 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE="${BASE:-}"
-if [[ -z "$BASE" ]]; then
-  echo "❌ BASE vacío (setear NATACHA_BASE_URL en Actions vars o secrets)"; exit 1
+BASE="${NATACHA_BASE_URL:-${REPO_BASE_URL:-${BASE:-}}}"
+if [[ -z "${BASE:-}" ]]; then
+  echo "🔴 BASE no definido (NATACHA_BASE_URL / REPO_BASE_URL / BASE)"; exit 1
 fi
 
-say(){ echo -e "$@"; }
+say() { echo -e "$*"; }
 
-say "🔎 Wirecheck contra BASE=$BASE"
-
-# A) Salud básica
-curl -sf --max-time 10 "$BASE/health" >/dev/null && say "🟢 /health OK"
-
-# B) Probar endpoints reales, con tolerancia
-ok=0; fail=0
-
-probe(){
-  local method="$1" path="$2" data="${3:-}"
-  if [[ "$method" == "GET" ]]; then
-    if curl -sf --max-time 15 "$BASE$path" >/dev/null; then say "🟢 $method $path"; ((ok++)); else say "🔴 $method $path"; ((fail++)); fi
+# hit <method> <path> [data-json]
+hit() {
+  local m="$1" p="$2" d="${3:-}"
+  local url="${BASE%/}${p}"
+  say "→ ${m} ${p}"
+  if [[ -n "$d" ]]; then
+    resp="$(mktemp)"; code="$(curl -sS -w '%{http_code}' -o "$resp" -H 'Content-Type: application/json' -X "$m" --data "$d" "$url" || true)"
   else
-    if curl -sf --max-time 15 -X "$method" "$BASE$path" -H "Content-Type: application/json" -d "$data" >/dev/null; then say "🟢 $method $path"; ((ok++)); else say "🔴 $method $path"; ((fail++)); fi
+    resp="$(mktemp)"; code="$(curl -sS -w '%{http_code}' -o "$resp" -X "$m" "$url" || true)"
+  fi
+
+  if [[ "$code" =~ ^2[0-9][0-9]$ ]]; then
+    say "🟢 ${m} ${p} (${code})"
+    return 0
+  else
+    say "🔴 ${m} ${p} (${code})"
+    say "── body ──"
+    cat "$resp" || true
+    say "──────────"
+    return 1
   fi
 }
 
-# contract mínimo actual:
-# - memory add (POST)
-# - memory search (GET)  (tenés /memory/search)
-# - v1 tasks search (GET)
-probe POST "/memory/add" '{"summary":"ci-wirecheck","detail":"","project":"Natacha","channel":"ci"}'
-probe GET  "/memory/search?limit=1"
-probe GET  "/v1/tasks/search?limit=1"
+say "🔎 Wirecheck contra BASE=$BASE"
 
-say "✅ wirecheck: ok=$ok fail=$fail"
-# Permitimos 1 fallo como warning sin romper el PR (por si cambia un path menor)
-if (( fail > 1 )); then exit 1; fi
+# 1) health
+hit GET /health
+
+# 2) memory/add
+hit POST /memory/add '{"text":"wirecheck ping","tags":["ci","wirecheck"],"meta":{"source":"router_wire_check"}}' || exit 1
+
+# 3) memory/search (fallback a v1)
+if ! hit GET "/memory/search?limit=1&query=wirecheck"; then
+  say "⚠️ fallback a /v1/memory/search"
+  hit GET "/v1/memory/search?limit=1&query=wirecheck" || exit 1
+fi
+
+# 4) tasks search (v1, fallback a /tasks/list)
+if ! hit GET "/v1/tasks/search?limit=1"; then
+  say "⚠️ fallback a /tasks/list"
+  hit GET "/tasks/list?limit=1" || exit 1
+fi
+
+say "✅ Wirecheck PASS"
