@@ -1,36 +1,23 @@
 name: Router Wirecheck & OpenAPI Test
 on:
-  workflow_dispatch:
-  push:
-    branches: [ main, chore/**, feat/**, fix/** ]
   pull_request:
     branches: [ main ]
-
-permissions:
-  contents: read
-
+  push:
+    branches: [ chore/fix-memory-v1-router ]
 jobs:
   wirecheck:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
+    env:
+      BASE: ${{ vars.NATACHA_BASE_URL != '' && vars.NATACHA_BASE_URL || secrets.NATACHA_BASE_URL }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install deps
+      - run: sudo apt-get update -y && sudo apt-get install -y jq curl
+      - name: Debug BASE
         run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt pytest
-          else
-            pip install fastapi==0.115.3 uvicorn==0.30.6 pydantic==2.* starlette==0.41.* pytest
-          fi
-
-      - name: Run wirecheck script
-        run: python scripts/check_routers_wired.py
-
-      - name: Run OpenAPI tests
-        run: pytest -q
+          echo "BASE=$BASE"
+          if [ -z "$BASE" ]; then echo "❌ BASE vacío (falta repo var o secret NATACHA_BASE_URL)"; exit 1; fi
+          curl -sf --max-time 10 "$BASE/health" && echo "health: OK"
+      - name: Router Wire Check
+        run: scripts/router_wire_check.sh
+      - name: OpenAPI Selfcheck
+        run: scripts/openapi_selfcheck.sh
