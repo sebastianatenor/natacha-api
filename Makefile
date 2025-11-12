@@ -1,3 +1,4 @@
+BASE ?= http://localhost:8080
 SHELL := /usr/bin/env bash
 
 .PHONY: guard py bashlint sanity
