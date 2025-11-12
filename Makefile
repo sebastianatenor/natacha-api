@@ -92,40 +92,27 @@ health-all: health-memory health-tasks health-ops
 	@echo "✅ All subsystems healthy"
 .PHONY: health-all
 
-# ===== Health targets (override seguro) =====
+# ===== Canon =====
 BASE ?= http://localhost:8080
+SHELL := /usr/bin/env bash
+
+.PHONY: health-memory health-tasks health-ops health-all secret-check-v2
 
 health-memory:
 	@echo "Using BASE=$(BASE)"
 	BASE=$(BASE) scripts/health_memory.sh
-.PHONY: health-memory
 
 health-tasks:
 	@echo "Using BASE=$(BASE)"
 	BASE=$(BASE) scripts/health_tasks.sh
-.PHONY: health-tasks
 
 health-ops:
 	@echo "Using BASE=$(BASE)"
 	BASE=$(BASE) scripts/health_ops.sh
-.PHONY: health-ops
 
 health-all: health-memory health-tasks health-ops
 	@echo "✅ All subsystems healthy"
-.PHONY: health-all
 
-.PHONY: secret-check
-secret-check:
-	@WF=".github/workflows/secret-checks-v2.yml"; \   # 👈 estaba .yml sin -v2
-	echo "Dispatching $${WF} on main…"; \
-	gh workflow run "$${WF}" --ref main; \
-	echo "Waiting for run id…"; \
-	RUN_ID=$$(gh run list --workflow "$${WF}" --limit 1 --json databaseId --jq '.[0].databaseId'); \
-	echo "RUN_ID=$$RUN_ID"; \
-	gh run watch "$$RUN_ID"; \
-	gh run view "$$RUN_ID" --json status,conclusion,displayTitle,jobs \
-	  --jq '{displayTitle,status,conclusion,jobs:(.jobs|length),names:[.jobs[].name]}'
-
-.PHONY: secret-check-v2
+# Dispara Secret Checks (v2) vía script
 secret-check-v2:
 	@bash scripts/gh_secret_check.sh
