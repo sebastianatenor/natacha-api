@@ -1,3 +1,4 @@
+from app.api_v1.memory_v1_routes import router as memory_v1_router
 import os, importlib.util, sys
 
 # Ruta del app.py en la raíz del repo dentro del contenedor (/app)
@@ -121,4 +122,3 @@ try:
     app.include_router(tasks_routes_router)
 except ModuleNotFoundError:
     pass
-

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, HTTPException, Query
 from google.cloud import firestore
 from google.oauth2 import service_account
+from google.api_core.exceptions import FailedPrecondition
 
 router = APIRouter(tags=["memory"])
 
@@ -169,7 +170,7 @@ def memory_add(payload: dict):
     return {"status": "ok", "stored": doc}
 
 
-@router.get("/memory/search")
+@router.get("/memory/search", tags=["memory"])
 def memory_search(
     project: str = Query(default=None),
     channel: str = Query(default=None),
@@ -179,37 +180,120 @@ def memory_search(
     db = get_db()
     col = db.collection("assistant_memory")
 
-    # si viene project o channel, filtramos en Firestore
-    if project or channel:
-        q = col
+    def _post_filter(items):
+        # filtro en memoria por texto si viene query
+        if query:
+            q_lower = query.lower()
+            items = [
+                it for it in items
+                if q_lower in ((it.get("summary") or "") + " " + (it.get("detail") or "")).lower()
+            ]
+        return items[:limit]
+
+    # --- Intento A: filtros directos en Firestore ---
+    try:
+        if project or channel:
+            q = col
+            if project:
+                q = q.where("project", "==", project)
+            if channel:
+                q = q.where("channel", "==", channel)
+            docs = q.limit(200).stream()
+
+            results = []
+            for d in docs:
+                data = d.to_dict()
+                data["id"] = d.id
+                results.append(data)
+            return _post_filter(results)
+
+        # sin filtros → más nuevos por timestamp
+        q = col.order_by("timestamp", direction=firestore.Query.DESCENDING).limit(200)
+        docs = q.stream()
+        results = []
+        for d in docs:
+            data = d.to_dict()
+            data["id"] = d.id
+            results.append(data)
+        return _post_filter(results)
+
+    except Exception as e:
+        # --- Intento B (fallback): traer recientes y filtrar en memoria ---
+        q = col.order_by("timestamp", direction=firestore.Query.DESCENDING).limit(200)
+        docs = q.stream()
+        results = []
+        for d in docs:
+            data = d.to_dict()
+            data["id"] = d.id
+            results.append(data)
+
+        # aplicar filtros en memoria si vinieron
         if project:
-            q = q.where("project", "==", project)
+            results = [r for r in results if (r.get("project") or "") == project]
         if channel:
-            q = q.where("channel", "==", channel)
-        docs = q.limit(200).stream()  # agarramos un poco más
-    else:
-        # si no hay filtros, traemos los más nuevos
-        q = col.order_by("timestamp", direction=firestore.Query.DESCENDING)
-        docs = q.limit(200).stream()
+            results = [r for r in results if (r.get("channel") or "") == channel]
 
-    results = []
-    for d in docs:
-        data = d.to_dict()
-        data["id"] = d.id
-        results.append(data)
+        return _post_filter(results)
 
-    # filtro en memoria por texto si vino query
+
+@router.get("/memory/search", tags=["memory"])
+def memory_search_safe(
+    project: str = Query(default=None),
+    channel: str = Query(default=None),
+    query: str = Query(default=None),
+    limit: int = Query(default=20, le=100),
+):
+    """
+    Versión con fallback: si Firestore pide índice, traemos últimos por timestamp
+    y filtramos en memoria para evitar 500.
+    """
+    db = get_db()
+    col = db.collection("assistant_memory")
+
+    def _stream_latest():
+        q2 = col.order_by("timestamp", direction=firestore.Query.DESCENDING)
+        return q2.limit(min(200, max(20, limit))).stream()
+
+    try:
+        if project or channel:
+            q = col
+            if project:
+                q = q.where("project", "==", project)
+            if channel:
+                q = q.where("channel", "==", channel)
+            docs = q.limit(min(200, max(20, limit))).stream()
+
+            results = []
+            for d in docs:
+                data = d.to_dict()
+                data["id"] = d.id
+                results.append(data)
+        else:
+            docs = _stream_latest()
+            results = []
+            for d in docs:
+                data = d.to_dict()
+                data["id"] = d.id
+                results.append(data)
+
+    except FailedPrecondition:
+        # 🔁 Fallback: falta índice → traemos últimos y filtramos en memoria
+        results = []
+        for d in _stream_latest():
+            data = d.to_dict()
+            data["id"] = d.id
+            results.append(data)
+        if project:
+            results = [x for x in results if (x.get("project") or "") == project]
+        if channel:
+            results = [x for x in results if (x.get("channel") or "") == channel]
+
+    # Filtro por texto opcional
     if query:
         q_lower = query.lower()
-        filtered = []
-        for item in results:
-            text = (
-                (item.get("summary") or "") + " " + (item.get("detail") or "")
-            ).lower()
-            if q_lower in text:
-                filtered.append(item)
-        # respetamos el limit
-        return filtered[:limit]
+        results = [
+            x for x in results
+            if q_lower in ((x.get("summary") or "") + " " + (x.get("detail") or "")).lower()
+        ]
 
-    # si no hubo query de texto, devolvemos lo que tenemos (limitado)
     return results[:limit]

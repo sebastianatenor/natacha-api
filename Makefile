@@ -73,3 +73,15 @@ deploy-prod:
 	@gcloud run deploy natacha-api --region us-central1 --source . \
 	  --set-secrets API_KEY=NATACHA_API_KEY:latest \
 	  --env-vars-file env.prod.yaml
+health-memory:
+	BASE=${BASE:-http://localhost:8080} scripts/health_memory.sh
+.PHONY: health-memory
+health-all: health-memory health-tasks health-ops
+	@echo "✅ All subsystems healthy"
+.PHONY: health-all
+health-tasks:
+	BASE=${BASE:-http://localhost:8080} scripts/health_tasks.sh
+.PHONY: health-tasks
+health-ops:
+	BASE=${BASE:-http://localhost:8080} scripts/health_ops.sh
+.PHONY: health-ops
