@@ -15,6 +15,36 @@ def _utc_iso() -> str:
     """ISO8601 en UTC."""
     return datetime.utcnow().isoformat()
 
+# Auto-tagging simple basado en palabras clave
+AUTO_TAGS = {
+    "sophie": "Sophie",
+    "jamin": "Jamin",
+    "xcmg": "XCMG",
+    "grúa": "Cranes",
+    "grua": "Cranes",
+    "crane": "Cranes",
+    "salta": "Salta",
+    "buenos aires": "BuenosAires",
+    "mercado": "MercadoLibre",
+    "importación": "Importaciones",
+    "importacion": "Importaciones",
+    "china": "China",
+    "llvc": "LLVC",
+}
+
+def detect_auto_tags(text: str) -> List[str]:
+    """
+    Detecta tags automáticamente a partir de palabras clave.
+    No rompe nada: solo complementa los tags explícitos.
+    """
+    text_low = text.lower()
+    found = []
+
+    for key, tag in AUTO_TAGS.items():
+        if key in text_low:
+            found.append(tag)
+
+    return found
 
 def save_raw_memory(payload: Dict[str, Any]) -> str:
     """
@@ -28,6 +58,8 @@ def save_raw_memory(payload: Dict[str, Any]) -> str:
     importance = payload.get("importance", "normal")
     source = payload.get("source", "actions")
     tags = payload.get("tags", [])
+    auto = detect_auto_tags(note)
+    tags = list(set(tags + auto))
 
     if isinstance(tags, str):
         # Si viene como string "a,b,c" lo pasamos a lista
