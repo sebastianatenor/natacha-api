@@ -116,3 +116,17 @@ health-all: health-memory health-tasks health-ops
 # Dispara Secret Checks (v2) vía script
 secret-check-v2:
 	@bash scripts/gh_secret_check.sh
+
+.PHONY: tasks-llvc
+tasks-llvc:
+	@KEY=$$(gcloud secrets versions access latest --secret NATACHA_API_KEY --project asistente-sebastian | tr -d '\r\n') \
+	  BASE=$(BASE) scripts/tasks_llvc.sh LLVC "" 10
+
+.PHONY: tasks-llvc-pending
+tasks-llvc-pending:
+	@KEY=$$(gcloud secrets versions access latest --secret NATACHA_API_KEY --project asistente-sebastian | tr -d '\r\n') \
+	  BASE=$(BASE) scripts/tasks_llvc.sh LLVC pending 20
+
+.PHONY: tasks-llvc-summary
+tasks-llvc-summary:
+	@BASE=$(BASE) KEY=$$KEY scripts/tasks_llvc_summary.sh
