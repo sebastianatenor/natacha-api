@@ -1,13 +1,19 @@
-from app.api_v1.memory_v1_routes import router as memory_v1_router
-import os, importlib.util, sys
+import os
+import sys
+import importlib.util
 
-# Ruta del app.py en la raíz del repo dentro del contenedor (/app)
+from fastapi.openapi.utils import get_openapi
+
+# ================================================================
+# Cargar app.py desde la raíz del repo dentro del contenedor
+# ================================================================
+
 APP_FILE = os.path.join(os.path.dirname(__file__), "app.py")
 
 if not os.path.exists(APP_FILE):
-    # Fallback: si no existe app.py, intentar paquete app/ con __init__.py que exponga `app`
+    # Fallback: intentar paquete "app"
     try:
-        from app import app  # noqa: F401
+        from app import app  # noqa
     except Exception as e:
         raise RuntimeError(f"No se encontró app.py ni paquete app con `app`: {e}")
 else:
@@ -19,106 +25,68 @@ else:
     if app is None:
         raise RuntimeError("app.py existe pero no define variable `app`")
 
+# ================================================================
+# IMPORTAR Y REGISTRAR ROUTERS (SAFE MODE)
+# ================================================================
+
+def safe_include(module_path: str):
+    """Incluye routers sin romper el arranque si falta alguno."""
+    try:
+        module = __import__(module_path, fromlist=["router"])
+        router = getattr(module, "router", None)
+        if router is not None:
+            app.include_router(router)
+    except ModuleNotFoundError:
+        pass
+
+
+safe_include("routes.ops_self")
+safe_include("routes.actions_routes")
+safe_include("routes.auto_routes")
+safe_include("routes.cog_routes")
+safe_include("routes.core_routes")
+safe_include("routes.embeddings_routes")
+safe_include("routes.health_ext")
+safe_include("routes.health_route")
+safe_include("routes.health_routes")
+safe_include("routes.memory_routes")
+safe_include("routes.memory_v2")
+safe_include("routes.memory_engine_routes")
+safe_include("routes.natacha_routes")
+safe_include("routes.actions_openapi")  # ⬅️ NUEVO: esquema reducido para Actions
+safe_include("routes.openapi_compat")
+safe_include("routes.ops_routes")
+safe_include("routes.semantic_routes")
+safe_include("routes.tasks_routes")
+
+# memory v1 explícito (si existe)
 try:
-    from routes.ops_self import router as ops_self_router
-    app.include_router(ops_self_router)
-except ModuleNotFoundError:
+    from app.api_v1.memory_v1_routes import router as memory_v1_router
+    app.include_router(memory_v1_router)
+except Exception:
     pass
 
+# ================================================================
+# CUSTOM OPENAPI
+# ================================================================
 
-try:
-    from routes.actions_routes import router as actions_routes_router
-    app.include_router(actions_routes_router)
-except ModuleNotFoundError:
-    pass
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
 
+    schema = get_openapi(
+        title=getattr(app, "title", "Natacha API"),
+        version="1.0.0",
+        description="Natacha API – runtime schema",
+        routes=app.routes,
+    )
 
-try:
-    from routes.auto_routes import router as auto_routes_router
-    app.include_router(auto_routes_router)
-except ModuleNotFoundError:
-    pass
+    schema["servers"] = [
+        {"url": "https://natacha-api-422255208682.us-central1.run.app"}
+    ]
 
-
-try:
-    from routes.cog_routes import router as cog_routes_router
-    app.include_router(cog_routes_router)
-except ModuleNotFoundError:
-    pass
-
-
-try:
-    from routes.core_routes import router as core_routes_router
-    app.include_router(core_routes_router)
-except ModuleNotFoundError:
-    pass
+    app.openapi_schema = schema
+    return app.openapi_schema
 
 
-try:
-    from routes.embeddings_routes import router as embeddings_routes_router
-    app.include_router(embeddings_routes_router)
-except ModuleNotFoundError:
-    pass
-
-
-try:
-    from routes.health_ext import router as health_ext_router
-    app.include_router(health_ext_router)
-except ModuleNotFoundError:
-    pass
-
-
-try:
-    from routes.health_route import router as health_route_router
-    app.include_router(health_route_router)
-except ModuleNotFoundError:
-    pass
-
-
-try:
-    from routes.health_routes import router as health_routes_router
-    app.include_router(health_routes_router)
-except ModuleNotFoundError:
-    pass
-
-
-try:
-    from routes.memory_routes import router as memory_routes_router
-    app.include_router(memory_routes_router)
-except ModuleNotFoundError:
-    pass
-
-
-try:
-    from routes.memory_v2 import router as memory_v2_router
-    app.include_router(memory_v2_router)
-except ModuleNotFoundError:
-    pass
-
-
-try:
-    from routes.openapi_compat import router as openapi_compat_router
-    app.include_router(openapi_compat_router)
-except ModuleNotFoundError:
-    pass
-
-
-try:
-    from routes.ops_routes import router as ops_routes_router
-    app.include_router(ops_routes_router)
-except ModuleNotFoundError:
-    pass
-
-
-try:
-    from routes.semantic_routes import router as semantic_routes_router
-    app.include_router(semantic_routes_router)
-except ModuleNotFoundError:
-    pass
-
-
-try:
-    from routes.tasks_routes import router as tasks_routes_router
-    app.include_router(tasks_routes_router)
-except ModuleNotFoundError:
-    pass
+app.openapi = custom_openapi  # type: ignore
