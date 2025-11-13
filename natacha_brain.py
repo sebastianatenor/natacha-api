@@ -47,9 +47,22 @@ def build_prompt(ctx: dict) -> str:
     DEBE recibir siempre un dict desde fetch_context().
     """
 
-    system = ctx.get("system_rule", "") or ""
-    summary = ctx.get("summary", "") or ""
+    system_raw = ctx.get("system_rule") or {}
+    summary_raw = ctx.get("summary") or {}
     error = ctx.get("error", None)
+
+    # Normalización:
+    # - system_rule suele venir como dict {"rule": "...", "version": "...", ...}
+    # - summary suele venir como dict {"summary": "...", "count": N, ...}
+    if isinstance(system_raw, dict):
+        system_text = system_raw.get("rule", "") or ""
+    else:
+        system_text = str(system_raw) if system_raw else ""
+
+    if isinstance(summary_raw, dict):
+        summary_text = summary_raw.get("summary", "") or ""
+    else:
+        summary_text = str(summary_raw) if summary_raw else ""
 
     base = (
         "You are Natacha, an executive AI assistant. "
@@ -59,10 +72,10 @@ def build_prompt(ctx: dict) -> str:
     if error:
         base += f"(⚠️ CONTEXT WARNING: {error})\n\n"
 
-    if system:
-        base += f"System rule:\n{system}\n\n"
+    if system_text.strip():
+        base += f"System rule:\n{system_text.strip()}\n\n"
 
-    if summary:
-        base += f"User memory summary:\n{summary}\n\n"
+    if summary_text.strip():
+        base += f"User memory summary:\n{summary_text.strip()}\n\n"
 
     return base.strip()
