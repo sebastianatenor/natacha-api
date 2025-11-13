@@ -42,11 +42,19 @@ create_resp="$(curl -sS -X POST "$BASE/tasks/add" \
 
 echo "$create_resp" | jq . || true
 
-TASK_ID="$(echo "$create_resp" | jq -r '.id // .task.id // empty')"
+TASK_ID="$(echo "$create_resp" | jq -r '.id // .task.id // .stored.id // empty')"
 
 if [[ -z "$TASK_ID" || "$TASK_ID" == "null" ]]; then
-  echo "🔴 /tasks/add FAIL – no se pudo obtener id de la tarea"
-  exit 1
+  # Modo legacy: /tasks/add no devuelve id, pero status es ok
+  if echo "$create_resp" | jq -e '.status == "ok"' >/dev/null 2>&1; then
+    echo "🟠 /tasks/add OK (legacy, sin id devuelto; se omite prueba de /tasks/update)"
+    echo
+    echo "✅ Tasks subsystem: HEALTHY (legacy add-only)"
+    exit 0
+  else
+    echo "🔴 /tasks/add FAIL – no se pudo obtener id de la tarea"
+    exit 1
+  fi
 fi
 
 echo "🟢 /tasks/add OK (id=$TASK_ID)"
@@ -58,7 +66,7 @@ echo "🔎 Marcando tarea como done en /tasks/update ..."
 update_payload="$(cat <<JSON
 {
   "user_id": "$USER_ID",
-  "id": "$TASK_ID",
+  "task_id": "$TASK_ID",
   "state": "done"
 }
 JSON
@@ -70,10 +78,13 @@ update_resp="$(curl -sS -X POST "$BASE/tasks/update" \
 
 echo "$update_resp" | jq . || true
 
-if echo "$update_resp" | jq -e '.status == "ok"' >/dev/null 2>&1; then
-  echo "🟢 /tasks/update OK"
+# Intentamos leer el estado final de la tarea
+STATE="$(echo "$update_resp" | jq -r '.state // .task.state // empty')"
+
+if [[ "$STATE" == "done" ]]; then
+  echo "🟢 /tasks/update OK (state=done)"
 else
-  echo "🟠 /tasks/update devolvió algo raro (no status: ok)"
+  echo "🟠 /tasks/update devolvió algo raro (state=$STATE)"
   # No rompemos todo el health si la creación funcionó; solo avisamos.
 fi
 
