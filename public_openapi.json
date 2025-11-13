@@ -3,7 +3,7 @@
   "info": {
     "title": "Natacha Public API",
     "version": "1.0.0",
-    "description": "Especificación reducida de Natacha para ChatGPT Actions."
+    "description": "Public actions available for the Natacha GPT."
   },
   "servers": [
     {
@@ -13,81 +13,25 @@
   "paths": {
     "/health": {
       "get": {
-        "summary": "Health",
-        "description": "Chequeo simple de salud de la API.",
-        "operationId": "health_check",
+        "operationId": "health",
+        "summary": "Check service health",
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Service is healthy",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object"
-                }
+                "schema": { "type": "object" }
               }
             }
           }
         }
       }
     },
+
     "/natacha/respond": {
       "post": {
-        "tags": ["natacha"],
-        "summary": "Natacha Respond",
-        "description": "Endpoint principal de Natacha: recibe un mensaje del usuario y devuelve la respuesta usando memoria y reglas internas.",
         "operationId": "natacha_respond",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "user_id": {
-                    "type": "string",
-                    "description": "ID lógico del usuario",
-                    "default": "sebastian"
-                  },
-                  "message": {
-                    "type": "string",
-                    "description": "Mensaje del usuario"
-                  },
-                  "model": {
-                    "type": "string",
-                    "description": "Nombre del modelo a usar (opcional)",
-                    "default": "gpt-4o-mini"
-                  }
-                },
-                "required": ["message"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Respuesta generada por Natacha",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "answer": { "type": "string" },
-                    "used_prompt": { "type": "string" },
-                    "model_called": { "type": "boolean" }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/memory/engine/raw": {
-      "post": {
-        "tags": ["memory"],
-        "summary": "Guardar memoria cruda",
-        "description": "Guarda una memoria cruda en Firestore (memory_raw). Campos típicos: user_id, note, kind, importance, source, tags.",
-        "operationId": "memory_engine_raw",
+        "summary": "Natacha responds using memory and model",
         "requestBody": {
           "required": true,
           "content": {
@@ -96,95 +40,16 @@
                 "type": "object",
                 "properties": {
                   "user_id": { "type": "string" },
-                  "note": { "type": "string" },
-                  "kind": { "type": "string" },
-                  "importance": { "type": "string" },
-                  "source": { "type": "string" },
-                  "tags": {
-                    "anyOf": [
-                      { "type": "array", "items": { "type": "string" } },
-                      { "type": "string" }
-                    ]
-                  }
-                }
+                  "message": { "type": "string" }
+                },
+                "required": ["message"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Memoria guardada",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": { "type": "string" },
-                    "memory_id": { "type": "string" }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/memory/engine/consolidate": {
-      "post": {
-        "tags": ["memory"],
-        "summary": "Consolidar memoria",
-        "description": "Consolida memorias crudas en un resumen limpio (por usuario o global).",
-        "operationId": "memory_engine_consolidate",
-        "parameters": [
-          {
-            "name": "user_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            },
-            "description": "user_id a consolidar; si se omite, consolida global."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Consolidación realizada",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/memory/engine/recent": {
-      "get": {
-        "tags": ["memory"],
-        "summary": "Memorias recientes",
-        "description": "Lista memorias crudas recientes de Firestore.",
-        "operationId": "memory_engine_recent",
-        "parameters": [
-          {
-            "name": "user_id",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "string" },
-            "description": "Filtrar por user_id (opcional)."
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "integer", "default": 20, "minimum": 1, "maximum": 200 },
-            "description": "Cantidad máxima de memorias a devolver."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Listado de memorias",
+            "description": "Model response",
             "content": {
               "application/json": {
                 "schema": { "type": "object" }
@@ -194,53 +59,11 @@
         }
       }
     },
-    "/memory/engine/context_bundle": {
-      "get": {
-        "tags": ["memory"],
-        "summary": "Paquete de contexto",
-        "description": "Devuelve system_rule + summary + recent para un user_id.",
-        "operationId": "memory_engine_context_bundle",
-        "parameters": [
-          {
-            "name": "user_id",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "string" },
-            "description": "ID lógico del usuario."
-          },
-          {
-            "name": "recent_limit",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "integer", "default": 20, "minimum": 1, "maximum": 200 },
-            "description": "Cantidad de memorias recientes."
-          },
-          {
-            "name": "include_global_fallback",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "boolean", "default": true },
-            "description": "Si true, usa resumen global si no hay uno específico."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Contexto listo para Natacha",
-            "content": {
-              "application/json": {
-                "schema": { "type": "object" }
-              }
-            }
-          }
-        }
-      }
-    },
+
     "/tasks/add": {
       "post": {
-        "tags": ["tasks"],
-        "summary": "Crear tarea",
-        "description": "Crea una tarea simple en la colección 'tasks'.",
-        "operationId": "tasks_add_public",
+        "operationId": "tasks_add",
+        "summary": "Create a task",
         "requestBody": {
           "required": true,
           "content": {
@@ -252,22 +75,16 @@
                   "title": { "type": "string" },
                   "detail": { "type": "string" },
                   "project": { "type": "string" },
-                  "channel": { "type": "string" },
-                  "due": { "type": "string" },
-                  "state": { "type": "string" },
-                  "evidence": {
-                    "type": "array",
-                    "items": { "type": "object" }
-                  }
+                  "state": { "type": "string" }
                 },
-                "required": ["user_id"]
+                "required": ["user_id", "title"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Tarea creada",
+            "description": "Task created",
             "content": {
               "application/json": {
                 "schema": { "type": "object" }
@@ -277,35 +94,22 @@
         }
       }
     },
+
     "/tasks/list": {
       "get": {
-        "tags": ["tasks"],
-        "summary": "Listar tareas",
-        "description": "Lista tareas filtradas por usuario/proyecto/estado.",
-        "operationId": "tasks_list_public",
+        "operationId": "tasks_list",
+        "summary": "List tasks",
         "parameters": [
           {
             "name": "user_id",
             "in": "query",
-            "required": false,
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "project",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "state",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "string" }
+            "schema": { "type": "string" },
+            "required": false
           }
         ],
         "responses": {
           "200": {
-            "description": "Listado de tareas",
+            "description": "List of tasks",
             "content": {
               "application/json": {
                 "schema": { "type": "object" }
@@ -315,12 +119,11 @@
         }
       }
     },
+
     "/tasks/update": {
       "post": {
-        "tags": ["tasks"],
-        "summary": "Actualizar tarea",
-        "description": "Actualiza campos de una tarea existente.",
-        "operationId": "tasks_update_public",
+        "operationId": "tasks_update",
+        "summary": "Update a task",
         "requestBody": {
           "required": true,
           "content": {
@@ -332,14 +135,7 @@
                   "task_id": { "type": "string" },
                   "title": { "type": "string" },
                   "detail": { "type": "string" },
-                  "project": { "type": "string" },
-                  "channel": { "type": "string" },
-                  "due": { "type": "string" },
-                  "state": { "type": "string" },
-                  "evidence": {
-                    "type": "array",
-                    "items": { "type": "object" }
-                  }
+                  "state": { "type": "string" }
                 },
                 "required": ["user_id", "task_id"]
               }
@@ -348,7 +144,84 @@
         },
         "responses": {
           "200": {
-            "description": "Tarea actualizada",
+            "description": "Task updated",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/memory/v2/store": {
+      "post": {
+        "operationId": "memory_v2_store",
+        "summary": "Store memory with vector",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "text": { "type": "string" },
+                        "tags": {
+                          "type": "array",
+                          "items": { "type": "string" }
+                        }
+                      },
+                      "required": ["text"]
+                    }
+                  }
+                },
+                "required": ["items"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stored memory",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/memory/engine/raw": {
+      "post": {
+        "operationId": "memory_engine_raw",
+        "summary": "Store raw memory",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": { "type": "string" },
+                  "note": { "type": "string" },
+                  "kind": { "type": "string" }
+                },
+                "required": ["user_id", "note"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stored raw memory",
             "content": {
               "application/json": {
                 "schema": { "type": "object" }
