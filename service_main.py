@@ -1,8 +1,11 @@
 import os
 import sys
+import json
 import importlib.util
+from pathlib import Path
 
 from fastapi.openapi.utils import get_openapi
+from fastapi import FastAPI
 
 # ================================================================
 # Cargar app.py desde la raíz del repo dentro del contenedor
@@ -53,7 +56,7 @@ safe_include("routes.memory_routes")
 safe_include("routes.memory_v2")
 safe_include("routes.memory_engine_routes")
 safe_include("routes.natacha_routes")
-safe_include("routes.actions_openapi")  # ⬅️ NUEVO: esquema reducido para Actions
+safe_include("routes.actions_openapi")  # ⬅️ esquema reducido para Actions
 safe_include("routes.openapi_compat")
 safe_include("routes.ops_routes")
 safe_include("routes.semantic_routes")
@@ -67,7 +70,33 @@ except Exception:
     pass
 
 # ================================================================
-# CUSTOM OPENAPI
+# ENDPOINT OPENAPI PÚBLICO PARA CHATGPT
+# ================================================================
+
+@app.get("/openapi_public.json", include_in_schema=False)
+def openapi_public():
+    """
+    Devuelve la especificación pública reducida para ChatGPT Actions.
+    """
+    base_dir = Path(__file__).parent
+    path = base_dir / "public_openapi.json"
+
+    if not path.exists():
+        return {
+            "openapi": "3.1.0",
+            "info": {
+                "title": "Natacha Public API (missing file)",
+                "version": "1.0.0",
+                "description": "public_openapi.json no encontrado en el contenedor."
+            },
+            "paths": {}
+        }
+
+    with path.open() as f:
+        return json.load(f)
+
+# ================================================================
+# CUSTOM OPENAPI (INTERNO)
 # ================================================================
 
 def custom_openapi():
