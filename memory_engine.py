@@ -82,6 +82,39 @@ def save_raw_memory(payload: Dict[str, Any]) -> str:
     doc_ref.set(data)
     return doc_ref.id
 
+def _compact_summary(text: str, max_chars: int = 2000) -> str:
+    """
+    Compacta el resumen:
+    - Elimina líneas duplicadas manteniendo el orden.
+    - Recorta a un máximo de max_chars para evitar textos gigantes.
+    """
+    if not text:
+        return ""
+
+    # Eliminar duplicados respetando el orden
+    seen = set()
+    lines: List[str] = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if line in seen:
+            continue
+        seen.add(line)
+        lines.append(line)
+
+    compact = "\n".join(lines)
+
+    if len(compact) <= max_chars:
+        return compact
+
+    # Recorte suave: hasta el límite más cercano a un salto de línea
+    truncated = compact[:max_chars]
+    last_nl = truncated.rfind("\n")
+    if last_nl > int(max_chars * 0.6):
+        truncated = truncated[:last_nl]
+
+    return truncated + "\n[...]"
 
 def consolidate_memory(user_id: Optional[str] = None):
     """
@@ -110,6 +143,7 @@ def consolidate_memory(user_id: Optional[str] = None):
         return None
 
     text = "\n".join(notes)
+    text = _compact_summary(text)
 
     key = user_id or "global"
     summary_doc = {
