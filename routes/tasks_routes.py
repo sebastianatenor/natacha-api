@@ -1,143 +1,180 @@
-from google.cloud import firestore
-from app.utils.task_dedupe import stable_key
-from fastapi import APIRouter, Body, HTTPException, Query
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
-# reusamos el cliente Firestore del proyecto
-from routes.db_util import get_client
+from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel, Field
+from google.cloud import firestore
 
-router = APIRouter()  # mismo esquema que auto_routes (sin prefix para mantener paths planos)
 
-def now_iso():
+router = APIRouter()  # sin prefix, paths planos: /tasks/add, /tasks/list, /tasks/update
+
+
+# =========================
+#  Modelos Pydantic
+# =========================
+
+class TaskBase(BaseModel):
+    user_id: str
+    title: str = ""
+    detail: str = ""
+    project: str = ""
+    channel: str = ""
+    due: str = ""
+    state: str = "pending"
+    evidence: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class TaskCreate(TaskBase):
+    """Payload de creación de tareas."""
+    pass
+
+
+class TaskUpdate(BaseModel):
+    user_id: str
+    task_id: str
+    title: Optional[str] = None
+    detail: Optional[str] = None
+    project: Optional[str] = None
+    channel: Optional[str] = None
+    due: Optional[str] = None
+    state: Optional[str] = None
+    evidence: Optional[List[Dict[str, Any]]] = None
+
+
+def _get_db() -> firestore.Client:
+    """Cliente Firestore compartido."""
+    return firestore.Client()
+
+
+def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
+
+# =========================
+#  /tasks/add
+# =========================
+
 @router.post("/tasks/add")
-def tasks_add(payload: dict = Body(...)):
+async def tasks_add(payload: TaskCreate) -> Dict[str, Any]:
     """
-    Crea/actualiza una tarea en Firestore con deduplicación por (project,title,paths).
-    Si existe una tarea 'pending' o 'vigente' con la misma key, hace append único de 'evidence'.
+    Crea una tarea simple en la colección 'tasks'.
+
+    Importante: NO usa consultas 'in' ni listas vacías,
+    así evitamos errores tipo "'values' must be non-empty".
     """
-    try:
-        db = get_client()
-        project = payload.get("project") or "Natacha"
-        title = payload.get("title") or "(untitled)"
-        detail = payload.get("detail") or ""
-        channel = payload.get("channel") or "api"
-        state = payload.get("state") or "pending"
-        due = payload.get("due") or ""
-        user_id = payload.get("user_id") or "system"
+    db = _get_db()
+    col = db.collection("tasks")
 
-        # paths opcionales para generar clave estable (puede venir como 'suspect_paths' o 'paths')
-        suspect_paths = payload.get("suspect_paths") or payload.get("paths") or []
-        if not isinstance(suspect_paths, list):
-            suspect_paths = [str(suspect_paths)]
+    now = _now_iso()
+    doc_ref = col.document()  # ID auto
+    task_id = doc_ref.id
 
-        # dedupe key estable (project + title + paths normalizados/ordenados)
-        key = stable_key(project, title, suspect_paths)
+    safe_project = payload.project or ""
+    safe_title = payload.title or ""
+    # Clave opaca, no dependemos de formato viejo
+    key = f"{safe_project}:{safe_title}:{task_id}"
 
-        col = db.collection("assistant_tasks")
+    doc: Dict[str, Any] = {
+        "user_id": payload.user_id,
+        "title": payload.title,
+        "detail": payload.detail,
+        "project": payload.project,
+        "channel": payload.channel,
+        "due": payload.due or "",
+        "state": payload.state or "pending",
+        "evidence": payload.evidence or [],
+        "created_at": now,
+        "updated_at": now,
+        "source": "tasks_routes",
+        "key": key,
+    }
 
-        # Buscar si existe abierta (pending/vigente) con la misma key
-        q = (col.where("key", "==", key)
-                .where("state", "in", ["pending", "vigente"])
-                .limit(1))
-        matches = list(q.stream())
+    doc_ref.set(doc)
+    doc["id"] = task_id
+    return doc
 
-        # Campos base del documento
-        base_doc = {
-            "title": title,
-            "detail": detail,
-            "project": project,
-            "channel": channel,
-            "state": state,
-            "due": due,
-            "user_id": user_id,
-            "key": key,
-            "updated_at": now_iso(),
-        }
 
-        if matches:
-            # Ya existe una abierta → append único de evidencia
-            doc_ref = matches[0].reference
-            update_payload = {
-                **base_doc,
-                "evidence": firestore.ArrayUnion(sorted(set(suspect_paths))) if suspect_paths else firestore.ArrayUnion([]),
-            }
-            # Si querés preservar 'created_at' original, solo actualizamos campos mutables:
-            update_payload.pop("title", None)  # opcional: evitar sobreescribir si no querés
-            update_payload.pop("project", None)
-            update_payload.pop("channel", None)
-            update_payload.pop("user_id", None)
-            update_payload.pop("key", None)
-
-            # Evitar ArrayUnion vacío (Firestore lo permite, pero por prolijidad):
-            if suspect_paths:
-                doc_ref.update(update_payload)
-            else:
-                # sin nueva evidencia: solo marca updated_at/state/detail
-                doc_ref.update({k: v for k, v in update_payload.items() if k != "evidence"})
-
-            return {"status": "ok", "id": matches[0].id, "deduped": True}
-        else:
-            # No existe → crear nueva
-            doc = {
-                **base_doc,
-                "created_at": now_iso(),
-                "source": "tasks_routes",
-                "evidence": sorted(set(suspect_paths)) if suspect_paths else [],
-            }
-            ref = col.add(doc)
-            task_id = ref[1].id if isinstance(ref, tuple) and len(ref) == 2 else getattr(ref, "id", "")
-            return {"status": "ok", "id": task_id, "deduped": False, "task": doc}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"tasks_add error: {e}")
+# =========================
+#  /tasks/list
+# =========================
 
 @router.get("/tasks/list")
-def tasks_list(
+async def tasks_list(
+    user_id: Optional[str] = Query(default=None),
     project: Optional[str] = Query(default=None),
     state: Optional[str] = Query(default=None),
-    limit: int = Query(default=20, ge=1, le=200),
-):
+) -> Dict[str, Any]:
     """
-    Lista tareas desde Firestore (assistant_tasks), con filtros simples.
-    """
-    try:
-        db = get_client()
-        q = db.collection("assistant_tasks").order_by("created_at", direction="DESCENDING")
-        if project:
-            q = q.where("project", "==", project)
-        if state:
-            q = q.where("state", "==", state)
+    Lista tareas desde Firestore.
 
-        items = []
-        for i, doc in enumerate(q.stream()):
-            if i >= limit:
-                break
-            d = doc.to_dict()
-            d["id"] = doc.id
-            items.append(d)
-        return {"status": "ok", "count": len(items), "items": items}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"tasks_list error: {e}")
+    Filtros opcionales:
+    - user_id
+    - project
+    - state
+    """
+    db = _get_db()
+    col = db.collection("tasks")
+
+    query = col
+    if user_id:
+        query = query.where("user_id", "==", user_id)
+    if project:
+        query = query.where("project", "==", project)
+    if state:
+        query = query.where("state", "==", state)
+
+    docs = list(query.stream())
+    items: List[Dict[str, Any]] = []
+    for d in docs:
+        data = d.to_dict() or {}
+        data["id"] = d.id
+        items.append(data)
+
+    return {
+        "status": "ok",
+        "count": len(items),
+        "items": items,
+    }
+
+
+# =========================
+#  /tasks/update
+# =========================
 
 @router.post("/tasks/update")
-def tasks_update(payload: dict = Body(...)):
+async def tasks_update(payload: TaskUpdate) -> Dict[str, Any]:
     """
-    Actualiza campos simples de una tarea: state, due, title, detail, project, channel.
-    Requiere: id
+    Actualiza campos de una tarea existente.
+    - Requiere: user_id, task_id
+    - Campos opcionales: title, detail, project, channel, due, state, evidence
     """
-    try:
-        tid = payload.get("id")
-        if not tid:
-            raise HTTPException(status_code=400, detail="missing id")
-        db = get_client()
-        ref = db.collection("assistant_tasks").document(tid)
-        fields = {k: v for k, v in payload.items() if k in {"state","due","title","detail","project","channel"}}
-        if not fields:
-            return {"status":"noop","id":tid}
-        ref.update(fields)
-        return {"status":"ok","id":tid,"updated":sorted(fields.keys())}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"tasks_update error: {e}")
+    db = _get_db()
+    col = db.collection("tasks")
+
+    if not payload.task_id:
+        raise HTTPException(status_code=400, detail="missing id")
+
+    doc_ref = col.document(payload.task_id)
+    snap = doc_ref.get()
+    if not snap.exists:
+        raise HTTPException(status_code=404, detail="task not found")
+
+    current = snap.to_dict() or {}
+
+    update_data: Dict[str, Any] = {}
+    for field in ["title", "detail", "project", "channel", "due", "state", "evidence"]:
+        value = getattr(payload, field)
+        if value is not None:
+            update_data[field] = value
+
+    if not update_data:
+        # Nada que actualizar: devolvemos el estado actual
+        current["id"] = payload.task_id
+        return current
+
+    update_data["updated_at"] = _now_iso()
+    doc_ref.update(update_data)
+
+    current.update(update_data)
+    current["id"] = payload.task_id
+    return current
