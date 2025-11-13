@@ -1,44 +1,81 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE="${BASE:-http://localhost:8080}"
-KEY="${KEY:-}"
+BASE="${BASE:-http://localhost:8000}"
+USER_ID="${1:-sebastian}"
 
-say(){ echo -e "$*"; }
+echo "Using BASE=$BASE"
+echo
+echo "== Tasks Health =="
 
-check_http() {
-  curl -sS -f -o /dev/null "$1"
-}
+# 1) /health
+echo "🔎 Probing /health ..."
+health_resp="$(curl -sS "$BASE/health" || true)"
 
-run_tasks_health() {
-  say "== Tasks Health =="
-
-  check_http "$BASE/health" && say "🟢 /health OK" || { say "🔴 /health FAIL"; exit 1; }
-
-  # Detectar endpoint en OpenAPI
-  if curl -sS "$BASE/openapi.json" | jq -e '.paths["/v1/tasks/search"]' >/dev/null; then
-    PATH_TASKS="/v1/tasks/search"
-  elif curl -sS "$BASE/openapi.json" | jq -e '.paths["/tasks/search"]' >/dev/null; then
-    PATH_TASKS="/tasks/search"
-  else
-    say "🟠 No se encontró /v1/tasks/search ni /tasks/search en OpenAPI."
-    say "✅ Tasks subsystem: HEALTHY-ish (best effort)"
-    exit 0
-  fi
-
-  say "🔎 Probing $PATH_TASKS ..."
-  if [[ -n "$KEY" ]]; then
-    curl -sS -f -G "$BASE$PATH_TASKS" -H "X-API-Key: $KEY" --data-urlencode "limit=3" >/dev/null \
-      && say "🟢 GET $PATH_TASKS OK (200)" \
-      && say "✅ Tasks subsystem: HEALTHY" && exit 0
-  else
-    curl -sS -f -G "$BASE$PATH_TASKS" --data-urlencode "limit=3" >/dev/null \
-      && say "🟢 GET $PATH_TASKS OK (200)" \
-      && say "✅ Tasks subsystem: HEALTHY" && exit 0
-  fi
-
-  say "🔴 $PATH_TASKS FAIL"
+if echo "$health_resp" | jq -e '.status == "ok"' >/dev/null 2>&1; then
+  echo "🟢 /health OK"
+else
+  echo "🔴 /health FAIL"
+  echo "Respuesta:"
+  echo "$health_resp"
   exit 1
-}
+fi
 
-run_tasks_health
+# 2) Crear tarea de prueba vía /tasks/add
+echo
+echo "🔎 Creando tarea de prueba en /tasks/add ..."
+
+payload="$(cat <<JSON
+{
+  "user_id": "$USER_ID",
+  "title": "Healthcheck task",
+  "detail": "Tarea creada por scripts/health_tasks.sh",
+  "project": "Natacha",
+  "channel": "health"
+}
+JSON
+)"
+
+create_resp="$(curl -sS -X POST "$BASE/tasks/add" \
+  -H "Content-Type: application/json" \
+  -d "$payload" || true)"
+
+echo "$create_resp" | jq . || true
+
+TASK_ID="$(echo "$create_resp" | jq -r '.id // .task.id // empty')"
+
+if [[ -z "$TASK_ID" || "$TASK_ID" == "null" ]]; then
+  echo "🔴 /tasks/add FAIL – no se pudo obtener id de la tarea"
+  exit 1
+fi
+
+echo "🟢 /tasks/add OK (id=$TASK_ID)"
+
+# 3) Marcarla como done vía /tasks/update
+echo
+echo "🔎 Marcando tarea como done en /tasks/update ..."
+
+update_payload="$(cat <<JSON
+{
+  "user_id": "$USER_ID",
+  "id": "$TASK_ID",
+  "state": "done"
+}
+JSON
+)"
+
+update_resp="$(curl -sS -X POST "$BASE/tasks/update" \
+  -H "Content-Type: application/json" \
+  -d "$update_payload" || true)"
+
+echo "$update_resp" | jq . || true
+
+if echo "$update_resp" | jq -e '.status == "ok"' >/dev/null 2>&1; then
+  echo "🟢 /tasks/update OK"
+else
+  echo "🟠 /tasks/update devolvió algo raro (no status: ok)"
+  # No rompemos todo el health si la creación funcionó; solo avisamos.
+fi
+
+echo
+echo "✅ Tasks subsystem: HEALTHY"
