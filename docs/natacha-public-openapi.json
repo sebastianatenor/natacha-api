@@ -1,0 +1,353 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Natacha Public API",
+    "version": "1.0.0",
+    "description": "OpenAPI reducido para conectar Natacha (memoria + tareas) con ChatGPT y otras apps."
+  },
+  "servers": [
+    {
+      "url": "https://natacha-api-422255208682.us-central1.run.app"
+    }
+  ],
+  "paths": {
+    "/natacha/respond": {
+      "post": {
+        "summary": "Responder usando memoria consolidada",
+        "operationId": "natacha_respond",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": {
+                    "type": "string",
+                    "description": "ID lógico del usuario",
+                    "default": "sebastian"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Mensaje del usuario para Natacha"
+                  },
+                  "model": {
+                    "type": "string",
+                    "description": "Modelo a usar (opcional)",
+                    "default": "gpt-4o-mini"
+                  }
+                },
+                "required": ["message"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Respuesta generada por Natacha",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "answer": { "type": "string" },
+                    "used_prompt": { "type": "string" },
+                    "model_called": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/memory/engine/raw": {
+      "post": {
+        "summary": "Guardar memoria cruda",
+        "operationId": "memory_save_raw",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": { "type": "string" },
+                  "note": { "type": "string" },
+                  "kind": { "type": "string" },
+                  "importance": { "type": "string" },
+                  "source": { "type": "string" },
+                  "tags": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                },
+                "required": ["user_id", "note"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Memoria guardada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "memory_id": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/memory/engine/recent": {
+      "get": {
+        "summary": "Listar memorias recientes",
+        "operationId": "memory_list_recent",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 20 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listado de memorias recientes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": { "type": "integer" },
+                    "items": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/memory/engine/consolidate": {
+      "post": {
+        "summary": "Consolidar memorias crudas",
+        "operationId": "memory_consolidate",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado de la consolidación",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "result": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/memory/engine/context_bundle": {
+      "get": {
+        "summary": "Obtener bundle de contexto (system + summary + recent)",
+        "operationId": "memory_context_bundle",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "recent_limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 20 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contexto listo para Natacha",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "user_id": { "type": "string" },
+                    "system_rule": { "type": "object" },
+                    "summary": { "type": "object" },
+                    "recent": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks/add": {
+      "post": {
+        "summary": "Crear tarea",
+        "operationId": "tasks_add",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": { "type": "string" },
+                  "title": { "type": "string" },
+                  "detail": { "type": "string" },
+                  "project": { "type": "string" },
+                  "channel": { "type": "string" },
+                  "due": { "type": "string" },
+                  "state": { "type": "string" }
+                },
+                "required": ["title"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tarea creada",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks/list": {
+      "get": {
+        "summary": "Listar tareas",
+        "operationId": "tasks_list",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listado de tareas",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks/update": {
+      "post": {
+        "summary": "Actualizar tarea",
+        "operationId": "tasks_update",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": { "type": "string" },
+                  "task_id": { "type": "string" },
+                  "state": { "type": "string" }
+                },
+                "required": ["task_id", "state"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado de la actualización",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health check del servicio",
+        "operationId": "service_health",
+        "responses": {
+          "200": {
+            "description": "Servicio OK",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/meta": {
+      "get": {
+        "summary": "Información del servicio",
+        "operationId": "service_meta",
+        "responses": {
+          "200": {
+            "description": "Metadatos del servicio",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
