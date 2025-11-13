@@ -5,18 +5,62 @@ from pydantic import BaseModel
 import os
 import requests
 
-from natacha_brain import fetch_context, build_prompt
+from natacha_brain import fetch_context, build_prompt, SERVICE_URL
 
 router = APIRouter(prefix="/natacha", tags=["natacha"])
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
 
 class UserMessage(BaseModel):
     user_id: str = "sebastian"
     message: str
     model: Optional[str] = "gpt-4o-mini"
 
+# ============================================================
+# AUTO MEMORY HELPERS
+# ============================================================
+
+def _should_store_message(msg: str) -> bool:
+    """
+    Define si el mensaje del usuario es relevante como memoria.
+    Más adelante se puede expandir con reglas más avanzadas.
+    """
+    if not msg:
+        return False
+
+    # evitar guardar mensajes triviales
+    trivial = ["hola", "dale", "ok", "si", "sí", "gracias"]
+    if msg.lower().strip() in trivial:
+        return False
+
+    # si menciona temas del negocio, lo guardamos
+    keywords = ["Sophie", "Jamin", "grúa", "China", "LLVC", "importación", "vial"]
+    if any(k.lower() in msg.lower() for k in keywords):
+        return True
+
+    return False
+
+
+def _store_raw_memory(user_id: str, note: str):
+    """
+    Llama al motor de memoria para guardar automáticamente la conversación.
+    Ignora errores silenciosamente para no romper el flujo.
+    """
+    try:
+        url = f"{SERVICE_URL}/memory/engine/raw"
+        payload = {
+            "user_id": user_id,
+            "note": note,
+            "kind": "conversation",
+            "importance": "normal",
+            "source": "natacha-auto"
+        }
+
+        import requests
+        requests.post(url, json=payload, timeout=5)
+
+    except Exception:
+        pass  # nunca romper la conversación por un problema de memoria
 
 @router.post("/respond")
 def natacha_respond(payload: UserMessage):
@@ -37,6 +81,14 @@ def natacha_respond(payload: UserMessage):
         # 2) Construir el prompt con memoria + mensaje actual
         base_prompt = build_prompt(ctx)
         full_prompt = base_prompt + f"\n\nUser message:\n{payload.message}"
+
+        # 2b) Guardar memoria de conversación si aplica
+        try:
+            if _should_store_message(payload.message):
+                _store_raw_memory(payload.user_id, payload.message)
+        except Exception:
+            # Nunca romper la respuesta por un problema de memoria
+            pass
 
         # 3) Si no hay OPENAI_API_KEY, devolvemos el prompt y un aviso
         if not OPENAI_API_KEY:
