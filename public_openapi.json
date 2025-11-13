@@ -2,8 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Natacha Public API",
-    "version": "1.0.0",
-    "description": "Public actions available for the Natacha GPT."
+    "version": "1.0.0"
   },
   "servers": [
     {
@@ -14,10 +13,10 @@
     "/health": {
       "get": {
         "operationId": "health",
-        "summary": "Check service health",
+        "summary": "Health Check",
         "responses": {
           "200": {
-            "description": "Service is healthy",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": { "type": "object" }
@@ -27,11 +26,10 @@
         }
       }
     },
-
     "/natacha/respond": {
       "post": {
         "operationId": "natacha_respond",
-        "summary": "Natacha responds using memory and model",
+        "summary": "Chat with Natacha",
         "requestBody": {
           "required": true,
           "content": {
@@ -40,7 +38,8 @@
                 "type": "object",
                 "properties": {
                   "user_id": { "type": "string" },
-                  "message": { "type": "string" }
+                  "message": { "type": "string" },
+                  "model": { "type": "string" }
                 },
                 "required": ["message"]
               }
@@ -49,7 +48,7 @@
         },
         "responses": {
           "200": {
-            "description": "Model response",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": { "type": "object" }
@@ -59,11 +58,10 @@
         }
       }
     },
-
     "/tasks/add": {
       "post": {
         "operationId": "tasks_add",
-        "summary": "Create a task",
+        "summary": "Create Task",
         "requestBody": {
           "required": true,
           "content": {
@@ -75,9 +73,11 @@
                   "title": { "type": "string" },
                   "detail": { "type": "string" },
                   "project": { "type": "string" },
+                  "channel": { "type": "string" },
+                  "due": { "type": "string" },
                   "state": { "type": "string" }
                 },
-                "required": ["user_id", "title"]
+                "required": ["user_id"]
               }
             }
           }
@@ -94,22 +94,18 @@
         }
       }
     },
-
     "/tasks/list": {
       "get": {
         "operationId": "tasks_list",
-        "summary": "List tasks",
+        "summary": "List Tasks",
         "parameters": [
-          {
-            "name": "user_id",
-            "in": "query",
-            "schema": { "type": "string" },
-            "required": false
-          }
+          { "name": "user_id", "in": "query", "schema": { "type": ["string", "null"] } },
+          { "name": "project", "in": "query", "schema": { "type": ["string", "null"] } },
+          { "name": "state", "in": "query", "schema": { "type": ["string", "null"] } }
         ],
         "responses": {
           "200": {
-            "description": "List of tasks",
+            "description": "Tasks list",
             "content": {
               "application/json": {
                 "schema": { "type": "object" }
@@ -119,11 +115,10 @@
         }
       }
     },
-
     "/tasks/update": {
       "post": {
         "operationId": "tasks_update",
-        "summary": "Update a task",
+        "summary": "Update Task",
         "requestBody": {
           "required": true,
           "content": {
@@ -154,51 +149,6 @@
         }
       }
     },
-
-    "/memory/v2/store": {
-      "post": {
-        "operationId": "memory_v2_store",
-        "summary": "Store memory with vector",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "items": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "text": { "type": "string" },
-                        "tags": {
-                          "type": "array",
-                          "items": { "type": "string" }
-                        }
-                      },
-                      "required": ["text"]
-                    }
-                  }
-                },
-                "required": ["items"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Stored memory",
-            "content": {
-              "application/json": {
-                "schema": { "type": "object" }
-              }
-            }
-          }
-        }
-      }
-    },
-
     "/memory/engine/raw": {
       "post": {
         "operationId": "memory_engine_raw",
@@ -212,7 +162,9 @@
                 "properties": {
                   "user_id": { "type": "string" },
                   "note": { "type": "string" },
-                  "kind": { "type": "string" }
+                  "kind": { "type": "string" },
+                  "importance": { "type": "string" },
+                  "source": { "type": "string" }
                 },
                 "required": ["user_id", "note"]
               }
@@ -221,7 +173,48 @@
         },
         "responses": {
           "200": {
-            "description": "Stored raw memory",
+            "description": "Memory stored",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/memory/v2/store": {
+      "post": {
+        "operationId": "memory_v2_store",
+        "summary": "Store vectorized memory",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "text": { "type": "string" },
+                        "tags": { "type": "array", "items": { "type": "string" } },
+                        "meta": { "type": "object" }
+                      },
+                      "required": ["text"]
+                    }
+                  }
+                },
+                "required": ["items"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Memory stored",
             "content": {
               "application/json": {
                 "schema": { "type": "object" }
