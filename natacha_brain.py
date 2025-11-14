@@ -1,55 +1,140 @@
 import os
+from typing import Any, Dict, List, Optional
+
 import requests
 
-SERVICE_URL = os.getenv("SERVICE_URL", "https://natacha-api-422255208682.us-central1.run.app")
+SERVICE_URL = os.getenv(
+    "SERVICE_URL",
+    "https://natacha-api-422255208682.us-central1.run.app",
+)
 
 
-def fetch_context(user_id: str):
+def fetch_context(user_id: str, recent_limit: int = 20) -> Dict[str, Any]:
     """
     Consulta el bundle de memoria consolidada desde Cloud Run
     y garantiza devolver SIEMPRE un diccionario.
     """
-
     try:
-        url = f"{SERVICE_URL}/memory/engine/context_bundle?user_id={user_id}&recent_limit=20"
-        resp = requests.get(url, timeout=10)
-
+        url = f"{SERVICE_URL}/memory/engine/context_bundle"
+        params = {
+            "user_id": user_id,
+            "recent_limit": recent_limit,
+            "include_global_fallback": True,
+        }
+        resp = requests.get(url, params=params, timeout=10)
         resp.raise_for_status()
-
         data = resp.json()
 
-        # 🔒 GARANTÍA: siempre dict
         if not isinstance(data, dict):
-            return {"summary": "", "recent": [], "system_rule": ""}
+            return {
+                "summary": {},
+                "recent": [],
+                "system_rule": {},
+                "user_id": user_id,
+            }
 
-        # Normalización mínima
         return {
-            "summary": data.get("summary", ""),
-            "recent": data.get("recent", []),
-            "system_rule": data.get("system_rule", ""),
+            "summary": data.get("summary") or {},
+            "recent": data.get("recent") or [],
+            "system_rule": data.get("system_rule") or {},
             "user_id": user_id,
         }
 
     except Exception as e:
         # Devuelve dict seguro en caso de error
         return {
-            "summary": "",
+            "summary": {},
             "recent": [],
-            "system_rule": "",
+            "system_rule": {},
             "error": f"context_fetch_error: {e}",
             "user_id": user_id,
         }
 
 
-def build_prompt(ctx: dict) -> str:
+# ============================================================
+# BÚSQUEDA SEMÁNTICA v2
+# ============================================================
+
+def semantic_search(
+    user_id: str,
+    query: str,
+    top_k: int = 5,
+) -> List[Dict[str, Any]]:
     """
-    Construye el prompt base con sistema + memoria consolidada + reglas.
-    DEBE recibir siempre un dict desde fetch_context().
+    Usa /memory/v2/search para encontrar memorias relevantes por significado.
+    Filtra por tag user:{user_id}.
+    """
+    query = (query or "").strip()
+    if not query:
+        return []
+
+    payload = {
+        "query": query,
+        "top_k": top_k,
+        "tags": [f"user:{user_id}"],
+        "use_semantic": True,
+    }
+
+    try:
+        url = f"{SERVICE_URL}/memory/v2/search"
+        resp = requests.post(url, json=payload, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+
+        if not isinstance(data, dict):
+            return []
+
+        items = data.get("items") or []
+        if not isinstance(items, list):
+            return []
+
+        return items
+
+    except Exception:
+        # Nunca romper el flujo por un problema de búsqueda semántica
+        return []
+
+
+def _format_semantic_block(items: List[Dict[str, Any]], max_items: int = 5) -> str:
+    """
+    Convierte los resultados semánticos en texto breve para el prompt.
+    """
+    if not items:
+        return ""
+
+    lines: List[str] = []
+    for i, item in enumerate(items[:max_items], start=1):
+        text = str(item.get("text", "")).strip()
+        tags = item.get("tags") or []
+        if len(text) > 220:
+            text = text[:220].rstrip() + "…"
+
+        if tags:
+            lines.append(f"- {text} (tags: {', '.join(tags)})")
+        else:
+            lines.append(f"- {text}")
+
+    if not lines:
+        return ""
+
+    return "Semantic memories:\n" + "\n".join(lines)
+
+
+# ============================================================
+# PROMPT BUILDER
+# ============================================================
+
+def build_prompt(
+    ctx: Dict[str, Any],
+    semantic_items: Optional[List[Dict[str, Any]]] = None,
+) -> str:
+    """
+    Construye el prompt base con sistema + memoria consolidada + reglas
+    + (opcional) memorias semánticas v2.
     """
 
     system_raw = ctx.get("system_rule") or {}
     summary_raw = ctx.get("summary") or {}
-    recent_raw = ctx.get("recent") or []
     error = ctx.get("error", None)
 
     # Normalización:
@@ -66,8 +151,8 @@ def build_prompt(ctx: dict) -> str:
         summary_text = str(summary_raw) if summary_raw else ""
 
     base = (
-        "You are Natacha, an executive AI assistant for Sebastián Atenor (LLVC Global). "
-        "You speak Spanish (vos) with an empowered but clear and concrete tone.\n\n"
+        "You are Natacha, an executive AI assistant. "
+        "You speak Spanish with an empowered tone.\n\n"
     )
 
     if error:
@@ -79,53 +164,10 @@ def build_prompt(ctx: dict) -> str:
     if summary_text.strip():
         base += f"User memory summary:\n{summary_text.strip()}\n\n"
 
-    # Opcional: incluir últimos recuerdos crudos como bullets
-    if isinstance(recent_raw, list) and recent_raw:
-        notes = []
-        for item in recent_raw[:5]:
-            note = ""
-            if isinstance(item, dict):
-                note = item.get("note") or item.get("text") or ""
-            else:
-                note = str(item)
-            note = (note or "").strip()
-            if note:
-                notes.append(f"- {note}")
-        if notes:
-            base += "Recent raw memories:\n" + "\n".join(notes) + "\n\n"
+    # Bloque extra: memorias semánticas v2
+    if semantic_items:
+        semantic_block = _format_semantic_block(semantic_items)
+        if semantic_block:
+            base += semantic_block + "\n\n"
 
     return base.strip()
-
-
-def search_related_memories(user_id: str, query: str, top_k: int = 5):
-    """
-    Busca memorias v2 relacionadas semánticamente al mensaje actual.
-
-    Usa /memory/v2/search con:
-    - query: mensaje actual
-    - top_k: cantidad de resultados
-    - tags: ["user:<user_id>"] para acotar por usuario
-    """
-    try:
-        url = f"{SERVICE_URL.rstrip('/')}/memory/v2/search"
-        payload = {
-            "query": query,
-            "top_k": top_k,
-            "tags": [f"user:{user_id}"],
-            "use_semantic": True,
-        }
-        resp = requests.post(url, json=payload, timeout=8)
-        resp.raise_for_status()
-        data = resp.json()
-
-        # Tolerante al shape de la respuesta
-        if isinstance(data, dict):
-            if "items" in data and isinstance(data["items"], list):
-                return data["items"]
-            if "results" in data and isinstance(data["results"], list):
-                return data["results"]
-
-        return []
-    except Exception:
-        # Nunca romper el flujo por un problema de búsqueda
-        return []
