@@ -1,0 +1,389 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Natacha Public API",
+    "version": "1.0.0",
+    "description": "Esquema reducido de Natacha para usar como Actions en ChatGPT.\nIncluye solo salud, memoria básica, tareas y conversación."
+  },
+  "servers": [
+    {
+      "url": "https://natacha-api-422255208682.us-central1.run.app"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_get",
+        "responses": {
+          "200": {
+            "description": "Estado de salud de Natacha",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/natacha/respond": {
+      "post": {
+        "summary": "Natacha Respond",
+        "operationId": "natacha_respond_post",
+        "description": "Conversación principal con Natacha. Usa la memoria interna y responde en base al contexto.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserMessage"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Respuesta de Natacha",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NatachaResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks/add": {
+      "post": {
+        "summary": "Crear tarea",
+        "operationId": "tasks_add_post",
+        "description": "Crea una tarea simple en la colección de tareas de Natacha.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tarea creada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "task_id": { "type": "string" }
+                  },
+                  "required": ["status", "task_id"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks/list": {
+      "get": {
+        "summary": "Listar tareas",
+        "operationId": "tasks_list_get",
+        "description": "Lista tareas filtradas por usuario, proyecto o estado.",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listado de tareas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks/update": {
+      "post": {
+        "summary": "Actualizar tarea",
+        "operationId": "tasks_update_post",
+        "description": "Actualiza campos de una tarea existente.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tarea actualizada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" }
+                  },
+                  "required": ["status"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/memory/engine/raw": {
+      "post": {
+        "summary": "Guardar memoria cruda",
+        "operationId": "memory_engine_raw_post",
+        "description": "Guarda una memoria cruda normalizada en el motor de memoria.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemoryRaw"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Memoria guardada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "memory_id": { "type": "string" }
+                  },
+                  "required": ["status", "memory_id"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/memory/v2/store": {
+      "post": {
+        "summary": "Guardar memoria v2",
+        "operationId": "memory_v2_store_post",
+        "description": "Guarda memorias en el nuevo motor de memoria v2 (con soporte para embeddings en el futuro).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemoryStoreRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Memorias almacenadas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" }
+                  },
+                  "required": ["status"]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UserMessage": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "Identificador del usuario. Por defecto 'sebastian'."
+          },
+          "message": {
+            "type": "string",
+            "description": "Mensaje en lenguaje natural para Natacha."
+          },
+          "model": {
+            "type": "string",
+            "description": "Nombre del modelo a usar.",
+            "default": "gpt-4o-mini"
+          }
+        },
+        "required": ["message"]
+      },
+      "NatachaResponse": {
+        "type": "object",
+        "properties": {
+          "answer": {
+            "type": "string",
+            "description": "Respuesta en texto de Natacha."
+          },
+          "used_prompt": {
+            "type": "string",
+            "description": "Prompt de sistema usado internamente."
+          },
+          "model_called": {
+            "type": "boolean",
+            "description": "Indica si se llamó al modelo externo."
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Código de error, si aplica."
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true,
+            "description": "Detalle del error, si aplica."
+          }
+        },
+        "required": ["answer", "model_called"]
+      },
+      "TaskCreate": {
+        "type": "object",
+        "description": "Payload para crear tareas.",
+        "properties": {
+          "user_id": { "type": "string" },
+          "title": { "type": "string" },
+          "detail": { "type": "string" },
+          "project": { "type": "string" },
+          "channel": { "type": "string" },
+          "due": { "type": "string" },
+          "state": {
+            "type": "string",
+            "description": "Estado de la tarea (pending, done, etc.).",
+            "default": "pending"
+          }
+        },
+        "required": ["user_id"]
+      },
+      "TaskUpdate": {
+        "type": "object",
+        "description": "Payload para actualizar tareas.",
+        "properties": {
+          "user_id": { "type": "string" },
+          "task_id": { "type": "string" },
+          "title": { "type": "string" },
+          "detail": { "type": "string" },
+          "project": { "type": "string" },
+          "channel": { "type": "string" },
+          "due": { "type": "string" },
+          "state": { "type": "string" }
+        },
+        "required": ["user_id", "task_id"]
+      },
+      "TaskListItem": {
+        "type": "object",
+        "description": "Representación simplificada de una tarea.",
+        "properties": {
+          "task_id": { "type": "string" },
+          "user_id": { "type": "string" },
+          "title": { "type": "string" },
+          "detail": { "type": "string" },
+          "project": { "type": "string" },
+          "channel": { "type": "string" },
+          "state": { "type": "string" },
+          "due": { "type": "string" }
+        }
+      },
+      "TaskListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TaskListItem" }
+          }
+        },
+        "required": ["items"]
+      },
+      "MemoryRaw": {
+        "type": "object",
+        "description": "Memoria cruda para el motor de memoria.",
+        "properties": {
+          "user_id": { "type": "string" },
+          "note": { "type": "string" },
+          "kind": { "type": "string" },
+          "importance": { "type": "string" },
+          "source": { "type": "string" },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["user_id", "note"]
+      },
+      "MemoryItem": {
+        "type": "object",
+        "description": "Elemento individual para el motor de memoria v2.",
+        "properties": {
+          "text": { "type": "string" },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "meta": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": ["text"]
+      },
+      "MemoryStoreRequest": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MemoryItem" }
+          }
+        },
+        "required": ["items"]
+      }
+    }
+  }
+}
