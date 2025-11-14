@@ -2,7 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Natacha Public API",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "description": "Public subset of Natacha API for ChatGPT Actions."
   },
   "servers": [
     {
@@ -12,14 +13,17 @@
   "paths": {
     "/health": {
       "get": {
-        "operationId": "health",
-        "summary": "Health Check",
+        "summary": "Health",
+        "operationId": "health_health_get",
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Service is healthy",
             "content": {
               "application/json": {
-                "schema": { "type": "object" }
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
               }
             }
           }
@@ -28,30 +32,38 @@
     },
     "/natacha/respond": {
       "post": {
-        "operationId": "natacha_respond",
-        "summary": "Chat with Natacha",
+        "summary": "Natacha Respond",
+        "description": "Main Natacha endpoint with memory-aware context.",
+        "operationId": "natacha_respond_natacha_respond_post",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "user_id": { "type": "string" },
-                  "message": { "type": "string" },
-                  "model": { "type": "string" }
-                },
-                "required": ["message"]
+                "$ref": "#/components/schemas/UserMessage"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Successful response from Natacha",
             "content": {
               "application/json": {
-                "schema": { "type": "object" }
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -60,24 +72,14 @@
     },
     "/tasks/add": {
       "post": {
-        "operationId": "tasks_add",
-        "summary": "Create Task",
+        "summary": "Create task",
+        "operationId": "tasks_add_tasks_add_post",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "user_id": { "type": "string" },
-                  "title": { "type": "string" },
-                  "detail": { "type": "string" },
-                  "project": { "type": "string" },
-                  "channel": { "type": "string" },
-                  "due": { "type": "string" },
-                  "state": { "type": "string" }
-                },
-                "required": ["user_id"]
+                "$ref": "#/components/schemas/TaskCreate"
               }
             }
           }
@@ -87,7 +89,20 @@
             "description": "Task created",
             "content": {
               "application/json": {
-                "schema": { "type": "object" }
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -96,19 +111,53 @@
     },
     "/tasks/list": {
       "get": {
-        "operationId": "tasks_list",
-        "summary": "List Tasks",
+        "summary": "List tasks",
+        "operationId": "tasks_list_tasks_list_get",
         "parameters": [
-          { "name": "user_id", "in": "query", "schema": { "type": ["string", "null"] } },
-          { "name": "project", "in": "query", "schema": { "type": ["string", "null"] } },
-          { "name": "state", "in": "query", "schema": { "type": ["string", "null"] } }
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
             "description": "Tasks list",
             "content": {
               "application/json": {
-                "schema": { "type": "object" }
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -117,22 +166,14 @@
     },
     "/tasks/update": {
       "post": {
-        "operationId": "tasks_update",
-        "summary": "Update Task",
+        "summary": "Update task",
+        "operationId": "tasks_update_tasks_update_post",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "user_id": { "type": "string" },
-                  "task_id": { "type": "string" },
-                  "title": { "type": "string" },
-                  "detail": { "type": "string" },
-                  "state": { "type": "string" }
-                },
-                "required": ["user_id", "task_id"]
+                "$ref": "#/components/schemas/TaskUpdate"
               }
             }
           }
@@ -142,7 +183,20 @@
             "description": "Task updated",
             "content": {
               "application/json": {
-                "schema": { "type": "object" }
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -151,22 +205,15 @@
     },
     "/memory/engine/raw": {
       "post": {
-        "operationId": "memory_engine_raw",
         "summary": "Store raw memory",
+        "operationId": "memory_raw_memory_engine_raw_post",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {
-                  "user_id": { "type": "string" },
-                  "note": { "type": "string" },
-                  "kind": { "type": "string" },
-                  "importance": { "type": "string" },
-                  "source": { "type": "string" }
-                },
-                "required": ["user_id", "note"]
+                "additionalProperties": true
               }
             }
           }
@@ -176,7 +223,20 @@
             "description": "Memory stored",
             "content": {
               "application/json": {
-                "schema": { "type": "object" }
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -185,40 +245,220 @@
     },
     "/memory/v2/store": {
       "post": {
-        "operationId": "memory_v2_store",
-        "summary": "Store vectorized memory",
+        "summary": "Store structured memories",
+        "operationId": "store_memory_v2_store_post",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "items": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "text": { "type": "string" },
-                        "tags": { "type": "array", "items": { "type": "string" } },
-                        "meta": { "type": "object" }
-                      },
-                      "required": ["text"]
-                    }
-                  }
-                },
-                "required": ["items"]
+                "$ref": "#/components/schemas/MemoryStoreRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Memory stored",
+            "description": "Memories stored",
             "content": {
               "application/json": {
-                "schema": { "type": "object" }
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
               }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UserMessage": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "default": "sebastian"
+          },
+          "message": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string",
+            "nullable": true,
+            "default": "gpt-4o-mini"
+          }
+        }
+      },
+      "TaskCreate": {
+        "type": "object",
+        "required": ["user_id"],
+        "properties": {
+          "user_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          },
+          "detail": {
+            "type": "string",
+            "default": ""
+          },
+          "project": {
+            "type": "string",
+            "default": ""
+          },
+          "channel": {
+            "type": "string",
+            "default": ""
+          },
+          "due": {
+            "type": "string",
+            "default": ""
+          },
+          "state": {
+            "type": "string",
+            "default": "pending"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "TaskUpdate": {
+        "type": "object",
+        "required": ["user_id", "task_id"],
+        "properties": {
+          "user_id": {
+            "type": "string"
+          },
+          "task_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "project": {
+            "type": "string",
+            "nullable": true
+          },
+          "channel": {
+            "type": "string",
+            "nullable": true
+          },
+          "due": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          },
+          "evidence": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "MemoryItem": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true
+          },
+          "embedding": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      "MemoryStoreRequest": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemoryItem"
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "properties": {
+          "loc": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          },
+          "msg": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "HTTPValidationError": {
+        "type": "object",
+        "properties": {
+          "detail": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
             }
           }
         }
