@@ -1,16 +1,26 @@
-name: Tag Sanity
+kname: Tag Sanity
+
 on:
   push:
     tags:
       - 'stable-*'
+
 jobs:
   sanity:
     runs-on: ubuntu-latest
+    env:
+      SERVICE_URL: ${{ secrets.SERVICE_URL }}
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: { python-version: '3.11' }
-      - run: sudo apt-get update && sudo apt-get install -y shellcheck
-      - run: bash scripts/guard_no_hardcodes.sh
-      - run: python -m py_compile $(git ls-files '*.py')
-      - run: bash scripts/run_bashlint.sh
+        with:
+          python-version: '3.11'
+      - name: Install ShellCheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Run Hardcode Guard
+        run: bash scripts/guard_no_hardcodes.sh
+      - name: Python Syntax Check
+        run: python -m py_compile $(git ls-files '*.py')
+      - name: Bash Lint
+        run: bash scripts/run_bashlint.sh
