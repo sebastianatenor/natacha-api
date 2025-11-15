@@ -118,11 +118,13 @@ def analyze_with_memory(payload: ProcessInput):
         "timestamp": str(datetime.datetime.utcnow()),
     }
 
-    # Guardar la nueva entrada en memoria contextual
+# 4️⃣ Guardar nueva memoria y actualizar métricas adaptativas
     try:
         memory_result = store_memory(payload.user or "anon", text)
+        adaptive_stats = update_metrics(eval_result)
     except Exception as e:
         memory_result = {"error": str(e)}
+        adaptive_stats = {"error": str(e)}
 
     return {
         "analysis_status": "ok",
@@ -165,4 +167,50 @@ def respond_with_context(payload: ProcessInput):
         "status": "ok",
         "result": result,
         "memory_result": memory_result,
+        "adaptive_stats": adaptive_stats,
     }
+
+# ============================================================
+# 🧠 Extensión Fase 4: Evaluación Cognitiva Integrada
+# ============================================================
+
+from cognitive_evaluator import evaluate_context_quality
+from adaptive_trainer import update_metrics, get_stats
+
+@app.post("/respond_with_evaluation")
+def respond_with_evaluation(payload: ProcessInput):
+    """
+    Extiende /respond_with_context para incluir una evaluación cognitiva
+    de la coherencia y claridad del contexto actual.
+    """
+    text = payload.text
+
+    # 1️⃣ Obtener contexto reciente desde la memoria contextual
+    context_data = retrieve_context()
+    context_items = context_data.get("context", []) if isinstance(context_data, dict) else []
+
+    # 2️⃣ Generar razonamiento con el módulo contextual previo
+    from context_reasoner import generate_response
+    reasoning_result = generate_response(text, context_items)
+
+    # 3️⃣ Evaluar calidad cognitiva del contexto
+    eval_result = evaluate_context_quality(context_items)
+
+    # 4️⃣ Guardar nueva memoria
+    memory_result = store_memory(payload.user or "anon", text)
+    adaptive_stats = update_metrics(eval_result)
+
+    return {
+        "status": "ok",
+        "timestamp": reasoning_result["timestamp"],
+        "response": reasoning_result["response"],
+        "context_summary": reasoning_result["context_summary"],
+        "evaluation": eval_result,
+        "memory_result": memory_result,
+        "adaptive_stats": adaptive_stats,
+    }
+
+@app.get("/ops/adaptive-stats")
+def ops_adaptive_stats():
+    """Devuelve las métricas actuales del sistema adaptativo."""
+    return get_stats()
