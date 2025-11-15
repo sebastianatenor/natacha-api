@@ -1,0 +1,17 @@
+
+    <svg width='420' height='200' xmlns='http://www.w3.org/2000/svg'>
+      <rect width='420' height='200' fill='#61dafb' fill-opacity='0.6'/>
+      <rect x='60' y='150' width='150' height='10' fill='#61dafb' rx='4'/>
+      <rect x='60' y='150' width='300' height='10' fill='none' stroke='#444' stroke-width='1' rx='4'/>
+      <text x='210' y='40' text-anchor='middle' fill='white' font-size='16'>🧠 Mapa Afectivo</text>
+      <text x='210' y='90' text-anchor='middle' fill='white' font-size='13'>
+        Estado: NEUTRAL
+      </text>
+      <text x='210' y='110' text-anchor='middle' fill='white' font-size='12'>
+        Energía: 0.50 | Intensidad: 0.50
+      </text>
+      <text x='210' y='180' text-anchor='middle' fill='#ddd' font-size='10'>
+        2025-11-15T21:22:08.163908 UTC
+      </text>
+    </svg>
+    
