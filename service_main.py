@@ -58,6 +58,7 @@ def root():
 # --- ✅ Core Bridge (nuevo) ---
 safe_include("routes.core_bridge")
 safe_include("ops.extensions.core_bridge_ext")
+=======
 
 # --- ✅ Affective Training (nuevo módulo adaptativo) ---
 safe_include("ops.affective_train")
