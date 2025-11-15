@@ -1,4 +1,4 @@
-kname: Tag Sanity
+name: Tag Sanity
 
 on:
   push:
