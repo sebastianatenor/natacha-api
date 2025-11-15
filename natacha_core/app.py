@@ -36,42 +36,65 @@ def health():
     }
 
 
-@app.post("/process")
-def process(input_data: ProcessInput):
-    """Simula procesamiento cognitivo básico"""
-    text = input_data.text.lower()
-    response = {}
+@app.post("/respond_with_evaluation")
+def respond_with_evaluation(payload: ProcessInput):
+    """
+    Extiende /respond_with_context con evaluación cognitiva,
+    emoción semántica, autorregulación afectiva y refuerzo adaptativo.
+    """
+    from cognitive_evaluator import evaluate_context_quality
+    from context_reasoner import generate_response
+    from adaptive_trainer import update_metrics, get_stats
+    from adaptive_reasoner import apply_adaptive_style, determine_mode
+    from semantic_emotion import detect_emotion
+    from affective_regulator import regulate_state
+    from adaptive_feedback import update_bias
+    from adaptive_store import load_state, save_state
 
-    if "hola" in text:
-        response["intent"] = "greeting"
-        response["reply"] = "¡Hola! Soy Natacha Core. ¿En qué puedo ayudarte?"
-    elif "estado" in text or "status" in text:
-        response["intent"] = "system_status"
-        response["reply"] = "Todo el ecosistema Natacha está estable y sincronizado 💾⚙️"
-    else:
-        response["intent"] = "unknown"
-        response["reply"] = "No estoy segura de qué quisiste decir 🤔"
+    text = payload.text
 
-    try:
-        payload = {
-            "key": f"core_log_{datetime.datetime.utcnow().isoformat()}",
-            "value": json.dumps(
-                {
-                    "input": input_data.text,
-                    "intent": response["intent"],
-                    "reply": response["reply"],
-                    "user": input_data.user,
-                    "metadata": input_data.metadata,
-                }
-            ),
-        }
-        requests.post(
-            "http://natacha-memory-console:8080/memory/store", json=payload, timeout=3
-        )
-    except Exception as e:
-        response["memory_sync"] = f"⚠️ Error al registrar en memoria: {e}"
+    # 1️⃣ Obtener contexto
+    context_data = retrieve_context()
+    context_items = context_data.get("context", []) if isinstance(context_data, dict) else []
 
-    return {"core_status": "ok", "input": input_data.text, "response": response}
+    # 2️⃣ Generar razonamiento base
+    reasoning_result = generate_response(text, context_items)
+
+    # 3️⃣ Evaluar claridad/coherencia
+    eval_result = evaluate_context_quality(context_items)
+    adaptive_stats = update_metrics(eval_result)
+
+    # 4️⃣ Detectar emoción semántica del texto
+    user_emotion = detect_emotion(text)
+
+    # 5️⃣ Autorregular estado afectivo
+    current_state = {
+        "confidence": adaptive_stats.get("stats", {}).get("avg_clarity", 0.5),
+        "energy": adaptive_stats.get("stats", {}).get("avg_coherence", 0.5)
+    }
+    new_emotion_state = regulate_state(current_state, text)
+
+    # 6️⃣ Aprendizaje de sesgos afectivos
+    bias_data = update_bias(
+        eval_result.get("clarity_score", 0.5),
+        eval_result.get("coherence_score", 0.5),
+        new_emotion_state
+    )
+
+    # 7️⃣ Guardar memoria adaptativa y respuesta estilizada
+    save_state(adaptive_stats)
+    final_response = apply_adaptive_style(reasoning_result["response"])
+
+    return {
+        "status": "ok",
+        "timestamp": reasoning_result["timestamp"],
+        "response": final_response,
+        "evaluation": eval_result,
+        "user_emotion": user_emotion,
+        "regulated_state": new_emotion_state,
+        "adaptive_stats": adaptive_stats,
+        "adaptive_bias": bias_data
+    }
 
 
 # === ENDPOINT /respond_with_evaluation ===
