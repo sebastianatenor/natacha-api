@@ -12,12 +12,12 @@ from routes.v1_routes import router as v1_router
 # Opcional: ops / ops_routes
 ops = None
 try:
-from routes import affective_map
-from routes import affective_projection
+    from routes import affective_map
+    from routes import affective_projection
 except Exception:
     try:
-from routes import affective_map
-from routes import affective_projection
+        from routes import affective_map
+        from routes import affective_projection
     except Exception:
         ops = None
 
