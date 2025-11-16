@@ -56,8 +56,12 @@ def root():
     }
 =======
 # --- ✅ Core Bridge (nuevo) ---
-safe_include("routes.core_bridge")  # <--- este es el archivo que creaste
+safe_include("routes.core_bridge")
 safe_include("ops.extensions.core_bridge_ext")
+
+# --- ✅ Affective Training (nuevo módulo adaptativo) ---
+safe_include("ops.affective_train")
+
 
 # memory v1 explícito (si existe)
 try:
