@@ -45,6 +45,7 @@ app.include_router(v1_routes.router)
 # === Módulos opcionales ===
 safe_include("ops.affective_train")
 
+<<<<<<< HEAD
 # === Endpoints de sistema ===
 @app.get("/")
 def root():
@@ -53,3 +54,66 @@ def root():
         "version": "19.0",
         "message": "Natacha API – núcleo afectivo adaptativo 🚀"
     }
+=======
+# --- ✅ Core Bridge (nuevo) ---
+safe_include("routes.core_bridge")  # <--- este es el archivo que creaste
+safe_include("ops.extensions.core_bridge_ext")
+
+# memory v1 explícito (si existe)
+try:
+    from app.api_v1.memory_v1_routes import router as memory_v1_router
+    app.include_router(memory_v1_router)
+except Exception:
+    pass
+
+# ================================================================
+# ENDPOINT OPENAPI PÚBLICO PARA CHATGPT
+# ================================================================
+
+@app.get("/openapi_public.json", include_in_schema=False)
+def openapi_public():
+    """
+    Devuelve la especificación pública reducida para ChatGPT Actions.
+    """
+    base_dir = Path(__file__).parent
+    path = base_dir / "public_openapi.json"
+
+    if not path.exists():
+        return {
+            "openapi": "3.1.0",
+            "info": {
+                "title": "Natacha Public API (missing file)",
+                "version": "1.0.0",
+                "description": "public_openapi.json no encontrado en el contenedor."
+            },
+            "paths": {}
+        }
+
+    with path.open() as f:
+        return json.load(f)
+
+# ================================================================
+# CUSTOM OPENAPI (INTERNO)
+# ================================================================
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    schema = get_openapi(
+        title=getattr(app, "title", "Natacha API"),
+        version="1.0.0",
+        description="Natacha API – runtime schema",
+        routes=app.routes,
+    )
+
+    schema["servers"] = [
+        {"url": "https://natacha-api-422255208682.us-central1.run.app"}
+    ]
+
+    app.openapi_schema = schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi  # type: ignore
+>>>>>>> a90748c (🧹 Fix: eliminado marcador de merge y limpiado bloque Core Bridge)
