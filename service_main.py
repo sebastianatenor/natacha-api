@@ -60,9 +60,11 @@ safe_include("routes.actions_openapi")  # esquema reducido para Actions
 safe_include("routes.openapi_compat")
 safe_include("routes.ops_routes")
 safe_include("routes.semantic_routes")
-safe_include("routes.core_bridge_routes")
 safe_include("routes.tasks_routes")
-safe_include("routes.core_bridge_routes")
+
+# --- ✅ Core Bridge (nuevo) ---
+safe_include("routes.core_bridge")  # <--- este es el archivo que creaste
+safe_include("ops.extensions.core_bridge_ext")
 
 # --- ✅ Core Bridge (nuevo) ---
 safe_include("routes.core_bridge")  # <--- este es el archivo que creaste
@@ -126,6 +128,3 @@ def custom_openapi():
 
 
 app.openapi = custom_openapi  # type: ignore
-safe_include("routes.core_bridge_routes")
-safe_include("routes.core_bridge_routes")
-safe_include("ops.extensions.core_bridge_ext")
