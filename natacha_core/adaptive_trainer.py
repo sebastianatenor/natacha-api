@@ -1,20 +1,27 @@
-import random
-from datetime import datetime
+# natacha_core/adaptive_trainer.py
 
-def train_predictive_model(user_state=None):
+from datetime import datetime
+from .affective_predictor import train_predictive_model
+
+def run_adaptive_cycle():
     """
-    Simula un entrenamiento de proyección afectiva adaptativa.
-    Devuelve un dict con predicción y nivel de confianza.
+    Ejecuta un ciclo completo de aprendizaje adaptativo.
+    Integra la predicción afectiva con ajustes internos simulados.
     """
-    moods = ["positivo", "neutral", "reflexivo", "creativo", "agotado", "ansioso"]
-    mood = random.choice(moods)
-    energy = round(random.uniform(0.3, 0.9), 2)
-    confidence = round(random.uniform(0.5, 0.95), 2)
+    result = train_predictive_model()
+
+    # Simular un ajuste interno (por ejemplo, ajustar sesgo adaptativo)
+    bias_shift = round(result["confidence"] * 0.05, 3)
+    new_state = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "applied_bias_shift": bias_shift,
+        "predicted_mood": result["predicted_mood"],
+        "energy_level": result["predicted_energy"],
+        "model_version": result["model_version"]
+    }
 
     return {
-        "timestamp": datetime.utcnow().isoformat(),
-        "predicted_mood": mood,
-        "predicted_energy": energy,
-        "confidence": confidence,
-        "model_version": "v1.0-sim"
+        "status": "ok",
+        "message": "Ciclo adaptativo completado",
+        "details": new_state
     }
