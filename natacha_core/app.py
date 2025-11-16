@@ -1,5 +1,10 @@
 from fastapi import FastAPI
-from routes import affective_map, affective_projection, affective_timeline, affective_sync
+from routes import (
+    affective_map,
+    affective_projection,
+    affective_timeline,
+    affective_sync
+)
 
 app = FastAPI(
     title="Natacha Core",
