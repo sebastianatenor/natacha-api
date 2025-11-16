@@ -3,7 +3,6 @@ import sys
 import json
 import importlib.util
 from pathlib import Path
-
 from fastapi.openapi.utils import get_openapi
 from fastapi import FastAPI
 
@@ -43,6 +42,7 @@ def safe_include(module_path: str):
         pass
 
 
+# --- Routers estándar ---
 safe_include("routes.ops_self")
 safe_include("routes.actions_routes")
 safe_include("routes.auto_routes")
@@ -56,13 +56,17 @@ safe_include("routes.memory_routes")
 safe_include("routes.memory_v2")
 safe_include("routes.memory_engine_routes")
 safe_include("routes.natacha_routes")
-safe_include("routes.actions_openapi")  # ⬅️ esquema reducido para Actions
+safe_include("routes.actions_openapi")  # esquema reducido para Actions
 safe_include("routes.openapi_compat")
 safe_include("routes.ops_routes")
 safe_include("routes.semantic_routes")
 safe_include("routes.core_bridge_routes")
 safe_include("routes.tasks_routes")
 safe_include("routes.core_bridge_routes")
+
+# --- ✅ Core Bridge (nuevo) ---
+safe_include("routes.core_bridge")  # <--- este es el archivo que creaste
+safe_include("ops.extensions.core_bridge_ext")
 
 # memory v1 explícito (si existe)
 try:

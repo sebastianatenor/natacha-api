@@ -1,3 +1,7 @@
+# ==========================================
+# Natacha Core – Cloud Run build (v18.6)
+# ==========================================
+
 FROM python:3.11-slim
 
 # Instalar Google Cloud SDK (gsutil)
@@ -11,11 +15,17 @@ RUN apt-get update && apt-get install -y curl gnupg && \
 
 WORKDIR /app
 
+# Copiar dependencias
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copiar el código del core
 COPY . .
 
+# Asegurar que el módulo se encuentre
+ENV PYTHONPATH="/app"
+
+# Puerto para Cloud Run
 EXPOSE 8080
 
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]

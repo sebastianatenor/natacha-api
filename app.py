@@ -3,7 +3,8 @@ from fastapi import FastAPI
 
 from routes.memory_routes import router as memory_router, v1_router as memory_v1_router
 from routes.health_route import router as health_router
-from routes import memory_routes
+from routes import affective_map
+from routes import affective_projection
 
 # v1 (tasks, etc.)
 from routes.v1_routes import router as v1_router
@@ -11,10 +12,12 @@ from routes.v1_routes import router as v1_router
 # Opcional: ops / ops_routes
 ops = None
 try:
-    from routes import ops as ops  # ops.py estándar
+from routes import affective_map
+from routes import affective_projection
 except Exception:
     try:
-        from routes import ops_routes as ops  # alternativa común
+from routes import affective_map
+from routes import affective_projection
     except Exception:
         ops = None
 
@@ -27,6 +30,8 @@ OPENAPI_SERVER_URL = os.getenv("OPENAPI_SERVER_URL", DEFAULT_SERVER_URL)
 SERVERS = [{"url": OPENAPI_SERVER_URL}] if OPENAPI_SERVER_URL else []
 
 app = FastAPI(
+app.include_router(affective_map.router)
+app.include_router(affective_projection.router)
     title="Natacha API",
     version="1.0.0",
     servers=SERVERS or None,
@@ -77,3 +82,4 @@ def meta():
 
 # Router v1 completo (tasks v1, etc.)
 app.include_router(v1_router)
+app.include_router(affective_projection.router)
