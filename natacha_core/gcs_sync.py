@@ -1,32 +1,41 @@
-import json
-from datetime import datetime
-from google.cloud import storage
-import os
+"""
+☁️ gcs_sync.py
+Utilidad genérica para sincronizar la línea temporal emocional y reflexiones con Google Cloud Storage.
+"""
 
-BUCKET_NAME = os.getenv("GCS_BUCKET", "natacha-memory-store")
-STATE_FILE = "adaptive_state.json"
-LOCAL_PATH = f"/app/{STATE_FILE}"
+import subprocess, datetime, os
 
-def upload_state():
-    """Sube el estado afectivo local a GCS."""
-    client = storage.Client()
-    bucket = client.bucket(BUCKET_NAME)
-    blob = bucket.blob(STATE_FILE)
-    blob.upload_from_filename(LOCAL_PATH)
-    return {"status": "uploaded", "time": datetime.utcnow().isoformat()}
+BUCKET_PATH = "gs://natacha-memory-store/affective_timeline.jsonl"
+LOCAL_PATH = "data/emotional_timeline.jsonl"
 
-def download_state():
-    """Descarga el estado afectivo más reciente desde GCS."""
-    client = storage.Client()
-    bucket = client.bucket(BUCKET_NAME)
-    blob = bucket.blob(STATE_FILE)
-    if blob.exists():
-        blob.download_to_filename(LOCAL_PATH)
-        return {"status": "downloaded", "time": datetime.utcnow().isoformat()}
-    return {"status": "not_found"}
-
-def ensure_state_file():
-    """Crea un estado vacío si no existe localmente."""
+def sync_to_gcs():
+    """Sube el archivo local a GCS si gsutil está disponible."""
     if not os.path.exists(LOCAL_PATH):
-        with open(LOCAL_PATH, "w") as f:
-            json.dump({"timeline": [], "last_update": datetime.utcnow().isoformat()}, f)
+        return {"status": "no_local_file"}
+    try:
+        subprocess.run(
+            ["gsutil", "cp", LOCAL_PATH, BUCKET_PATH],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        return {
+            "status": "synced",
+            "bucket": BUCKET_PATH,
+            "timestamp": datetime.datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
+
+def load_from_gcs():
+    """Descarga la última versión desde GCS si existe."""
+    try:
+        subprocess.run(
+            ["gsutil", "cp", BUCKET_PATH, LOCAL_PATH],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        return {"status": "downloaded", "file": LOCAL_PATH}
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
