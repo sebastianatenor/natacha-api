@@ -2,9 +2,6 @@
 🌩 adaptive_store.py
 Persistencia híbrida: local + sincronización con GCS (Google Cloud Storage).
 Mantiene coherencia entre nodos y respaldo del estado cognitivo adaptativo.
-💾 adaptive_store.py
-Persistencia local para las métricas adaptativas del sistema de razonamiento.
-Guarda y carga las estadísticas en un archivo JSON, para que sobrevivan a reinicios del Core.
 """
 
 import json
@@ -35,15 +32,6 @@ def save_state(metrics: dict):
         except Exception as e:
             return {"status": "saved_local_only", "detail": str(e), "timestamp": timestamp}
 
-
-STATE_FILE = "adaptive_state.json"
-
-def save_state(metrics: dict):
-    """Guarda el estado actual de métricas en disco."""
-    try:
-        with open(STATE_FILE, "w") as f:
-            json.dump(metrics, f, indent=2)
-        return {"status": "saved", "file": STATE_FILE, "timestamp": datetime.datetime.utcnow().isoformat()}
     except Exception as e:
         return {"status": "error", "detail": str(e)}
 
@@ -60,7 +48,6 @@ def load_state():
     except Exception:
         pass  # si falla, seguimos con el archivo local
 
-    """Carga el estado de métricas desde disco, si existe."""
     if not os.path.exists(STATE_FILE):
         return None
     try:
