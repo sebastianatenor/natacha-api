@@ -69,7 +69,6 @@ safe_include("ops.extensions.core_bridge_ext")
 # --- ✅ Core Bridge (nuevo) ---
 safe_include("routes.core_bridge")  # <--- este es el archivo que creaste
 safe_include("ops.extensions.core_bridge_ext")
-=======
 
 # memory v1 explícito (si existe)
 try:
