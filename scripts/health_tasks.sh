@@ -8,15 +8,20 @@ echo "Using BASE=$BASE"
 echo
 echo "== Tasks Health =="
 
+check_json() {
+  local resp="$1"
+  echo "$resp" | jq empty >/dev/null 2>&1
+}
+
 # 1) /health
 echo "🔎 Probing /health ..."
 health_resp="$(curl -sS "$BASE/health" || true)"
 
-if echo "$health_resp" | jq -e '.status == "ok"' >/dev/null 2>&1; then
+if check_json "$health_resp" && echo "$health_resp" | jq -e '.status == "ok"' >/dev/null 2>&1; then
   echo "🟢 /health OK"
 else
   echo "🔴 /health FAIL"
-  echo "Respuesta:"
+  echo "Response (non-JSON or invalid):"
   echo "$health_resp"
   exit 1
 fi
@@ -40,15 +45,19 @@ create_resp="$(curl -sS -X POST "$BASE/v1/tasks/add" \
   -H "Content-Type: application/json" \
   -d "$payload" || true)"
 
-echo "$create_resp" | jq . || true
+if check_json "$create_resp"; then
+  echo "$create_resp" | jq . || true
+else
+  echo "⚠️ Invalid or non-JSON response from /v1/tasks/add:"
+  echo "$create_resp"
+  exit 1
+fi
 
 TASK_ID="$(echo "$create_resp" | jq -r '.id // .task.id // .stored.id // empty')"
 
 if [[ -z "$TASK_ID" || "$TASK_ID" == "null" ]]; then
-  # Modo legacy: /v1/tasks/add no devuelve id, pero status es ok
   if echo "$create_resp" | jq -e '.status == "ok"' >/dev/null 2>&1; then
-    echo "🟠 /v1/tasks/add OK (legacy, sin id devuelto; se omite prueba de /v1/tasks/update)"
-    echo
+    echo "🟠 /v1/tasks/add OK (legacy, sin id devuelto)"
     echo "✅ Tasks subsystem: HEALTHY (legacy add-only)"
     exit 0
   else
@@ -76,7 +85,13 @@ update_resp="$(curl -sS -X POST "$BASE/v1/tasks/update" \
   -H "Content-Type: application/json" \
   -d "$update_payload" || true)"
 
-echo "$update_resp" | jq . || true
+if check_json "$update_resp"; then
+  echo "$update_resp" | jq . || true
+else
+  echo "⚠️ Invalid or non-JSON response from /v1/tasks/update:"
+  echo "$update_resp"
+  exit 1
+fi
 
 STATE="$(echo "$update_resp" | jq -r '.state // .task.state // empty')"
 
