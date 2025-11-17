@@ -21,9 +21,9 @@ else
   exit 1
 fi
 
-# 2) Crear tarea de prueba vía /tasks/add
+# 2) Crear tarea de prueba vía /v1/tasks/add
 echo
-echo "🔎 Creando tarea de prueba en /tasks/add ..."
+echo "🔎 Creando tarea de prueba en /v1/tasks/add ..."
 
 payload="$(cat <<JSON
 {
@@ -36,7 +36,7 @@ payload="$(cat <<JSON
 JSON
 )"
 
-create_resp="$(curl -sS -X POST "$BASE/tasks/add" \
+create_resp="$(curl -sS -X POST "$BASE/v1/tasks/add" \
   -H "Content-Type: application/json" \
   -d "$payload" || true)"
 
@@ -45,23 +45,23 @@ echo "$create_resp" | jq . || true
 TASK_ID="$(echo "$create_resp" | jq -r '.id // .task.id // .stored.id // empty')"
 
 if [[ -z "$TASK_ID" || "$TASK_ID" == "null" ]]; then
-  # Modo legacy: /tasks/add no devuelve id, pero status es ok
+  # Modo legacy: /v1/tasks/add no devuelve id, pero status es ok
   if echo "$create_resp" | jq -e '.status == "ok"' >/dev/null 2>&1; then
-    echo "🟠 /tasks/add OK (legacy, sin id devuelto; se omite prueba de /tasks/update)"
+    echo "🟠 /v1/tasks/add OK (legacy, sin id devuelto; se omite prueba de /v1/tasks/update)"
     echo
     echo "✅ Tasks subsystem: HEALTHY (legacy add-only)"
     exit 0
   else
-    echo "🔴 /tasks/add FAIL – no se pudo obtener id de la tarea"
+    echo "🔴 /v1/tasks/add FAIL – no se pudo obtener id de la tarea"
     exit 1
   fi
 fi
 
-echo "🟢 /tasks/add OK (id=$TASK_ID)"
+echo "🟢 /v1/tasks/add OK (id=$TASK_ID)"
 
-# 3) Marcarla como done vía /tasks/update
+# 3) Marcarla como done vía /v1/tasks/update
 echo
-echo "🔎 Marcando tarea como done en /tasks/update ..."
+echo "🔎 Marcando tarea como done en /v1/tasks/update ..."
 
 update_payload="$(cat <<JSON
 {
@@ -72,20 +72,18 @@ update_payload="$(cat <<JSON
 JSON
 )"
 
-update_resp="$(curl -sS -X POST "$BASE/tasks/update" \
+update_resp="$(curl -sS -X POST "$BASE/v1/tasks/update" \
   -H "Content-Type: application/json" \
   -d "$update_payload" || true)"
 
 echo "$update_resp" | jq . || true
 
-# Intentamos leer el estado final de la tarea
 STATE="$(echo "$update_resp" | jq -r '.state // .task.state // empty')"
 
 if [[ "$STATE" == "done" ]]; then
-  echo "🟢 /tasks/update OK (state=done)"
+  echo "🟢 /v1/tasks/update OK (state=done)"
 else
-  echo "🟠 /tasks/update devolvió algo raro (state=$STATE)"
-  # No rompemos todo el health si la creación funcionó; solo avisamos.
+  echo "🟠 /v1/tasks/update devolvió algo raro (state=$STATE)"
 fi
 
 echo
