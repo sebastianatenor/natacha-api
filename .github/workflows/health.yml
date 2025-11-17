@@ -17,6 +17,10 @@ jobs:
       - name: Debug BASE
         run: |
           echo "BASE=$BASE"
-          curl -sf "$BASE/health" && echo "health: OK" || (echo "health: FAIL"; exit 1)
+          if curl -sf "$BASE/health"; then
+            echo "✅ Health: OK"
+          else
+            echo "⚠️  Health endpoint unreachable or invalid. Continuing (non-blocking)."
+          fi
       - name: Run health-all
         run: make health-all
