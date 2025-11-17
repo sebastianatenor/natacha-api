@@ -2,11 +2,43 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+import json
+from pathlib import Path
+
 from routes import (
     memory_routes,
     health_route,
     v1_routes,
 )
+
+# === Carga automática de memoria desde Google Cloud Storage ===
+import subprocess
+
+def load_memory_from_gcs():
+    """Carga memory_store.jsonl desde GCS si está en entorno Cloud Run."""
+    gcs_path = "gs://natacha-memory-store/memory_store.jsonl"
+    local_path = "/app/memory_store.jsonl"
+
+    # Detectar si estamos en Cloud Run
+    in_cloud_run = os.getenv("K_SERVICE") is not None
+
+    if in_cloud_run:
+        print("[BOOT] Cloud Run environment detected. Attempting to sync memory from GCS...")
+        try:
+            subprocess.run(
+                ["gsutil", "cp", gcs_path, local_path],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            print(f"[OK] Memory loaded from {gcs_path}")
+        except Exception as e:
+            print(f"[WARN] Could not load memory from GCS: {e}")
+    else:
+        print("[BOOT] Local environment detected. Skipping GCS memory sync.")
+
+# Ejecutar sincronización al arranque
+load_memory_from_gcs()
 
 # === Función segura para incluir módulos opcionales ===
 def safe_include(module_name: str):
