@@ -100,6 +100,15 @@ safe_include("ops.introspection.history_reader")
 safe_include("ops.introspection.self_reflect")
 safe_include("ops.introspection.meta_reflect")
 
+# --- ✅ Cognitive Evolution Engine (v19.3) ---
+safe_include("ops.cognitive_evolution")
+
+# --- ✅ Self Diagnostics Module ---
+safe_include("ops.self_diagnostics")
+
+# --- ✅ Firestore Adapter Bridge ---
+safe_include("ops.firestore_adapter")
+
 # memory v1 explícito (si existe)
 try:
     from app.api_v1.memory_v1_routes import router as memory_v1_router
