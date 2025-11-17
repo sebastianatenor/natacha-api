@@ -62,6 +62,11 @@ safe_include("ops.extensions.core_bridge_ext")
 # --- ✅ Affective Training (nuevo módulo adaptativo) ---
 safe_include("ops.affective_train")
 
+# --- ✅ Code Introspection Engine (v19.2) ---
+safe_include("ops.introspection.code_scan")
+safe_include("ops.introspection.history_reader")
+safe_include("ops.introspection.self_reflect")
+safe_include("ops.introspection.meta_reflect")
 
 # memory v1 explícito (si existe)
 try:
