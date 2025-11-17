@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Body, Query
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
-import inspect
 import traceback
 
 from routes.memory_routes import get_db as _get_db
@@ -11,15 +10,15 @@ router = APIRouter()
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
+
 @router.post("/tasks/add")
 async def tasks_add(payload: dict = Body(...)) -> Dict[str, Any]:
     """
-    Crea una tarea simple en la colección 'tasks' y loguea errores internos.
+    Crea una tarea simple en Firestore y registra logs detallados.
     """
     try:
         db = _get_db()
         col = db.collection("tasks")
-
         now = _now_iso()
         doc_ref = col.document()
         task_id = doc_ref.id
@@ -39,18 +38,21 @@ async def tasks_add(payload: dict = Body(...)) -> Dict[str, Any]:
             "key": f"{payload.get('project','')}:{payload.get('title','')}:{task_id}",
         }
 
+        # 🔍 Logueamos lo que realmente devuelve Firestore
         result = doc_ref.set(doc)
-        if inspect.iscoroutine(result):
+        print(f"[DEBUG] Firestore set() returned: {type(result)} -> {result}")
+        if hasattr(result, "__await__"):  # si es coroutine, esperarla
             await result
 
         doc["id"] = task_id
-        return {"status": "ok", "task": doc}
+        print(f"[OK] Task created: {task_id}")
+        return doc
 
     except Exception as e:
-        # 🚨 Log completo en consola del servidor
-        print("[ERROR] /tasks/add ->", e)
+        print("[ERROR] tasks_add exception ->", e)
         traceback.print_exc()
         return {"status": "error", "detail": str(e)}
+
 
 @router.get("/tasks/list")
 async def tasks_list(
