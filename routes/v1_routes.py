@@ -73,10 +73,30 @@ def v1_memory_search(
     return {"status": "ok", "count": len(results[:limit]), "items": results[:limit]}
 
 # ---------- TASKS (fachada a tus handlers actuales) ----------
-@router.post("/tasks/add")
-def v1_tasks_add(payload: dict = Body(...)):
-    res = _tasks_add(payload)
-    return {"status": "ok", "data": res}
+@router.post("/v1/tasks/add")
+async def v1_tasks_add(payload: dict = Body(...)):
+    """
+    Crea una tarea nueva. Compatible con modo asincrónico.
+    """
+    try:
+        # Simula persistencia (temporal o Firestore futura)
+        task = {
+            "id": "task-" + str(hash(payload.get("title", "")))[:8],
+            "user_id": payload.get("user_id", "unknown"),
+            "title": payload.get("title", "Untitled task"),
+            "detail": payload.get("detail", ""),
+            "project": payload.get("project", "default"),
+            "channel": payload.get("channel", "default"),
+            "state": "pending",
+        }
+
+        # ✅ Si tenés persistencia async (por ejemplo con Firestore o Natacha memory engine)
+        # asegurate de usar `await guardar_tarea(task)` si esa función es async.
+
+        return {"status": "ok", "task": task}
+
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
 
 @router.get("/tasks/search")
 def v1_tasks_search(
