@@ -1,133 +1,438 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Natacha Public API",
-    "version": "1.0.0",
-    "description": "Esquema reducido de Natacha para usar como Actions en ChatGPT.\nIncluye solo salud, memoria básica, tareas y conversación."
+    "title": "Natacha API",
+    "description": "API central de Natacha con motor afectivo adaptativo.",
+    "version": "19.0-adaptive-affective-training"
   },
-  "servers": [
-    {
-      "url": "https://natacha-api-422255208682.us-central1.run.app"
-    }
-  ],
   "paths": {
-    "/health": {
-      "get": {
-        "summary": "Health",
-        "operationId": "health_get",
-        "responses": {
-          "200": {
-            "description": "Estado de salud de Natacha",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": { "type": "string" },
-                    "message": { "type": "string" }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/natacha/respond": {
+    "/memory/add": {
       "post": {
-        "summary": "Natacha Respond",
-        "operationId": "natacha_respond_post",
-        "description": "Conversación principal con Natacha. Usa la memoria interna y responde en base al contexto.",
+        "tags": [
+          "memory"
+        ],
+        "summary": "Memory Add",
+        "operationId": "memory_add_memory_add_post",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UserMessage"
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Payload"
               }
             }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Respuesta de Natacha",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NatachaResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/tasks/add": {
-      "post": {
-        "summary": "Crear tarea",
-        "operationId": "tasks_add_post",
-        "description": "Crea una tarea simple en la colección de tareas de Natacha.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TaskCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Tarea creada",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": { "type": "string" },
-                    "task_id": { "type": "string" }
-                  },
-                  "required": ["status", "task_id"]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/tasks/list": {
-      "get": {
-        "summary": "Listar tareas",
-        "operationId": "tasks_list_get",
-        "description": "Lista tareas filtradas por usuario, proyecto o estado.",
-        "parameters": [
-          {
-            "name": "user_id",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "string" }
           },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/memory/search": {
+      "get": {
+        "tags": [
+          "v1"
+        ],
+        "summary": "Memory Search V1",
+        "description": "v1: Trae hasta 200 docs por timestamp y filtra en Python para evitar índices compuestos.",
+        "operationId": "memory_search_v1_memory_search_get",
+        "parameters": [
           {
             "name": "project",
             "in": "query",
             "required": false,
-            "schema": { "type": "string" }
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project"
+            }
+          },
+          {
+            "name": "channel",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Channel"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Query"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Memory Search V1 Memory Search Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/deps": {
+      "get": {
+        "summary": "Health Deps",
+        "description": "Chequeos no destructivos:\n- Import y cliente de Firestore (en runtime, con try/except)\n- Lectura mínima (limit=1) protegida\n- Exposición de env no sensibles",
+        "operationId": "health_deps_health_deps_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/debug_source": {
+      "get": {
+        "summary": "Health Debug Source",
+        "description": "Ruta del archivo en runtime y SHA256 del módulo.",
+        "operationId": "health_debug_source_health_debug_source_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/memory/add": {
+      "post": {
+        "tags": [
+          "v1"
+        ],
+        "summary": "V1 Memory Add",
+        "operationId": "v1_memory_add_v1_memory_add_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/memory/search": {
+      "get": {
+        "tags": [
+          "v1"
+        ],
+        "summary": "V1 Memory Search",
+        "operationId": "v1_memory_search_v1_memory_search_get",
+        "parameters": [
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project"
+            }
+          },
+          {
+            "name": "channel",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Channel"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Query"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tasks/add": {
+      "post": {
+        "tags": [
+          "v1"
+        ],
+        "summary": "V1 Tasks Add",
+        "operationId": "v1_tasks_add_v1_tasks_add_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tasks/search": {
+      "get": {
+        "tags": [
+          "v1"
+        ],
+        "summary": "V1 Tasks Search",
+        "operationId": "v1_tasks_search_v1_tasks_search_get",
+        "parameters": [
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project"
+            }
           },
           {
             "name": "state",
             "in": "query",
             "required": false,
-            "schema": { "type": "string" }
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Listado de tareas",
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TaskListResponse"
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -135,32 +440,40 @@
         }
       }
     },
-    "/tasks/update": {
+    "/v1/tasks/update": {
       "post": {
-        "summary": "Actualizar tarea",
-        "operationId": "tasks_update_post",
-        "description": "Actualiza campos de una tarea existente.",
+        "tags": [
+          "v1"
+        ],
+        "summary": "V1 Tasks Update",
+        "operationId": "v1_tasks_update_v1_tasks_update_post",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TaskUpdate"
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Payload"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
-            "description": "Tarea actualizada",
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": { "type": "string" }
-                  },
-                  "required": ["status"]
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -168,33 +481,97 @@
         }
       }
     },
-    "/memory/engine/raw": {
+    "/ops/affective-train/run": {
       "post": {
-        "summary": "Guardar memoria cruda",
-        "operationId": "memory_engine_raw_post",
-        "description": "Guarda una memoria cruda normalizada en el motor de memoria.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MemoryRaw"
+        "tags": [
+          "Affective Training"
+        ],
+        "summary": "Run Affective Training",
+        "description": "Simula un entrenamiento de proyección afectiva adaptativa.\nDevuelve un dict con predicción y nivel de confianza.",
+        "operationId": "run_affective_training_ops_affective_train_run_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/core/ping": {
+      "get": {
+        "tags": [
+          "ops-core"
+        ],
+        "summary": "Ping Core",
+        "description": "Verifica si el Core Cognitivo local responde.",
+        "operationId": "ping_core_ops_core_ping_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/core/analyze": {
+      "post": {
+        "tags": [
+          "ops-core"
+        ],
+        "summary": "Analyze With Core",
+        "description": "Envía un texto al Core Cognitivo para análisis y devuelve la respuesta.",
+        "operationId": "analyze_with_core_ops_core_analyze_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Payload"
+              }
+            }
+          },
+          "required": true
         },
         "responses": {
           "200": {
-            "description": "Memoria guardada",
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": { "type": "string" },
-                    "memory_id": { "type": "string" }
-                  },
-                  "required": ["status", "memory_id"]
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -202,33 +579,122 @@
         }
       }
     },
-    "/memory/v2/store": {
+    "/ops/introspection/scan": {
       "post": {
-        "summary": "Guardar memoria v2",
-        "operationId": "memory_v2_store_post",
-        "description": "Guarda memorias en el nuevo motor de memoria v2 (con soporte para embeddings en el futuro).",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MemoryStoreRequest"
+        "tags": [
+          "Introspection"
+        ],
+        "summary": "Scan Codebase",
+        "description": "Escanea el código fuente del proyecto.",
+        "operationId": "scan_codebase_ops_introspection_scan_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           }
-        },
+        }
+      }
+    },
+    "/ops/introspection/history": {
+      "get": {
+        "tags": [
+          "Introspection"
+        ],
+        "summary": "Read Introspection History",
+        "description": "Lee las introspecciones previas y analiza su contenido.",
+        "operationId": "read_introspection_history_ops_introspection_history_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "title": "Limit"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Memorias almacenadas",
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": { "type": "string" }
-                  },
-                  "required": ["status"]
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/introspection/compare": {
+      "get": {
+        "tags": [
+          "Introspection"
+        ],
+        "summary": "Compare Versions",
+        "description": "Compara la cantidad de issues entre versiones.",
+        "operationId": "compare_versions_ops_introspection_compare_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/introspection/reflect": {
+      "get": {
+        "tags": [
+          "Introspection"
+        ],
+        "summary": "Reflect On Self",
+        "description": "Analiza introspecciones previas y sugiere áreas de mejora.\nAdemás, guarda la reflexión en la memoria persistente.",
+        "operationId": "reflect_on_self_ops_introspection_reflect_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/introspection/meta": {
+      "get": {
+        "tags": [
+          "Introspection"
+        ],
+        "summary": "Meta Reflection",
+        "description": "Analiza las auto-reflexiones previas de Natacha\ny genera una evaluación de su evolución cognitiva.",
+        "operationId": "meta_reflection_ops_introspection_meta_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           }
@@ -238,151 +704,51 @@
   },
   "components": {
     "schemas": {
-      "UserMessage": {
-        "type": "object",
+      "HTTPValidationError": {
         "properties": {
-          "user_id": {
-            "type": "string",
-            "description": "Identificador del usuario. Por defecto 'sebastian'."
-          },
-          "message": {
-            "type": "string",
-            "description": "Mensaje en lenguaje natural para Natacha."
-          },
-          "model": {
-            "type": "string",
-            "description": "Nombre del modelo a usar.",
-            "default": "gpt-4o-mini"
-          }
-        },
-        "required": ["message"]
-      },
-      "NatachaResponse": {
-        "type": "object",
-        "properties": {
-          "answer": {
-            "type": "string",
-            "description": "Respuesta en texto de Natacha."
-          },
-          "used_prompt": {
-            "type": "string",
-            "description": "Prompt de sistema usado internamente."
-          },
-          "model_called": {
-            "type": "boolean",
-            "description": "Indica si se llamó al modelo externo."
-          },
-          "error": {
-            "type": "string",
-            "nullable": true,
-            "description": "Código de error, si aplica."
-          },
           "detail": {
-            "type": "string",
-            "nullable": true,
-            "description": "Detalle del error, si aplica."
-          }
-        },
-        "required": ["answer", "model_called"]
-      },
-      "TaskCreate": {
-        "type": "object",
-        "description": "Payload para crear tareas.",
-        "properties": {
-          "user_id": { "type": "string" },
-          "title": { "type": "string" },
-          "detail": { "type": "string" },
-          "project": { "type": "string" },
-          "channel": { "type": "string" },
-          "due": { "type": "string" },
-          "state": {
-            "type": "string",
-            "description": "Estado de la tarea (pending, done, etc.).",
-            "default": "pending"
-          }
-        },
-        "required": ["user_id"]
-      },
-      "TaskUpdate": {
-        "type": "object",
-        "description": "Payload para actualizar tareas.",
-        "properties": {
-          "user_id": { "type": "string" },
-          "task_id": { "type": "string" },
-          "title": { "type": "string" },
-          "detail": { "type": "string" },
-          "project": { "type": "string" },
-          "channel": { "type": "string" },
-          "due": { "type": "string" },
-          "state": { "type": "string" }
-        },
-        "required": ["user_id", "task_id"]
-      },
-      "TaskListItem": {
-        "type": "object",
-        "description": "Representación simplificada de una tarea.",
-        "properties": {
-          "task_id": { "type": "string" },
-          "user_id": { "type": "string" },
-          "title": { "type": "string" },
-          "detail": { "type": "string" },
-          "project": { "type": "string" },
-          "channel": { "type": "string" },
-          "state": { "type": "string" },
-          "due": { "type": "string" }
-        }
-      },
-      "TaskListResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
             "type": "array",
-            "items": { "$ref": "#/components/schemas/TaskListItem" }
+            "title": "Detail"
           }
         },
-        "required": ["items"]
-      },
-      "MemoryRaw": {
         "type": "object",
-        "description": "Memoria cruda para el motor de memoria.",
-        "properties": {
-          "user_id": { "type": "string" },
-          "note": { "type": "string" },
-          "kind": { "type": "string" },
-          "importance": { "type": "string" },
-          "source": { "type": "string" },
-          "tags": {
-            "type": "array",
-            "items": { "type": "string" }
-          }
-        },
-        "required": ["user_id", "note"]
+        "title": "HTTPValidationError"
       },
-      "MemoryItem": {
-        "type": "object",
-        "description": "Elemento individual para el motor de memoria v2.",
+      "ValidationError": {
         "properties": {
-          "text": { "type": "string" },
-          "tags": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
             "type": "array",
-            "items": { "type": "string" }
+            "title": "Location"
           },
-          "meta": {
-            "type": "object",
-            "additionalProperties": true
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
           }
         },
-        "required": ["text"]
-      },
-      "MemoryStoreRequest": {
         "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/MemoryItem" }
-          }
-        },
-        "required": ["items"]
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
       }
     }
   }

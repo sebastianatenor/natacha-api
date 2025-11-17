@@ -57,3 +57,4 @@ Esta release marca el inicio del *Affective Projection Engine* dentro del subsis
 - docs: show CI badges (Sanity + Tag Sanity) (4b25f34) — Sebastián Atenor
 
 
+- 🧠 v19.2 – Cloud Memory Sync Edition (auto GCS memory load)
