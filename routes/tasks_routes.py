@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Body, Query
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
+import inspect
+import traceback
 
 from routes.memory_routes import get_db as _get_db
 
@@ -12,8 +14,7 @@ def _now_iso() -> str:
 @router.post("/tasks/add")
 async def tasks_add(payload: dict = Body(...)) -> Dict[str, Any]:
     """
-    Crea una tarea simple en la colección 'tasks'.
-    Corrige bug de coroutine devuelto por Firestore.
+    Crea una tarea simple en la colección 'tasks' y loguea errores internos.
     """
     try:
         db = _get_db()
@@ -39,8 +40,6 @@ async def tasks_add(payload: dict = Body(...)) -> Dict[str, Any]:
         }
 
         result = doc_ref.set(doc)
-        # 🔹 Detectamos si el resultado es coroutine (async)
-        import inspect
         if inspect.iscoroutine(result):
             await result
 
@@ -48,6 +47,9 @@ async def tasks_add(payload: dict = Body(...)) -> Dict[str, Any]:
         return {"status": "ok", "task": doc}
 
     except Exception as e:
+        # 🚨 Log completo en consola del servidor
+        print("[ERROR] /tasks/add ->", e)
+        traceback.print_exc()
         return {"status": "error", "detail": str(e)}
 
 @router.get("/tasks/list")
