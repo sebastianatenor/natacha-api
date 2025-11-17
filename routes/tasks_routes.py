@@ -9,47 +9,39 @@ router = APIRouter()
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-# =========================
-#  /tasks/add
-# =========================
-
 @router.post("/tasks/add")
 async def tasks_add(payload: dict = Body(...)) -> Dict[str, Any]:
     """
     Crea una tarea simple en la colección 'tasks'.
-
-    Compatible con entorno síncrono (dev) y asíncrono (Cloud Run).
+    Corrige bug de coroutine devuelto por Firestore.
     """
     try:
         db = _get_db()
         col = db.collection("tasks")
 
         now = _now_iso()
-        doc_ref = col.document()  # ID auto
+        doc_ref = col.document()
         task_id = doc_ref.id
-
-        safe_project = payload.get("project") or ""
-        safe_title = payload.get("title") or ""
-        key = f"{safe_project}:{safe_title}:{task_id}"
 
         doc: Dict[str, Any] = {
             "user_id": payload.get("user_id"),
-            "title": payload.get("title"),
-            "detail": payload.get("detail"),
-            "project": payload.get("project"),
-            "channel": payload.get("channel"),
+            "title": payload.get("title", "Untitled task"),
+            "detail": payload.get("detail", ""),
+            "project": payload.get("project", "default"),
+            "channel": payload.get("channel", "default"),
             "due": payload.get("due") or "",
-            "state": payload.get("state") or "pending",
+            "state": payload.get("state", "pending"),
             "evidence": payload.get("evidence") or [],
             "created_at": now,
             "updated_at": now,
             "source": "tasks_routes",
-            "key": key,
+            "key": f"{payload.get('project','')}:{payload.get('title','')}:{task_id}",
         }
 
-        # Si .set() es coroutine (modo async Firestore), hacemos await
         result = doc_ref.set(doc)
-        if hasattr(result, "__await__"):
+        # 🔹 Detectamos si el resultado es coroutine (async)
+        import inspect
+        if inspect.iscoroutine(result):
             await result
 
         doc["id"] = task_id
@@ -58,19 +50,12 @@ async def tasks_add(payload: dict = Body(...)) -> Dict[str, Any]:
     except Exception as e:
         return {"status": "error", "detail": str(e)}
 
-# =========================
-#  /tasks/list
-# =========================
-
 @router.get("/tasks/list")
 async def tasks_list(
     user_id: Optional[str] = Query(default=None),
     project: Optional[str] = Query(default=None),
     state: Optional[str] = Query(default=None),
 ) -> Dict[str, Any]:
-    """
-    Lista tareas desde Firestore.
-    """
     db = _get_db()
     col = db.collection("tasks")
 
