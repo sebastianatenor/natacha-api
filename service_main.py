@@ -45,7 +45,7 @@ app.include_router(v1_routes.router)
 # === Módulos opcionales ===
 safe_include("ops.affective_train")
 
-<<<<<<< HEAD
+
 # === Endpoints de sistema ===
 @app.get("/")
 def root():
@@ -54,11 +54,10 @@ def root():
         "version": "19.0",
         "message": "Natacha API – núcleo afectivo adaptativo 🚀"
     }
-=======
+
 # --- ✅ Core Bridge (nuevo) ---
 safe_include("routes.core_bridge")
 safe_include("ops.extensions.core_bridge_ext")
-=======
 
 # --- ✅ Affective Training (nuevo módulo adaptativo) ---
 safe_include("ops.affective_train")
@@ -121,4 +120,3 @@ def custom_openapi():
 
 
 app.openapi = custom_openapi  # type: ignore
->>>>>>> a90748c (🧹 Fix: eliminado marcador de merge y limpiado bloque Core Bridge)
