@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 {
   "openapi": "3.1.0",
   "info": {
@@ -754,5 +753,3 @@
     }
   }
 }
-=======
->>>>>>> d635d28 (chore: regenerate OpenAPI schema for v19.2)
