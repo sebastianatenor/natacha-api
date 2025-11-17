@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Body, Query
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
-import traceback
+import asyncio, traceback
 
 from routes.memory_routes import get_db as _get_db
 
@@ -14,7 +14,7 @@ def _now_iso() -> str:
 @router.post("/tasks/add")
 async def tasks_add(payload: dict = Body(...)) -> Dict[str, Any]:
     """
-    Crea una tarea simple en Firestore y registra logs detallados.
+    Crea una tarea simple en Firestore, asegurando que cualquier operación async se espere correctamente.
     """
     try:
         db = _get_db()
@@ -38,10 +38,9 @@ async def tasks_add(payload: dict = Body(...)) -> Dict[str, Any]:
             "key": f"{payload.get('project','')}:{payload.get('title','')}:{task_id}",
         }
 
-        # 🔍 Logueamos lo que realmente devuelve Firestore
+        # Ejecutar set() y esperar si es coroutine
         result = doc_ref.set(doc)
-        print(f"[DEBUG] Firestore set() returned: {type(result)} -> {result}")
-        if hasattr(result, "__await__"):  # si es coroutine, esperarla
+        if asyncio.iscoroutine(result):
             await result
 
         doc["id"] = task_id
@@ -52,30 +51,3 @@ async def tasks_add(payload: dict = Body(...)) -> Dict[str, Any]:
         print("[ERROR] tasks_add exception ->", e)
         traceback.print_exc()
         return {"status": "error", "detail": str(e)}
-
-
-@router.get("/tasks/list")
-async def tasks_list(
-    user_id: Optional[str] = Query(default=None),
-    project: Optional[str] = Query(default=None),
-    state: Optional[str] = Query(default=None),
-) -> Dict[str, Any]:
-    db = _get_db()
-    col = db.collection("tasks")
-
-    query = col
-    if user_id:
-        query = query.where("user_id", "==", user_id)
-    if project:
-        query = query.where("project", "==", project)
-    if state:
-        query = query.where("state", "==", state)
-
-    docs = list(query.stream())
-    items: List[Dict[str, Any]] = []
-    for d in docs:
-        data = d.to_dict() or {}
-        data["id"] = d.id
-        items.append(data)
-
-    return {"status": "ok", "tasks": items}
