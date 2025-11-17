@@ -1,70 +1,59 @@
 import os
-import sys
-import json
-import importlib.util
-from pathlib import Path
-from fastapi.openapi.utils import get_openapi
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-# ================================================================
-# Cargar app.py desde la raíz del repo dentro del contenedor
-# ================================================================
+from routes import (
+    memory_routes,
+    health_route,
+    v1_routes,
+)
 
-APP_FILE = os.path.join(os.path.dirname(__file__), "app.py")
-
-if not os.path.exists(APP_FILE):
-    # Fallback: intentar paquete "app"
+# === Función segura para incluir módulos opcionales ===
+def safe_include(module_name: str):
     try:
-        from app import app  # noqa
+        module = __import__(module_name, fromlist=["router"])
+        if hasattr(module, "router"):
+            app.include_router(module.router)
+            print(f"[OK] Included: {module_name}")
+        else:
+            print(f"[WARN] No router in {module_name}")
     except Exception as e:
-        raise RuntimeError(f"No se encontró app.py ni paquete app con `app`: {e}")
-else:
-    spec = importlib.util.spec_from_file_location("natacha_root_app", APP_FILE)
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules["natacha_root_app"] = mod
-    spec.loader.exec_module(mod)  # type: ignore
-    app = getattr(mod, "app", None)
-    if app is None:
-        raise RuntimeError("app.py existe pero no define variable `app`")
+        print(f"[SKIP] {module_name} – {e}")
 
-# ================================================================
-# IMPORTAR Y REGISTRAR ROUTERS (SAFE MODE)
-# ================================================================
+# === Inicialización de la app principal ===
+app = FastAPI(
+    title="Natacha API",
+    version="19.0-adaptive-affective-training",
+    description="API central de Natacha con motor afectivo adaptativo."
+)
 
-def safe_include(module_path: str):
-    """Incluye routers sin romper el arranque si falta alguno."""
-    try:
-        module = __import__(module_path, fromlist=["router"])
-        router = getattr(module, "router", None)
-        if router is not None:
-            app.include_router(router)
-    except ModuleNotFoundError:
-        pass
+# === Configuración de CORS ===
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# === Routers principales ===
+app.include_router(memory_routes.router)
+app.include_router(memory_routes.v1_router)
+app.include_router(health_route.router)
+app.include_router(v1_routes.router)
+
+# === Módulos opcionales ===
+safe_include("ops.affective_train")
 
 
-# --- Routers estándar ---
-safe_include("routes.ops_self")
-safe_include("routes.actions_routes")
-safe_include("routes.auto_routes")
-safe_include("routes.cog_routes")
-safe_include("routes.core_routes")
-safe_include("routes.embeddings_routes")
-safe_include("routes.health_ext")
-safe_include("routes.health_route")
-safe_include("routes.health_routes")
-safe_include("routes.memory_routes")
-safe_include("routes.memory_v2")
-safe_include("routes.memory_engine_routes")
-safe_include("routes.natacha_routes")
-safe_include("routes.actions_openapi")  # esquema reducido para Actions
-safe_include("routes.openapi_compat")
-safe_include("routes.ops_routes")
-safe_include("routes.semantic_routes")
-safe_include("routes.tasks_routes")
-
-# --- ✅ Core Bridge (nuevo) ---
-safe_include("routes.core_bridge")  # <--- este es el archivo que creaste
-safe_include("ops.extensions.core_bridge_ext")
+# === Endpoints de sistema ===
+@app.get("/")
+def root():
+    return {
+        "status": "ok",
+        "version": "19.0",
+        "message": "Natacha API – núcleo afectivo adaptativo 🚀"
+    }
 
 # --- ✅ Core Bridge (nuevo) ---
 safe_include("routes.core_bridge")

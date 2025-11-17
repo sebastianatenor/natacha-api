@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 
 from routes.memory_routes import router as memory_router, v1_router as memory_v1_router
@@ -12,11 +13,20 @@ try:
 except Exception:
     ops = None
 
+# === Config de servers para OpenAPI ===
+# Para simplificar, hoy fijamos el server principal a la URL de producción.
+# Más adelante lo podemos parametrizar con una env var (OPENAPI_SERVER_URL).
+DEFAULT_SERVER_URL = "https://natacha-api-422255208682.us-central1.run.app"
+OPENAPI_SERVER_URL = os.getenv("OPENAPI_SERVER_URL", DEFAULT_SERVER_URL)
+
+SERVERS = [{"url": OPENAPI_SERVER_URL}] if OPENAPI_SERVER_URL else []
+
 # === Inicialización de la app principal ===
 app = FastAPI(
     title="Natacha Core",
     version="18.0-affective-projection",
-    description="Core API con proyección cognitivo-afectiva, timeline y sincronización adaptativa."
+    description="Core API con proyección cognitivo-afectiva, timeline y sincronización adaptativa.",
+    servers=SERVERS,
 )
 
 # Routers principales
