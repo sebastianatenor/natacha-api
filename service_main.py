@@ -94,6 +94,9 @@ safe_include("ops.extensions.core_bridge_ext")
 # --- ✅ Affective Training (nuevo módulo adaptativo) ---
 safe_include("ops.affective_train")
 
+# --- ✅ Memory v2 Engine (long-term store) ---
+safe_include("routes.memory_v2")
+
 # --- ✅ Code Introspection Engine (v19.2) ---
 safe_include("ops.introspection.code_scan")
 safe_include("ops.introspection.history_reader")

@@ -28,3 +28,19 @@
     - /ops/debug_source, /ops/insights, /ops/snapshot, /ops/snapshots, /ops/summary
 - Sanity scripts:
   - scripts/tasks_sanity.sh → OK contra Cloud Run para user_id=sebastian
+
+## RUNTIME & MEMORY – v19.x
+
+- Runtime oficial (local y Cloud Run)
+  - EntryPoint: `service_main:app`
+  - Docker CMD: `uvicorn service_main:app --host 0.0.0.0 --port 8080`
+
+- Memoria larga (oficial)
+  - Engine: `routes/memory_v2.py`
+  - Router: `/memory/v2/...`
+  - STORAGE (prod): `MEMORY_FILE=gs://natacha-memory-store/memory_store.jsonl`
+  - STORAGE (local): `memory_store.jsonl` en el root del proyecto
+
+- Runtimes legacy / auxiliares
+  - `natacha_app:app` → runtime legado, solo para debug puntual. No se usa en Cloud Run.
+  - `app/app.py` (`app:app`) → app auxiliar de core bridge. No es el runtime principal.
