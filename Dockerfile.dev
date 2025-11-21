@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 8080
 
 # 👇 unificamos con la app real
-CMD ["uvicorn", "natacha_app:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
+CMD ["uvicorn", "service_main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]

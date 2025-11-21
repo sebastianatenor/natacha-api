@@ -1,3 +1,9 @@
+# ============================================================
+# LEGACY RUNTIME – NO USAR COMO ENTRYPOINT EN CLOUND RUN
+# Runtime oficial de Natacha API: service_main:app
+# Este módulo se mantiene solo para compatibilidad y debugging puntual.
+# ============================================================
+
 from fastapi import FastAPI
 from routes import core_bridge
 
