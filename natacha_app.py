@@ -11,6 +11,7 @@ from routes.memory_routes import router as memory_router
 from routes.ops_routes import router as ops_router
 from routes.semantic_routes import router as semantic_router
 from routes.tasks_routes import router as tasks_router
+from routes.memory_v2 import router as memory_v2_router  # 👈 NUEVO
 
 app = FastAPI()
 
@@ -25,7 +26,7 @@ def __debug_codeid_tasks_routes():
         src = inspect.getsource(mod)
         path = inspect.getfile(mod)
         sha = hashlib.sha256(src.encode("utf-8")).hexdigest()[:16]
-        return JSONResponse({"module":"routes.tasks_routes","file":path,"sha256_16":sha})
+        return JSONResponse({"module": "routes.tasks_routes", "file": path, "sha256_16": sha})
     except Exception as e:
         import traceback
         return PlainTextResponse(traceback.format_exc(), status_code=500)
@@ -41,6 +42,7 @@ def __debug_routers():
     return JSONResponse(out)
 # ==== END DEBUG ====
 # app.include_router(tasks_router)  # via auto-discovery
+
 # ==== AUTO-DISCOVERY DE ROUTERS ====
 import pkgutil, importlib, inspect
 from fastapi import APIRouter
@@ -76,6 +78,9 @@ _loaded = _load_routers()
 for modname, name, rtr in _loaded:
     prefix = _PREFIX_MAP.get(modname, '')
     app.include_router(rtr, prefix=prefix, tags=getattr(rtr, 'tags', None))
+
+# 👇 Montamos explícitamente la memoria v2 (JSONL/GCS)
+app.include_router(memory_v2_router)  # rutas /memory/v2/*
 
 # DEBUG: listar lo montado (ver sección B)
 from fastapi.responses import JSONResponse
@@ -184,8 +189,7 @@ def __debug_codeid_ops_routes():
         src = inspect.getsource(mod)
         path = inspect.getfile(mod)
         sha = hashlib.sha256(src.encode("utf-8")).hexdigest()[:16]
-        return JSONResponse({"module":"routes.ops_routes","file":path,"sha256_16":sha})
+        return JSONResponse({"module": "routes.ops_routes", "file": path, "sha256_16": sha})
     except Exception:
         import traceback
         return PlainTextResponse(traceback.format_exc(), status_code=500)
-

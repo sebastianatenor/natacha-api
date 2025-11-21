@@ -50,6 +50,13 @@ def _load() -> List[dict]:
     with open(DATA_FILE, "r", encoding="utf-8") as f:
         return [json.loads(line) for line in f if line.strip()]
 
+def _load_local() -> List[dict]:
+    """Versión explícita para el backend local (no GCS)."""
+    if not os.path.exists(DATA_FILE):
+        return []
+    with open(DATA_FILE, "r", encoding="utf-8") as f:
+        return [json.loads(line) for line in f if line.strip()]
+
 def _cosine(a: List[float], b: List[float]) -> float:
     if not a or not b or len(a) != len(b):
         return 0.0
@@ -83,19 +90,31 @@ def search(q: MemoryQuery):
     if not data:
         return {"status": "ok", "items": []}
 
+    # Filtrado por tags si vienen
     if q.tags:
         tagset = set(q.tags)
-        data = [d for d in data if isinstance(d.get("tags"), list) and tagset.intersection(d["tags"])]
+        data = [
+            d for d in data
+            if isinstance(d.get("tags"), list) and tagset.intersection(d["tags"])
+        ]
 
     topk = max(1, min(q.top_k, 50))
 
+    # --- búsqueda semántica ---
     if q.use_semantic:
         qvec = _embed(q.query)
         scored = []
         for d in data:
-            sc = _cosine(qvec, d.get("embedding") or _embed(d.get("text","")))
+            text = d.get("text")
+            # 🔑 ignorar entradas sin texto (introspecciones, etc.)
+            if not text:
+                continue
+            emb = d.get("embedding") or _embed(text)
+            sc = _cosine(qvec, emb)
             scored.append((sc, d))
+
         scored.sort(key=lambda x: x[0], reverse=True)
+
         results = []
         for sc, d in scored[:topk]:
             results.append({
@@ -103,35 +122,38 @@ def search(q: MemoryQuery):
                 "text": d.get("text"),
                 "tags": d.get("tags"),
                 "meta": d.get("meta"),
-                "score": round(float(sc), 4)
+                "score": round(float(sc), 4),
             })
         return {"status": "ok", "items": results}
 
-    # keyword naive
+    # --- búsqueda keyword naive ---
     ql = q.query.lower()
     ranked = []
     for d in data:
-        score = 1.0 if ql in (d.get("text","").lower()) else 0.0
+        text = d.get("text", "")
+        if not text:
+            continue
+        score = 1.0 if ql in text.lower() else 0.0
         if score > 0:
             ranked.append((score, d))
+
     ranked.sort(key=lambda x: x[0], reverse=True)
+
     results = [{
         "_id": d.get("_id"),
         "text": d.get("text"),
         "tags": d.get("tags"),
         "meta": d.get("meta"),
-        "score": round(float(sc), 4)
+        "score": round(float(sc), 4),
     } for sc, d in ranked[:topk]]
+
     return {"status": "ok", "items": results}
 
 # --- mantenimiento: compactar el store (dedup) ---
 @router.post("/compact")
 def compact_store():
     # cargar todo
-    if DATA_FILE.startswith("gs://"):
-        items = _gcs_read_all()
-    else:
-        items = _load_local()
+    items = _load()
 
     # dedup por _id (si falta _id, usamos hash del texto)
     seen = {}
@@ -160,7 +182,6 @@ def compact_store():
 
 
 
-
 @router.get("/ops/memory-info")
 def memory_info():
     path = DATA_FILE
@@ -169,8 +190,17 @@ def memory_info():
             items = _gcs_read_all()
             backend = "gcs"
         else:
-            items = _load_local()
+            items = _load()
             backend = "local"
-        return {"status":"ok","backend":backend,"memory_file":str(path),"count":len(items)}
+        return {
+            "status": "ok",
+            "backend": backend,
+            "memory_file": str(path),
+            "count": len(items),
+        }
     except Exception as e:
-        return {"status":"error","memory_file":str(path),"error":str(e)}
+        return {
+            "status": "error",
+            "memory_file": str(path),
+            "error": str(e),
+        }
