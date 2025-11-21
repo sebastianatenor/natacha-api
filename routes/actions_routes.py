@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 
-from firestore_client import get_db
+from ops.firestore_adapter import get_firestore_client as get_db
 
 router = APIRouter(tags=["actions"])
 

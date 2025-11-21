@@ -1,0 +1,188 @@
+[BOOT] Local environment detected. Skipping GCS memory sync.
+[OK] Included: ops.affective_train
+[SKIP] routes.core_bridge – No module named 'routes.core_bridge'
+[OK] Included: ops.extensions.core_bridge_ext
+[OK] Included: ops.affective_train
+[OK] Included: ops.introspection.code_scan
+[OK] Included: ops.introspection.history_reader
+[OK] Included: ops.introspection.self_reflect
+[OK] Included: ops.introspection.meta_reflect
+[OK] Included: ops.cognitive_evolution
+[OK] Included: ops.self_diagnostics
+[WARN] No router in ops.firestore_adapter
+== RUTAS FASTAPI ==
+
+PATH:      /
+METHODS:   ['GET']
+NAME:      root
+MODULE:    service_main
+FUNC:      root
+----------------------------------------------------------------------
+PATH:      /health
+METHODS:   ['GET']
+NAME:      health
+MODULE:    routes.health_route
+FUNC:      health
+----------------------------------------------------------------------
+PATH:      /health/debug_source
+METHODS:   ['GET']
+NAME:      health_debug_source
+MODULE:    routes.health_route
+FUNC:      health_debug_source
+----------------------------------------------------------------------
+PATH:      /health/deps
+METHODS:   ['GET']
+NAME:      health_deps
+MODULE:    routes.health_route
+FUNC:      health_deps
+----------------------------------------------------------------------
+PATH:      /memory/add
+METHODS:   ['POST']
+NAME:      memory_add
+MODULE:    routes.memory_routes
+FUNC:      memory_add
+----------------------------------------------------------------------
+PATH:      /memory/add
+METHODS:   ['POST']
+NAME:      memory_add
+MODULE:    routes.memory_routes
+FUNC:      memory_add
+----------------------------------------------------------------------
+PATH:      /memory/search
+METHODS:   ['GET']
+NAME:      memory_search
+MODULE:    routes.memory_routes
+FUNC:      memory_search
+----------------------------------------------------------------------
+PATH:      /memory/search
+METHODS:   ['GET']
+NAME:      memory_search_safe
+MODULE:    routes.memory_routes
+FUNC:      memory_search_safe
+----------------------------------------------------------------------
+PATH:      /memory/search
+METHODS:   ['GET']
+NAME:      memory_search
+MODULE:    routes.memory_routes
+FUNC:      memory_search
+----------------------------------------------------------------------
+PATH:      /memory/search
+METHODS:   ['GET']
+NAME:      memory_search_safe
+MODULE:    routes.memory_routes
+FUNC:      memory_search_safe
+----------------------------------------------------------------------
+PATH:      /memory/search
+METHODS:   ['GET']
+NAME:      memory_search_v1
+MODULE:    app.api_v1.memory_v1_routes
+FUNC:      memory_search_v1
+----------------------------------------------------------------------
+PATH:      /openapi_public.json
+METHODS:   ['GET']
+NAME:      openapi_public
+MODULE:    service_main
+FUNC:      openapi_public
+----------------------------------------------------------------------
+PATH:      /ops/affective-train/run
+METHODS:   ['POST']
+NAME:      run_affective_training
+MODULE:    ops.affective_train
+FUNC:      run_affective_training
+----------------------------------------------------------------------
+PATH:      /ops/affective-train/run
+METHODS:   ['POST']
+NAME:      run_affective_training
+MODULE:    ops.affective_train
+FUNC:      run_affective_training
+----------------------------------------------------------------------
+PATH:      /ops/cognitive/evolve
+METHODS:   ['POST']
+NAME:      run_evolution
+MODULE:    ops.cognitive_evolution
+FUNC:      run_evolution
+----------------------------------------------------------------------
+PATH:      /ops/cognitive/status
+METHODS:   ['GET']
+NAME:      cognitive_status
+MODULE:    ops.cognitive_evolution
+FUNC:      cognitive_status
+----------------------------------------------------------------------
+PATH:      /ops/core/analyze
+METHODS:   ['POST']
+NAME:      analyze_with_core
+MODULE:    ops.extensions.core_bridge_ext
+FUNC:      analyze_with_core
+----------------------------------------------------------------------
+PATH:      /ops/core/ping
+METHODS:   ['GET']
+NAME:      ping_core
+MODULE:    ops.extensions.core_bridge_ext
+FUNC:      ping_core
+----------------------------------------------------------------------
+PATH:      /ops/introspection/compare
+METHODS:   ['GET']
+NAME:      compare_versions
+MODULE:    ops.introspection.history_reader
+FUNC:      compare_versions
+----------------------------------------------------------------------
+PATH:      /ops/introspection/history
+METHODS:   ['GET']
+NAME:      read_introspection_history
+MODULE:    ops.introspection.history_reader
+FUNC:      read_introspection_history
+----------------------------------------------------------------------
+PATH:      /ops/introspection/meta
+METHODS:   ['GET']
+NAME:      meta_reflection
+MODULE:    ops.introspection.meta_reflect
+FUNC:      meta_reflection
+----------------------------------------------------------------------
+PATH:      /ops/introspection/reflect
+METHODS:   ['GET']
+NAME:      reflect_on_self
+MODULE:    ops.introspection.self_reflect
+FUNC:      reflect_on_self
+----------------------------------------------------------------------
+PATH:      /ops/introspection/scan
+METHODS:   ['POST']
+NAME:      scan_codebase
+MODULE:    ops.introspection.code_scan
+FUNC:      scan_codebase
+----------------------------------------------------------------------
+PATH:      /ops/self/diagnostics
+METHODS:   ['GET']
+NAME:      run_diagnostics
+MODULE:    ops.self_diagnostics
+FUNC:      run_diagnostics
+----------------------------------------------------------------------
+PATH:      /v1/memory/add
+METHODS:   ['POST']
+NAME:      v1_memory_add
+MODULE:    routes.v1_routes
+FUNC:      v1_memory_add
+----------------------------------------------------------------------
+PATH:      /v1/memory/search
+METHODS:   ['GET']
+NAME:      v1_memory_search
+MODULE:    routes.v1_routes
+FUNC:      v1_memory_search
+----------------------------------------------------------------------
+PATH:      /v1/tasks/add
+METHODS:   ['POST']
+NAME:      v1_tasks_add
+MODULE:    routes.v1_routes
+FUNC:      v1_tasks_add
+----------------------------------------------------------------------
+PATH:      /v1/tasks/search
+METHODS:   ['GET']
+NAME:      v1_tasks_search
+MODULE:    routes.v1_routes
+FUNC:      v1_tasks_search
+----------------------------------------------------------------------
+PATH:      /v1/tasks/update
+METHODS:   ['POST']
+NAME:      v1_tasks_update
+MODULE:    routes.v1_routes
+FUNC:      v1_tasks_update
+----------------------------------------------------------------------
