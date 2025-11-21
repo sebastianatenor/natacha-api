@@ -107,3 +107,10 @@ Estos runtimes viven en el mismo repo pero representan **otros servicios**:
     - Cambiar a: `uvicorn service_main:app --host 0.0.0.0 --port 8080 --reload`
     - Objetivo: que dev y prod apunten al mismo runtime oficial.
 
+
+### Módulos legacy adicionales
+
+- `routes/register_core_bridge.py`
+  - Tenía un patrón viejo de `app.include_router(...)` acoplado a un runtime global.
+  - Hoy NO se importa desde `service_main:app`.
+  - Se conserva solo como referencia histórica.
