@@ -15,6 +15,7 @@ from routes import (
 )
 from routes.tasks_routes import router as tasks_router
 from routes.people_routes import router as people_router
+from routes.project_routes import router as project_router
 from routes.ops_routes import router as ops_routes
 
 
