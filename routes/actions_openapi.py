@@ -26,12 +26,12 @@ ALLOWED_PATHS = [
     "/tasks/list",
     "/tasks/update",
 
-    # Personas (CRM interno)
+    # People (contactos / perfiles)
     "/people/save",
     "/people/get",
     "/people/search",
 
-    # Proyectos (Project Memory)
+    # Projects (proyectos)
     "/projects/save",
     "/projects/get",
     "/projects/search",
@@ -61,6 +61,11 @@ def _build_actions_schema(app) -> Dict:
     paths = full_schema.get("paths", {})
     filtered_paths = {p: v for p, v in paths.items() if p in ALLOWED_PATHS}
     full_schema["paths"] = filtered_paths
+
+    # 🔴 FIX IMPORTANTE: agregar servers con URL HTTPS pública
+    full_schema["servers"] = [
+        {"url": "https://natacha-api-422255208682.us-central1.run.app"}
+    ]
 
     return full_schema
 
