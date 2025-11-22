@@ -1,18 +1,47 @@
-from fastapi import APIRouter
-from natacha_core.semantic_memory_v2 import save_event, search
 
-router = APIRouter(prefix="/memory/v2/semantic", tags=["memory_v2_semantic"])
+from typing import List, Optional
+
+from fastapi import APIRouter
+from pydantic import BaseModel
+
+from natacha_core import semantic_memory_v2
+
+router = APIRouter(
+    prefix="/memory/v2/semantic",
+    tags=["memory_v2_semantic"],
+)
+
+
+class SemanticAddPayload(BaseModel):
+    user_id: str
+    project: str
+    text: str
+    tags: Optional[List[str]] = None
+    people: Optional[List[str]] = None
+
 
 @router.post("/add")
-def semantic_add(payload: dict):
-    return save_event(
-        user_id=payload.get("user_id", "sebastian"),
-        project=payload.get("project", "general"),
-        text=payload.get("text", ""),
-        tags=payload.get("tags", []),
-        people=payload.get("people", []),
+def semantic_add(payload: SemanticAddPayload):
+    return semantic_memory_v2.save_event(
+        user_id=payload.user_id,
+        project=payload.project,
+        text=payload.text,
+        tags=payload.tags or [],
+        people=payload.people or [],
     )
 
+
 @router.get("/search")
-def semantic_search(limit: int = 50):
-    return {"items": search(limit=limit)}
+def semantic_search(
+    user_id: Optional[str] = None,
+    project: Optional[str] = None,
+    q: Optional[str] = None,
+    limit: int = 50,
+):
+    items = semantic_memory_v2.search(
+        user_id=user_id,
+        project=project,
+        q=q,
+        limit=limit,
+    )
+    return {"items": items}
