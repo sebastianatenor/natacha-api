@@ -26,6 +26,16 @@ ALLOWED_PATHS = [
     "/tasks/list",
     "/tasks/update",
 
+    # Personas (CRM interno)
+    "/people/save",
+    "/people/get",
+    "/people/search",
+
+    # Proyectos (Project Memory)
+    "/projects/save",
+    "/projects/get",
+    "/projects/search",
+
     # Ops (diagnóstico de la propia API)
     "/ops/summary",
     "/ops/insights",
@@ -43,7 +53,7 @@ def _build_actions_schema(app) -> Dict:
         version="1.0.0",
         description=(
             "Esquema reducido para ChatGPT Actions de Natacha. "
-            "Incluye salud, memoria, núcleo de respuesta, tasks y ops."
+            "Incluye salud, memoria, núcleo de respuesta, tasks, people, projects y ops."
         ),
         routes=app.routes,
     )
