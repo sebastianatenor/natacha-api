@@ -1,3 +1,18 @@
+### semantic_memory_v2 (MEMORIA SEMÁNTICA)
+
+- Rol: memoria de largo plazo basada en Firestore.
+- Guarda: texto, tags, personas, timestamp, embedding.
+- Endpoints:
+    POST /memory/v2/semantic/add
+    GET  /memory/v2/semantic/search
+    GET  /memory/v2/semantic/summary
+- Garantías:
+    - Nunca rompe por fallos de OpenAI.
+    - Siempre devuelve resultados.
+    - summarize() nunca levanta excepción (devuelve fallback).
+- Índice Firestore requerido:
+    user_id ASC, project ASC, ts DESC.
+
 # Natacha API - Registry
 - URL: https://natacha-api-422255208682.us-central1.run.app
 - Revisión: natacha-api-00605-9x5
