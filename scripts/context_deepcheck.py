@@ -1,9 +1,29 @@
 #!/usr/bin/env python3
+"""
+context_deepcheck.py
+
+Deep-check del engine de contexto/memoria de Natacha para un user/proyecto.
+
+- Llama a /memory/engine/context_bundle
+- Muestra:
+  * system_rule (si está, versión, created_at)
+  * summary (si está, longitud y updated_at)
+  * recent / recent_sample (hasta 3 muestras, robusto si viene como lista o dict)
+  * estado de semantic_v2 (si el bundle lo incluye)
+
+Uso:
+
+  BASE="https://natacha-api-422255208682.us-central1.run.app" \\
+    python3 scripts/context_deepcheck.py --user sebastian --project LLVC
+
+Opcional:
+  --json  -> imprime JSON crudo (bundle completo + meta)
+"""
+
 import os
 import sys
 import json
 import argparse
-import datetime as dt
 
 import requests
 
@@ -19,7 +39,7 @@ def parse_args():
     return p.parse_args()
 
 
-def get_base():
+def get_base() -> str:
     base = os.environ.get("BASE") or os.environ.get("SERVICE_URL")
     if not base:
         base = "http://localhost:8080"
@@ -51,26 +71,48 @@ def main():
         print(resp.text)
         sys.exit(1)
 
-    data = resp.json()
+    try:
+        data = resp.json()
+    except Exception as e:
+        print("❌ La respuesta no es JSON válido:", repr(e))
+        print("Cuerpo parcial:", resp.text[:500])
+        sys.exit(1)
 
     if args.json:
-        print(json.dumps(
-            {
-                "base": base,
-                "user_id": user_id,
-                "project": project,
-                "raw": data,
-            },
-            indent=2,
-            ensure_ascii=False,
-        ))
+        print(
+            json.dumps(
+                {
+                    "base": base,
+                    "user_id": user_id,
+                    "project": project,
+                    "raw": data,
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
         return
 
     # ---- Interpretación amigable ----
-    system_rule = data.get("system_rule")
-    summary = data.get("summary")
-    recent = data.get("recent") or data.get("recent_sample") or []
+    system_rule = data.get("system_rule") or {}
+    summary = data.get("summary") or {}
     semantic_status = data.get("semantic_v2_status") or data.get("semantic_status")
+
+    # recent puede venir como:
+    # - lista directa: [...]
+    # - dict con items: {"items": [...]}
+    # - o en recent_sample
+    recent_block = data.get("recent")
+    if recent_block is None:
+        recent_block = data.get("recent_sample")
+
+    if isinstance(recent_block, list):
+        recent_list = recent_block
+    elif isinstance(recent_block, dict):
+        items = recent_block.get("items")
+        recent_list = items if isinstance(items, list) else []
+    else:
+        recent_list = []
 
     print(f"Base: {base}")
     print(f"user_id: {user_id} | project (lógico): {project}")
@@ -97,10 +139,19 @@ def main():
 
     # Recent
     print()
-    print(f"Recent / muestras recientes: {len(recent)} (limit={recent_limit})")
-    if recent:
-        # mostrar 3 ejemplos cortos
-        for i, item in enumerate(recent[:3], start=1):
+    print(f"Recent / muestras recientes: {len(recent_list)} (limit={recent_limit})")
+    if not recent_list:
+        print("  ⚠️ No hay recent en el bundle.")
+    else:
+        # mostrar hasta 3 ejemplos cortos
+        for i, item in enumerate(recent_list[:3], start=1):
+            if not isinstance(item, dict):
+                print(
+                    f"  {i}) [tipo inesperado: {type(item).__name__}] "
+                    f"{repr(item)[:200]}"
+                )
+                continue
+
             kind = item.get("kind") or "?"
             created_at = item.get("created_at") or "?"
             note = item.get("note") or ""
@@ -108,8 +159,6 @@ def main():
             if len(note_short) > 100:
                 note_short = note_short[:97] + "..."
             print(f"  {i}) [{kind}] {created_at} → {note_short}")
-    else:
-        print("  ⚠️ No hay recent en el bundle.")
 
     # Semantic v2 status (si existe)
     print()
