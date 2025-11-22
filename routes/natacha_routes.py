@@ -214,3 +214,16 @@ def natacha_respond(payload: UserMessage):
                 "error": "model_call_failed",
                 "detail": str(e),
             }
+
+    except Exception as e:
+        # Error general del endpoint Natacha
+        return {
+            "answer": (
+                "⚠️ Hubo un error interno al procesar la solicitud de Natacha. "
+                "Revisá los logs del backend para más detalle."
+            ),
+            "used_prompt": "",
+            "model_called": False,
+            "error": "natacha_internal_error",
+            "detail": str(e),
+        }
