@@ -12,6 +12,10 @@ from memory_engine import (
     COL_SUMMARY,
 )
 
+# ⬇️ Nuevo: integración con memoria semántica v2
+from natacha_core import semantic_memory_v2
+
+
 router = APIRouter(prefix="/memory/engine", tags=["memory-engine"])
 
 
@@ -64,6 +68,10 @@ def memory_context_bundle(
     user_id: Optional[str] = None,
     recent_limit: int = Query(20, ge=1, le=200),
     include_global_fallback: bool = True,
+    # ⬇️ Parámetros opcionales para memoria semántica v2
+    semantic_project: Optional[str] = None,
+    semantic_q: Optional[str] = None,
+    semantic_limit: int = Query(5, ge=1, le=50),
 ):
     """
     Devuelve un paquete de contexto listo para Natacha:
@@ -71,6 +79,7 @@ def memory_context_bundle(
     - system_rule: regla de sistema principal (core-v1 por defecto)
     - summary: resumen consolidado por usuario (o global si no hay)
     - recent: memorias crudas recientes
+    - semantic_v2: resumen semántico opcional si se envían parámetros
     """
     key = user_id or "global"
 
@@ -91,6 +100,50 @@ def memory_context_bundle(
     # 3) Recientes
     recent_items = list_recent_memories(user_id=user_id, limit=recent_limit)
 
+    # 4) Bloque de memoria semántica v2 (opcional)
+    semantic_block: Dict[str, Any] = {
+        "status": "disabled",
+        "reason": "No semantic_project or semantic_q provided.",
+        "params": {
+            "user_id": user_id,
+            "project": semantic_project,
+            "q": semantic_q,
+            "limit": semantic_limit,
+        },
+        "result": None,
+    }
+
+    if semantic_project and semantic_q:
+        try:
+            sem_result = semantic_memory_v2.summarize(
+                user_id=user_id,
+                project=semantic_project,
+                q=semantic_q,
+                limit=semantic_limit,
+            )
+            semantic_block = {
+                "status": "ok",
+                "params": {
+                    "user_id": user_id,
+                    "project": semantic_project,
+                    "q": semantic_q,
+                    "limit": semantic_limit,
+                },
+                "result": sem_result,
+            }
+        except Exception as e:
+            semantic_block = {
+                "status": "error",
+                "error": str(e),
+                "params": {
+                    "user_id": user_id,
+                    "project": semantic_project,
+                    "q": semantic_q,
+                    "limit": semantic_limit,
+                },
+                "result": None,
+            }
+
     return {
         "status": "ok",
         "user_id": user_id,
@@ -100,4 +153,5 @@ def memory_context_bundle(
             "count": len(recent_items),
             "items": recent_items,
         },
+        "semantic_v2": semantic_block,
     }
