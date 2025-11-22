@@ -1,25 +1,31 @@
 import os
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
 import json
 from pathlib import Path
 
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
+
+# === Routers principales ===
 from routes import (
     memory_routes,
     health_route,
     v1_routes,
+    actions_openapi,
 )
+from routes.tasks_routes import router as tasks_router
+from routes.ops_routes import router as ops_routes
+
 
 # === Carga automática de memoria desde Google Cloud Storage ===
 import subprocess
+
 
 def load_memory_from_gcs():
     """Carga memory_store.jsonl desde GCS si está en entorno Cloud Run."""
     gcs_path = "gs://natacha-memory-store/memory_store.jsonl"
     local_path = "/app/memory_store.jsonl"
 
-    # Detectar si estamos en Cloud Run
     in_cloud_run = os.getenv("K_SERVICE") is not None
 
     if in_cloud_run:
@@ -29,7 +35,7 @@ def load_memory_from_gcs():
                 ["gsutil", "cp", gcs_path, local_path],
                 check=True,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                stderr=subprocess.PIPE,
             )
             print(f"[OK] Memory loaded from {gcs_path}")
         except Exception as e:
@@ -37,8 +43,10 @@ def load_memory_from_gcs():
     else:
         print("[BOOT] Local environment detected. Skipping GCS memory sync.")
 
+
 # Ejecutar sincronización al arranque
 load_memory_from_gcs()
+
 
 # === Función segura para incluir módulos opcionales ===
 def safe_include(module_name: str):
@@ -52,11 +60,12 @@ def safe_include(module_name: str):
     except Exception as e:
         print(f"[SKIP] {module_name} – {e}")
 
+
 # === Inicialización de la app principal ===
 app = FastAPI(
     title="Natacha API",
     version="19.0-adaptive-affective-training",
-    description="API central de Natacha con motor afectivo adaptativo."
+    description="API central de Natacha con motor afectivo adaptativo.",
 )
 
 # === Configuración de CORS ===
@@ -69,60 +78,73 @@ app.add_middleware(
 )
 
 # === Routers principales ===
-app.include_router(memory_routes.router)
-app.include_router(memory_routes.v1_router)
-app.include_router(health_route.router)
-app.include_router(v1_routes.router)
+app.include_router(memory_routes.router)        # /memory/add, /memory/search
+app.include_router(memory_routes.v1_router)     # /memory/engine/* v1, etc.
+app.include_router(health_route.router)         # /health, /meta
+app.include_router(v1_routes.router)            # /v1/memory/*
+app.include_router(tasks_router)                # /tasks/add, /tasks/list, /tasks/update (core)
+app.include_router(ops_routes)                  # /ops/*
+app.include_router(actions_openapi.router)      # /actions/openapi.json para ChatGPT Actions
 
-# === Módulos opcionales ===
-safe_include("ops.affective_train")
-
-
-# === Endpoints de sistema ===
-@app.get("/")
-def root():
-    return {
-        "status": "ok",
-        "version": "19.0",
-        "message": "Natacha API – núcleo afectivo adaptativo 🚀"
-    }
-
-# --- ✅ Core Bridge (nuevo) ---
+# --- Módulos opcionales (mantengo tus safe_include) ---
 safe_include("routes.core_bridge")
 safe_include("ops.extensions.core_bridge_ext")
 
-# --- ✅ Affective Training (nuevo módulo adaptativo) ---
 safe_include("ops.affective_train")
 
-# --- ✅ Memory v2 Engine (long-term store) ---
 safe_include("routes.memory_v2")
 
-# --- ✅ Code Introspection Engine (v19.2) ---
 safe_include("ops.introspection.code_scan")
 safe_include("ops.introspection.history_reader")
 safe_include("ops.introspection.self_reflect")
 safe_include("ops.introspection.meta_reflect")
 
-# --- ✅ Cognitive Evolution Engine (v19.3) ---
 safe_include("ops.cognitive_evolution")
-
-# --- ✅ Self Diagnostics Module ---
 safe_include("ops.self_diagnostics")
-
-# --- ✅ Firestore Adapter Bridge ---
 safe_include("ops.firestore_adapter")
+
+
+print("[BOOT] Listando rutas registradas en FastAPI:")
+for r in app.routes:
+    try:
+        methods = getattr(r, "methods", None)
+        print("[ROUTE]", getattr(r, "path", None), methods)
+    except Exception as e:
+        print("[ROUTE_ERR]", r, e)
 
 # memory v1 explícito (si existe)
 try:
     from app.api_v1.memory_v1_routes import router as memory_v1_router
+
     app.include_router(memory_v1_router)
 except Exception:
     pass
 
-# ================================================================
-# ENDPOINT OPENAPI PÚBLICO PARA CHATGPT
-# ================================================================
 
+
+# ================================================================
+# DEBUG: listar rutas registradas en tiempo de ejecución
+# ================================================================
+from fastapi.routing import APIRoute  # type: ignore
+
+@app.get("/debug/routes", include_in_schema=False)
+def debug_routes():
+    """
+    Devuelve las rutas registradas en esta instancia de FastAPI.
+    Sirve para comparar local vs Cloud Run.
+    """
+    rutas = []
+    for route in app.routes:
+        if isinstance(route, APIRoute):
+            rutas.append({
+                "path": route.path,
+                "methods": sorted(list(route.methods)),
+            })
+    return rutas
+
+# ================================================================
+# OPENAPI PÚBLICO PARA CHATGPT
+# ================================================================
 @app.get("/openapi_public.json", include_in_schema=False)
 def openapi_public():
     """
@@ -137,18 +159,18 @@ def openapi_public():
             "info": {
                 "title": "Natacha Public API (missing file)",
                 "version": "1.0.0",
-                "description": "public_openapi.json no encontrado en el contenedor."
+                "description": "public_openapi.json no encontrado en el contenedor.",
             },
-            "paths": {}
+            "paths": {},
         }
 
     with path.open() as f:
         return json.load(f)
 
+
 # ================================================================
 # CUSTOM OPENAPI (INTERNO)
 # ================================================================
-
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
@@ -169,3 +191,13 @@ def custom_openapi():
 
 
 app.openapi = custom_openapi  # type: ignore
+
+
+# === Endpoint raíz ===
+@app.get("/")
+def root():
+    return {
+        "status": "ok",
+        "version": "19.0",
+        "message": "Natacha API – núcleo afectivo adaptativo 🚀",
+    }

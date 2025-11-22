@@ -35,4 +35,4 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
 EXPOSE 8080
 
 # 5. comando
-CMD ["sh", "-c", "uvicorn service_main:app --host 0.0.0.0 --port ${PORT:-8080}"]
+CMD ["sh", "-c", "uvicorn service_main:app --host 0.0.0.0 --port 8000"]

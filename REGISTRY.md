@@ -1,13 +1,8 @@
 # Natacha API - Registry
 - URL: https://natacha-api-422255208682.us-central1.run.app
-- Revisión: natacha-api-00428-g49
-- Service Account: natacha-firestore-access@asistente-sebastian.iam.gserviceaccount.com
-- Secret montado: natacha-firestore-key
-
-## 2025-11-13 – Estado estable Natacha API
-
-- Revisión Cloud Run: natacha-api-00484-drq
-- Imagen: gcr.io/asistente-sebastian/natacha-api:natacha-v1
+- Revisión: natacha-api-00605-9x5
+- Service Account: natacha-runtime@asistente-sebastian.iam.gserviceaccount.com
+- Secret montado: NATACHA_API_KEY
 - Health: /health → OK
 - Memoria:
   - /memory/engine/recent
