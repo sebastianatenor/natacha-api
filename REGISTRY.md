@@ -13,6 +13,65 @@
 - Índice Firestore requerido:
     user_id ASC, project ASC, ts DESC.
 
+#### Integración: semantic_memory_v2 ↔ motor de contexto (context_bundle)
+
+Rol de la integración:
+- Cuando Natacha necesita “entender en qué anda Sebastián”, el motor de contexto (context_bundle)
+  consulta a `semantic_memory_v2` para traer recuerdos relevantes y los mezcla con:
+  - memoria reciente / conversación actual
+  - tareas abiertas y estado de proyectos (LLVC, etc.)
+  - eventos de calendario / signals externos (cuando estén integrados)
+
+Contrato mínimo de uso (desde el engine):
+- Siempre llamar a `semantic_memory_v2.summarize(...)` con:
+  - `user_id` obligatorio (ej: "sebastian").
+  - `project` opcional pero recomendado (ej: "LLVC").
+  - `q` la intención actual o tema (ej: "proformas", "estado grúas SQZ400").
+  - `limit` entre 3 y 20 según el caso (por defecto usamos 5–10).
+- El engine NUNCA debe asumir que:
+  - habrá siempre items,
+  - habrá siempre embeddings,
+  - OpenAI respondió bien.
+  En su lugar, debe usar SIEMPRE los campos del dict que devuelve `summarize()`:
+
+Salida garantizada de `semantic_memory_v2.summarize()`:
+- `query`: la query original que se usó.
+- `user_id`, `project`: eco de los parámetros.
+- `limit`: cuántos recuerdos se consideraron.
+- `context_preview`: texto compacto con los recuerdos relevantes (`[#1] ...`).
+- `summary`: resumen en lenguaje natural (o fallback sin modelo si falló algo).
+- `model`: modelo usado (ej: "gpt-4o-mini").
+- `error`: `null` si todo ok, o string con el mensaje de error si el modelo falló.
+- `items`: lista de recuerdos con sus campos:
+  - `text`, `tags`, `people`, `ts`, `project`, `user_id`
+  - `score` (similitud coseno básica)
+  - `sim` (similitud normalizada interna)
+  - `fresh` (factor de frescura / recencia)
+  - `tag_bonus` (bonus por match de tags)
+
+Responsabilidad del engine (context_bundle):
+- Usar `summary` y/o `context_preview` como “memoria larga” para construir el prompt de Natacha.
+- Puede usar `items` para:
+  - destacar qué es lo más importante,
+  - decidir próximos pasos (ej: “hablar con Sophie por proformas”),
+  - alimentar otros módulos (planner, gestor de tareas, etc.).
+- No debe escribir directamente en Firestore para memoria semántica:
+  SIEMPRE debe delegar las escrituras a `semantic_memory_v2.save_event(...)`
+  o a los endpoints `/memory/v2/semantic/add`.
+
+Ejemplo mental de flujo:
+1. Usuario habla de “proformas de XCMG para Metalcon”.
+2. Engine llama a:
+   - `summ = semantic_memory_v2.summarize(user_id="sebastian", project="LLVC", q="proformas", limit=5)`
+3. Engine arma el contexto de Natacha con:
+   - conversación reciente,
+   - `summ["summary"]`,
+   - opcionalmente algunos `summ["items"]` crudos.
+4. Natacha responde sabiendo:
+   - que Sophie está demorada,
+   - que hay preocupación por Metalcon y los clientes,
+   - que quizá haya que escribir o hacer follow-up.
+
 # Natacha API - Registry
 - URL: https://natacha-api-422255208682.us-central1.run.app
 - Revisión: natacha-api-00605-9x5
