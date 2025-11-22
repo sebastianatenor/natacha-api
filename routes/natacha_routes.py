@@ -110,7 +110,7 @@ def natacha_respond(payload: UserMessage):
         ctx = fetch_context(user_id=payload.user_id)
 
         # 2) Construir el prompt con memoria consolidada
-        base_prompt = build_prompt(ctx)
+       base_prompt = build_prompt(ctx, payload.message)
 
         # 2b) Guardar memoria de conversación si aplica
         try:
