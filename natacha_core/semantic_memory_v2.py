@@ -8,8 +8,8 @@ from openai import OpenAI
 
 COLLECTION = "semantic_memory_v2"
 
-_firestore_client = None
-_openai_client = None
+_firestore_client: Optional[firestore.Client] = None
+_openai_client: Optional[OpenAI] = None
 
 
 def _fs() -> firestore.Client:
@@ -96,9 +96,8 @@ def save_event(user_id: str, project: str, text: str, tags=None, people=None):
     embedding: List[float] = []
     try:
         embedding = _embed_text(text)
-    except Exception as e:
+    except Exception:
         # Defensa: si algo falla con OpenAI, igual guardamos sin embedding
-        print(f"[semantic_memory_v2.save_event] Error generando embedding: {e}")
         embedding = []
 
     doc = {
@@ -115,71 +114,63 @@ def save_event(user_id: str, project: str, text: str, tags=None, people=None):
     return {"status": "ok", "saved": doc}
 
 
-def search(limit: int = 50, **filters):
+def search(
+    user_id: Optional[str] = None,
+    project: Optional[str] = None,
+    q: Optional[str] = None,
+    limit: int = 50,
+):
     """
-    Búsqueda semántica simple y robusta:
+    Búsqueda semántica simple:
     - Filtra por user_id y project si vienen.
-    - Si no hay q -> devuelve últimos eventos por ts (o sin order_by si Firestore se queja).
+    - Si no hay q -> devuelve últimos eventos por ts.
     - Si hay q -> genera embedding de la query y rankea por similitud coseno.
-    - Nunca explota por:
-        * índices de Firestore
-        * embeddings faltantes o mal formados
-        * errores de OpenAI
-    """
-    user_id: Optional[str] = filters.get("user_id")
-    project: Optional[str] = filters.get("project")
-    q: Optional[str] = filters.get("q")
+    - Nunca explota por embeddings faltantes, mal formados o longitudes raras.
 
+    IMPORTANTE: evitamos order_by() en Firestore para no requerir índices
+    compuestos. Ordenamos por ts del lado de la aplicación.
+    """
     db = _fs()
-    base_query = db.collection(COLLECTION)
+    query = db.collection(COLLECTION)
 
     if user_id:
-        base_query = base_query.where("user_id", "==", user_id)
+        query = query.where("user_id", "==", user_id)
     if project:
-        base_query = base_query.where("project", "==", project)
+        query = query.where("project", "==", project)
+
+    # Leemos todos los documentos que matchean los filtros
+    docs = [d.to_dict() for d in query.stream()]
+
+    # Ordenamos por ts descendente del lado de Python
+    def _ts_val(doc: Dict[str, Any]) -> float:
+        try:
+            return float(doc.get("ts", 0.0))
+        except Exception:
+            return 0.0
+
+    docs.sort(key=_ts_val, reverse=True)
 
     # Defensa: aseguramos límite mínimo 1
     limit_value = limit if isinstance(limit, int) and limit > 0 else 50
 
-    # 1) Intento principal: ordenar por ts desc
-    try:
-        query = (
-            base_query
-            .order_by("ts", direction=firestore.Query.DESCENDING)
-            .limit(limit_value)
-        )
-        docs = [d.to_dict() for d in query.stream()]
-    except Exception as e:
-        print(f"[semantic_memory_v2.search] Firestore query con order_by falló: {e}")
-        # 2) Fallback: sin order_by, solo limit
-        try:
-            query = base_query.limit(limit_value)
-            docs = [d.to_dict() for d in query.stream()]
-        except Exception as e2:
-            print(f"[semantic_memory_v2.search] Firestore fallback sin order_by también falló: {e2}")
-            # 3) Fallback extremo: nada
-            return []
-
     # Si no hay texto de búsqueda, devolvemos los últimos eventos tal cual
     if not q:
-        return docs
+        return docs[:limit_value]
 
     # Intentamos generar embedding de la query; si falla, devolvemos fallback
     try:
         query_vec = _embed_text(q)
-    except Exception as e:
-        print(f"[semantic_memory_v2.search] Embedding de la query falló: {e}")
-        return docs
+    except Exception:
+        return docs[:limit_value]
 
-    results = []
+    results: List[Dict[str, Any]] = []
     for d in docs:
         emb = d.get("embedding") or []
         score = 0.0
         if isinstance(emb, list) and emb:
             try:
                 score = _cosine(query_vec, emb)
-            except Exception as e:
-                print(f"[semantic_memory_v2.search] Cálculo de coseno falló: {e}")
+            except Exception:
                 score = 0.0
 
         d_with_score = dict(d)
@@ -191,3 +182,101 @@ def search(limit: int = 50, **filters):
 
     # Respetamos el límite en la salida
     return results[:limit_value]
+
+
+def summarize(
+    user_id: Optional[str] = None,
+    project: Optional[str] = None,
+    q: Optional[str] = None,
+    limit: int = 5,
+    max_tokens: int = 256,
+) -> Dict[str, Any]:
+    """
+    Devuelve un resumen de los recuerdos más relevantes para la query dada.
+    Nunca levanta excepción: si algo falla, devuelve un resumen fallback.
+    """
+    # Primero reutilizamos la búsqueda semántica
+    items = search(user_id=user_id, project=project, q=q, limit=limit)
+
+    # Armamos un bloque de contexto compacto
+    lines = []
+    for idx, item in enumerate(items, start=1):
+        ts = item.get("ts")
+        text = item.get("text", "")
+        project_val = item.get("project") or ""
+        tags = item.get("tags") or []
+        tags_str = ", ".join(tags) if tags else ""
+        parts = [f"[#{idx}]"]
+        if project_val:
+            parts.append(f"[{project_val}]")
+        if ts:
+            # timestamp puede venir como float o int; lo simplificamos
+            try:
+                ts_num = float(ts)
+                parts.append(f"(ts={int(ts_num)})")
+            except Exception:
+                pass
+        header = " ".join(parts)
+        if tags_str:
+            header = f"{header} [{tags_str}]"
+        lines.append(f"{header}\n{text}")
+
+    context_block = "\n\n".join(lines) if lines else "No hay recuerdos previos relevantes."
+
+    # Prompt base para el modelo
+    prompt = (
+        "Eres la memoria de un asistente personal llamado Natacha, que ayuda a Sebastián con "
+        "importaciones de maquinaria, coordinación con proveedores (como XCMG, Jamin, etc.) y "
+        "la relación con sus clientes (Metalcon, Nubicom, etc.).\n\n"
+        "Te paso fragmentos de recuerdos (eventos semánticos). Cada uno está numerado [#] y puede tener tags.\n\n"
+        f"Consulta del usuario: {q or '(sin consulta explícita)'}\n\n"
+        "Recuerdos:\n"
+        f"{context_block}\n\n"
+        "Responde en español con:\n"
+        "1) Un resumen corto y accionable de la situación (2–3 frases).\n"
+        "2) Hasta 3 puntos clave que Natacha debería tener presente.\n"
+        "3) Si corresponde, una sugerencia concreta de próximo paso para Sebastián.\n"
+    )
+
+    # Llamada al modelo, con defensa total para no romper el endpoint
+    summary_text = ""
+    model_used = "gpt-4o-mini"
+    error_message = None
+
+    try:
+        client = _openai()
+        resp = client.chat.completions.create(
+            model=model_used,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Eres una memoria ejecutiva para un asistente personal llamado Natacha."
+                },
+                {"role": "user", "content": prompt},
+            ],
+            max_tokens=max_tokens,
+            temperature=0.2,
+        )
+        summary_text = resp.choices[0].message.content
+    except Exception as e:
+        # Fallback: resumen básico concatenando textos
+        error_message = str(e)
+        joined = " ".join(item.get("text", "") for item in items)
+        if not joined:
+            summary_text = "No hay recuerdos almacenados para esta consulta."
+        else:
+            if len(joined) > 600:
+                joined = joined[:600] + "..."
+            summary_text = "Resumen aproximado (fallback sin modelo): " + joined
+
+    return {
+        "query": q,
+        "user_id": user_id,
+        "project": project,
+        "limit": limit,
+        "context_preview": context_block,
+        "summary": summary_text,
+        "model": model_used,
+        "error": error_message,
+        "items": items,
+    }

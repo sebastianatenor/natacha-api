@@ -1,4 +1,3 @@
-
 from typing import List, Optional
 
 from fastapi import APIRouter
@@ -45,3 +44,21 @@ def semantic_search(
         limit=limit,
     )
     return {"items": items}
+
+
+@router.get("/summary")
+def semantic_summary(
+    user_id: str,
+    project: str,
+    q: str,
+    limit: int = 20,
+):
+    """
+    Devuelve un resumen de los recuerdos más relevantes para la query dada.
+    """
+    return semantic_memory_v2.summarize(
+        user_id=user_id,
+        project=project,
+        q=q,
+        limit=limit,
+    )
