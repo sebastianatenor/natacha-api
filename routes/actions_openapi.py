@@ -58,14 +58,84 @@ def _build_actions_schema(app) -> Dict:
         routes=app.routes,
     )
 
+    # Filtramos paths
     paths = full_schema.get("paths", {})
     filtered_paths = {p: v for p, v in paths.items() if p in ALLOWED_PATHS}
     full_schema["paths"] = filtered_paths
 
-    # 🔴 FIX IMPORTANTE: agregar servers con URL HTTPS pública
+    # 🔴 FIX 1: agregar servers con URL HTTPS pública (requisito de Actions)
     full_schema["servers"] = [
         {"url": "https://natacha-api-422255208682.us-central1.run.app"}
     ]
+
+    # 🔴 FIX 2: definir esquemas formales para people.save y projects.save
+    components = full_schema.setdefault("components", {}).setdefault("schemas", {})
+
+    # Esquema para /people/save
+    components["PeoplePayload"] = {
+        "title": "PeoplePayload",
+        "type": "object",
+        "properties": {
+            "id": {"type": "string", "title": "Id", "description": "ID interno único del contacto"},
+            "name": {"type": "string", "title": "Name", "description": "Nombre de la persona"},
+            "role": {"type": "string", "title": "Role", "description": "Rol / cargo"},
+            "location": {"type": "string", "title": "Location", "description": "Ciudad / región"},
+            "notes": {"type": "string", "title": "Notes", "description": "Notas relevantes"},
+            "tags": {
+                "type": "array",
+                "title": "Tags",
+                "items": {"type": "string"},
+                "description": "Etiquetas tipo ['china','xcmg','llvc']",
+            },
+        },
+        "required": ["id"],
+    }
+
+    # Esquema para /projects/save
+    components["ProjectPayload"] = {
+        "title": "ProjectPayload",
+        "type": "object",
+        "properties": {
+            "id": {"type": "string", "title": "Id", "description": "ID único del proyecto (ej. 'LLVC')"},
+            "name": {"type": "string", "title": "Name", "description": "Nombre del proyecto"},
+            "status": {"type": "string", "title": "Status", "description": "Estado actual (activo, idea, pausado, etc.)"},
+            "focus": {
+                "type": "array",
+                "title": "Focus",
+                "items": {"type": "string"},
+                "description": "Áreas de foco (ej. ['importaciones','maquinaria'])",
+            },
+            "notes": {"type": "string", "title": "Notes", "description": "Notas generales del proyecto"},
+            "risks": {
+                "type": "array",
+                "title": "Risks",
+                "items": {"type": "string"},
+                "description": "Riesgos principales",
+            },
+            "next_steps": {
+                "type": "array",
+                "title": "NextSteps",
+                "items": {"type": "string"},
+                "description": "Próximos pasos a seguir",
+            },
+        },
+        "required": ["id"],
+    }
+
+    # Forzar que los endpoints /people/save y /projects/save usen esos schemas
+    try:
+        full_schema["paths"]["/people/save"]["post"]["requestBody"]["content"]["application/json"]["schema"] = {
+            "$ref": "#/components/schemas/PeoplePayload"
+        }
+    except KeyError:
+        pass
+
+    try:
+        full_schema["paths"]["/projects/save"]["post"]["requestBody"]["content"]["application/json"]["schema"] = {
+            "$ref": "#/components/schemas/ProjectPayload"
+        }
+    except KeyError:
+        pass
 
     return full_schema
 
