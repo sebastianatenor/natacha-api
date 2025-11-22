@@ -1,65 +1,97 @@
 from typing import Optional, Dict, Any
-from fastapi import APIRouter, Body, Query
-import requests
-import os
+
+from fastapi import APIRouter, Body, Query, HTTPException
+
+# Importamos los modelos y handlers core de tasks
+from routes.tasks_routes import (
+    TaskCreate,
+    TaskUpdate,
+    tasks_add,
+    tasks_list,
+    tasks_update,
+)
 
 router = APIRouter(prefix="/v1", tags=["v1"])
 
-# Detecta BASE del propio servicio
-BASE = os.getenv("BASE_URL", "").strip()
-if not BASE:
-    BASE = "http://localhost:8000"
 
-# -----------------------------
-# 1) /v1/tasks/add  → proxy real
-# -----------------------------
 @router.post("/tasks/add")
 def v1_tasks_add(payload: Dict[str, Any] = Body(...)):
-    url = f"{BASE}/tasks/add"
-    r = requests.post(url, json=payload, timeout=10)
+    """
+    /v1/tasks/add – fachada estable hacia el core /tasks/add.
+
+    - Valida el payload con TaskCreate.
+    - Llama directamente a tasks_add(...) del módulo core.
+    - Devuelve un envoltorio con source="v1_proxy_add".
+    """
+    try:
+        task = TaskCreate(**payload)
+    except TypeError as e:
+        raise HTTPException(status_code=400, detail=f"invalid task payload: {e}")
+
+    core_resp = tasks_add(task)  # dict con {"status": "ok", "item": {...}} idealmente
+
+    item = core_resp.get("item", core_resp) if isinstance(core_resp, dict) else core_resp
+
     return {
         "status": "ok",
         "source": "v1_proxy_add",
-        "item": r.json().get("item"),
+        "item": item,
     }
 
-# -----------------------------
-# 2) /v1/tasks/search  → proxy real
-# -----------------------------
+
 @router.get("/tasks/search")
 def v1_tasks_search(
     project: Optional[str] = Query(default=None),
     state: Optional[str] = Query(default=None),
-    limit: int = Query(default=20),
+    limit: int = Query(default=20, ge=1, le=200),
 ):
-    params = {
-        "project": project,
-        "state": state,
-        "limit": limit,
-    }
-    url = f"{BASE}/tasks/list"
-    r = requests.get(url, params=params, timeout=10)
-    data = r.json()
+    """
+    /v1/tasks/search – fachada estable hacia el core /tasks/list.
+
+    Usa:
+      - user_id: None
+      - project, state, limit como vienen del query.
+    """
+    core_resp = tasks_list(
+        user_id=None,
+        project=project,
+        state=state,
+        limit=limit,
+    )
+
+    items = core_resp.get("items", []) if isinstance(core_resp, dict) else core_resp
+
     return {
         "status": "ok",
         "source": "v1_proxy_search",
-        "items": data.get("items", []),
+        "project": project,
+        "state": state,
+        "limit": limit,
+        "items": items,
     }
 
-# -----------------------------
-# 3) /v1/tasks/update  → proxy REAL nuevo
-# -----------------------------
+
 @router.post("/tasks/update")
 def v1_tasks_update(payload: Dict[str, Any] = Body(...)):
     """
-    Proxy real: reenviamos a /tasks/update
+    /v1/tasks/update – fachada estable hacia el core /tasks/update.
+
+    Requiere:
+      - id
+    Opcionales:
+      - title, detail, state, due
     """
-    url = f"{BASE}/tasks/update"
-    r = requests.post(url, json=payload, timeout=10)
-    out = r.json()
+    try:
+        upd = TaskUpdate(**payload)
+    except TypeError as e:
+        raise HTTPException(status_code=400, detail=f"invalid task update payload: {e}")
+
+    core_resp = tasks_update(upd)  # dict con {"status": "ok", "item": {...}} idealmente
+
+    item = core_resp.get("item", core_resp) if isinstance(core_resp, dict) else core_resp
 
     return {
         "status": "ok",
         "source": "v1_proxy_update",
-        "item": out.get("item"),
+        "item": item,
     }
