@@ -1,131 +1,166 @@
-import os
 import requests
+import os
 
 SERVICE_URL = os.getenv("SERVICE_URL", "https://natacha-api-422255208682.us-central1.run.app")
 
 
-def fetch_context(user_id: str):
+def fetch_context(user_id: str, project: str = None):
     """
-    Consulta el bundle de memoria consolidada desde Cloud Run
-    y garantiza devolver SIEMPRE un diccionario.
+    Llama al motor /memory/engine/context_bundle y devuelve el paquete completo.
     """
+    params = {"user_id": user_id, "recent_limit": 20}
+    if project:
+        params["project"] = project
+        params["semantic_project"] = project
+        params["semantic_q"] = f"estado {project}"
+        params["semantic_limit"] = 5
 
     try:
-        url = f"{SERVICE_URL}/memory/engine/context_bundle?user_id={user_id}&recent_limit=20"
-        resp = requests.get(url, timeout=10)
-
-        resp.raise_for_status()
-
-        data = resp.json()
-
-        # 🔒 GARANTÍA: siempre dict
-        if not isinstance(data, dict):
-            return {"summary": "", "recent": [], "system_rule": ""}
-
-        # Normalización mínima
-        return {
-            "summary": data.get("summary", ""),
-            "recent": data.get("recent", []),
-            "system_rule": data.get("system_rule", ""),
-            "user_id": user_id,
-        }
-
+        r = requests.get(f"{SERVICE_URL}/memory/engine/context_bundle", params=params, timeout=10)
+        return r.json()
     except Exception as e:
-        # Devuelve dict seguro en caso de error
         return {
-            "summary": "",
-            "recent": [],
-            "system_rule": "",
-            "error": f"context_fetch_error: {e}",
-            "user_id": user_id,
+            "status": "error",
+            "error": str(e),
+            "system_rule": None,
+            "summary": None,
+            "recent": {},
+            "semantic_v2": {},
         }
 
 
-def build_prompt(ctx: dict) -> str:
+def build_prompt(context: dict, message: str) -> str:
     """
-    Construye el prompt base con sistema + memoria consolidada + reglas.
-    DEBE recibir siempre un dict desde fetch_context().
+    Construye el prompt que se le pasa al modelo.
+    Ahora incluye semantic_v2.summary integrado.
     """
 
-    system_raw = ctx.get("system_rule") or {}
-    summary_raw = ctx.get("summary") or {}
-    recent_raw = ctx.get("recent") or []
-    error = ctx.get("error", None)
+    parts = []
 
-    # Normalización:
-    # - system_rule suele venir como dict {"rule": "...", "version": "...", ...}
-    # - summary suele venir como dict {"summary": "...", "count": N, ...}
-    if isinstance(system_raw, dict):
-        system_text = system_raw.get("rule", "") or ""
-    else:
-        system_text = str(system_raw) if system_raw else ""
-
-    if isinstance(summary_raw, dict):
-        summary_text = summary_raw.get("summary", "") or ""
-    else:
-        summary_text = str(summary_raw) if summary_raw else ""
-
-    base = (
+    # 1. Rol
+    parts.append(
         "You are Natacha, an executive AI assistant for Sebastián Atenor (LLVC Global). "
-        "You speak Spanish (vos) with an empowered but clear and concrete tone.\n\n"
+        "You speak Spanish (vos) with an empowered but clear and concrete tone."
     )
 
-    if error:
-        base += f"(⚠️ CONTEXT WARNING: {error})\n\n"
+    # 2. System Rule
+    system_rule = context.get("system_rule")
+    if system_rule and system_rule.get("rule"):
+        parts.append(f"\nSystem rule:\n{system_rule['rule']}")
 
-    if system_text.strip():
-        base += f"System rule:\n{system_text.strip()}\n\n"
+    # 3. User memory summary (resumen ejecutivo)
+    summary = context.get("summary")
+    if summary and summary.get("summary"):
+        parts.append(f"\nUser memory summary:\n{summary['summary']}")
 
-    if summary_text.strip():
-        base += f"User memory summary:\n{summary_text.strip()}\n\n"
+    # 4. Semantic v2 – integración explícita
+    semantic_block = context.get("semantic_v2") or {}
+    semantic_result = semantic_block.get("result") or {}
+    semantic_summary = semantic_result.get("summary")
 
-    # Opcional: incluir últimos recuerdos crudos como bullets
-    if isinstance(recent_raw, list) and recent_raw:
-        notes = []
-        for item in recent_raw[:5]:
-            note = ""
-            if isinstance(item, dict):
-                note = item.get("note") or item.get("text") or ""
-            else:
-                note = str(item)
-            note = (note or "").strip()
+    if semantic_summary:
+        parts.append("\nMemoria semántica del proyecto (v2):\n" + semantic_summary)
+
+    # 5. Recent messages (solo para dar color contextual)
+    recent = context.get("recent", {})
+    items = recent.get("items", [])
+    if items:
+        recent_texts = []
+        for it in items[:5]:
+            note = it.get("note")
             if note:
-                notes.append(f"- {note}")
-        if notes:
-            base += "Recent raw memories:\n" + "\n".join(notes) + "\n\n"
+                recent_texts.append(f"- {note}")
+        if recent_texts:
+            parts.append("\nMensajes recientes relevantes:\n" + "\n".join(recent_texts))
 
-    return base.strip()
+    # 6. Mensaje actual del usuario
+    parts.append("\nMensaje del usuario:\n" + message)
+
+    return "\n\n".join(parts)
 
 
-def search_related_memories(user_id: str, query: str, top_k: int = 5):
+def call_llm(prompt: str) -> str:
     """
-    Busca memorias v2 relacionadas semánticamente al mensaje actual.
-
-    Usa /memory/v2/search con:
-    - query: mensaje actual
-    - top_k: cantidad de resultados
-    - tags: ["user:<user_id>"] para acotar por usuario
+    Llama al modelo de OpenAI usando la API definida en SERVICE_URL (tu backend).
     """
     try:
-        url = f"{SERVICE_URL.rstrip('/')}/memory/v2/search"
-        payload = {
-            "query": query,
-            "top_k": top_k,
-            "tags": [f"user:{user_id}"],
-            "use_semantic": True,
+        r = requests.post(
+            f"{SERVICE_URL}/ops/core/analyze",
+            json={"prompt": prompt},
+            timeout=20,
+        )
+        data = r.json()
+        return data.get("answer") or data.get("text") or "Sin respuesta del modelo."
+    except Exception as e:
+        return f"[Error llamando al modelo] {e}"
+
+
+def handle_message(user_id: str, project: str, message: str):
+    """
+    Lógica principal: obtiene contexto, arma prompt, y llama al modelo.
+    """
+
+    ctx = fetch_context(user_id=user_id, project=project)
+    prompt = build_prompt(ctx, message)
+    answer = call_llm(prompt)
+
+    return {
+        "answer": answer,
+        "used_prompt": prompt,
+        "model_called": True,
+    }
+
+# --------------------------------------------------------------------
+# Compat: helper legado para búsquedas de memoria relacionadas
+# --------------------------------------------------------------------
+
+def search_related_memories(user_id, project, message, limit=5):
+    """
+    Helper legado usado por algunos endpoints (ej. /natacha/respond).
+    Hoy delega en /memory/engine/context_bundle con parámetros semánticos.
+
+    No escribe nada, solo lee contexto.
+    """
+    import os
+    import requests
+
+    base = (
+        os.getenv("SERVICE_URL")
+        or os.getenv("NATACHA_SERVICE_URL")
+        or "http://localhost:8080"
+    )
+
+    params = {
+        "user_id": user_id,
+        "recent_limit": 20,
+        "semantic_limit": limit,
+    }
+
+    if project:
+        params["project"] = project
+        params["semantic_project"] = project
+
+    # usamos el propio mensaje como query semántica
+    params["semantic_q"] = message
+
+    try:
+        r = requests.get(
+            f"{base}/memory/engine/context_bundle",
+            params=params,
+            timeout=10,
+        )
+        r.raise_for_status()
+        data = r.json()
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "params_used": params,
+            "result": None,
         }
-        resp = requests.post(url, json=payload, timeout=8)
-        resp.raise_for_status()
-        data = resp.json()
 
-        # Tolerante al shape de la respuesta
-        if isinstance(data, dict):
-            if "items" in data and isinstance(data["items"], list):
-                return data["items"]
-            if "results" in data and isinstance(data["results"], list):
-                return data["results"]
-
-        return []
-    except Exception:
-        # Nunca romper el flujo por un problema de búsqueda
-        return []
+    return {
+        "status": "ok",
+        "params_used": params,
+        "result": data.get("semantic_v2"),
+    }

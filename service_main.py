@@ -11,13 +11,16 @@ from routes import (
     memory_routes,
     health_route,
     v1_routes,
+    natacha_routes,
     actions_openapi,
+    memory_engine_routes,  # motor de contexto /memory/engine/*
 )
 from routes.tasks_routes import router as tasks_router
 from routes.people_routes import router as people_router
 from routes.project_routes import router as project_router
 from routes.ops_routes import router as ops_routes
-
+from routes.semantic_v2_routes import router as semantic_v2_router
+from routes.natacha_healthcheck import router as natacha_healthcheck_router  # ⬅️ NUEVO
 
 # === Carga automática de memoria desde Google Cloud Storage ===
 import subprocess
@@ -80,31 +83,29 @@ app.add_middleware(
 )
 
 # === Routers principales ===
-app.include_router(memory_routes.router)        # /memory/add, /memory/search
-app.include_router(memory_routes.v1_router)     # /memory/engine/* v1, etc.
-app.include_router(health_route.router)         # /health, /meta
-app.include_router(v1_routes.router)            # /v1/memory/*
-app.include_router(tasks_router)                # /tasks/add, /tasks/list, /tasks/update (core)
+app.include_router(memory_routes.router)         # /memory/add, /memory/search
+app.include_router(memory_routes.v1_router)      # /memory/engine/* v1, etc.
+app.include_router(memory_engine_routes.router)  # /memory/engine/context_bundle
+app.include_router(health_route.router)          # /health, /meta
+app.include_router(v1_routes.router)             # /v1/memory/*
+app.include_router(tasks_router)                 # /tasks/add, /tasks/list, /tasks/update
 app.include_router(people_router)
 app.include_router(project_router)
-app.include_router(ops_routes)                  # /ops/*
-app.include_router(actions_openapi.router)      # /actions/openapi.json para ChatGPT Actions
-from routes.semantic_v2_routes import router as semantic_v2_router
-app.include_router(semantic_v2_router)
+app.include_router(ops_routes)                   # /ops/*
+app.include_router(actions_openapi.router)       # /actions/openapi.json
+app.include_router(natacha_routes.router)        # /natacha/respond
+app.include_router(semantic_v2_router)           # /memory/v2/semantic/*
+app.include_router(natacha_healthcheck_router)   # ⬅️ NUEVO: /natacha/healthcheck
 
-# --- Módulos opcionales (mantengo tus safe_include) ---
+# --- Módulos opcionales ---
 safe_include("routes.core_bridge")
 safe_include("ops.extensions.core_bridge_ext")
-
 safe_include("ops.affective_train")
-
 safe_include("routes.memory_v2")
-
 safe_include("ops.introspection.code_scan")
 safe_include("ops.introspection.history_reader")
 safe_include("ops.introspection.self_reflect")
 safe_include("ops.introspection.meta_reflect")
-
 safe_include("ops.cognitive_evolution")
 safe_include("ops.self_diagnostics")
 safe_include("ops.firestore_adapter")
@@ -127,11 +128,11 @@ except Exception:
     pass
 
 
-
 # ================================================================
 # DEBUG: listar rutas registradas en tiempo de ejecución
 # ================================================================
 from fastapi.routing import APIRoute  # type: ignore
+
 
 @app.get("/debug/routes", include_in_schema=False)
 def debug_routes():
@@ -147,6 +148,7 @@ def debug_routes():
                 "methods": sorted(list(route.methods)),
             })
     return rutas
+
 
 # ================================================================
 # OPENAPI PÚBLICO PARA CHATGPT
