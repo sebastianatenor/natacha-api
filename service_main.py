@@ -89,6 +89,7 @@ app.include_router(people_router)
 app.include_router(project_router)
 app.include_router(ops_routes)                  # /ops/*
 app.include_router(actions_openapi.router)      # /actions/openapi.json para ChatGPT Actions
+from routes.semantic_v2_routes import router as semantic_v2_routernapp.include_router(semantic_v2_router)
 
 # --- Módulos opcionales (mantengo tus safe_include) ---
 safe_include("routes.core_bridge")
