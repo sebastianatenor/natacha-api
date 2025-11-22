@@ -86,6 +86,7 @@ app.include_router(health_route.router)         # /health, /meta
 app.include_router(v1_routes.router)            # /v1/memory/*
 app.include_router(tasks_router)                # /tasks/add, /tasks/list, /tasks/update (core)
 app.include_router(people_router)
+app.include_router(project_router)
 app.include_router(ops_routes)                  # /ops/*
 app.include_router(actions_openapi.router)      # /actions/openapi.json para ChatGPT Actions
 
