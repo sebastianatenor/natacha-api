@@ -246,12 +246,68 @@ Cuando `context_bundle` arme el objeto `summary`, debe combinar tres capas:
 
 ---
 
+## Fuentes de datos y servicios externos
+
+Estado actual (2025-11-22):
+
+- 🔵 Firestore (principal)
+  - Uso: memoria v1, v2, tareas, embeddings.
+  - Estado: EN PRODUCCIÓN, estable.
+  - Acceso: vía `google-cloud-firestore` desde `routes/memory_routes.py`, `routes/semantic_routes.py`, `routes/embeddings_routes.py`, etc.
+
+- 🟢 Google Cloud Storage
+  - Uso: exportaciones de memoria y backups de contexto.
+  - Estado: EN PRODUCCIÓN, estable.
+  - Acceso: vía `google-cloud-storage` desde `routes/memory_export_routes.py` y `routes/memory_v2.py`.
+
+- 🟠 Google Calendar
+  - Objetivo: permitir que Natacha lea eventos, resuma el día y genere recordatorios desde el calendario personal de Sebastián.
+  - Estado actual:
+    - Existe un servicio Cloud Run llamado `natacha-calendar-service`, con URL registrada en los snapshots de infraestructura.
+    - La imagen `gcr.io/asistente-sebastian/natacha-calendar` **no existe** → el servicio está colgado / no funcional.
+  - Decisión de arquitectura:
+    - La integración “oficial” de calendario va a vivir dentro de **este servicio `natacha-api`**, vía nuevas rutas `/calendar/...`.
+    - `natacha-calendar-service` se considera **servicio legado / experimental** y puede darse de baja más adelante.
+  - Próximos pasos (alta prioridad):
+    1. Crear rutas internas `/calendar/status` y `/calendar/agenda-hoy` dentro de `natacha-api`.
+    2. Implementar cliente de Google Calendar usando credenciales ya existentes del proyecto.
+    3. Exponer estos endpoints a través del OpenAPI público para que Natacha (ChatGPT) pueda usarlos como acción.
+
+- 🟠 Google Drive
+  - Objetivo: acceso a documentos y archivos (contratos, cuadros de costos, briefs de proyectos) para que Natacha pueda resumir y buscar.
+  - Estado actual:
+    - No hay código implementado en este repo que use la API de Drive.
+    - Solo está mencionado en documentos de diseño (briefs y planes).
+  - Decisión:
+    - Primera etapa: solo lectura de archivos clave (carpetas LLVC / contratos / briefs).
+    - Se integrará también dentro de `natacha-api` como rutas `/drive/...`.
+  - Próximos pasos (prioridad media-alta):
+    1. Definir carpeta(s) objetivo en Drive.
+    2. Implementar una ruta simple `/drive/list` para listar archivos visibles.
+    3. Implementar `/drive/resume` para enviar un archivo a un modelo y devolver resumen.
+
+- 🟠 Notion
+  - Objetivo: usar Notion como “tablero vivo” de proyectos, tareas y documentación de LLVC Global.
+  - Estado actual:
+    - Existe un secreto `NOTION_TOKEN` configurado en el proyecto GCP.
+    - No hay todavía rutas ni cliente de Notion en este repo.
+    - Notion se menciona en varios documentos: `docs/memory_flow.md`, `docs/plan_automatizacion.md`, `docs/agent_rules.md`, etc.
+  - Decisión:
+    - La integración se hará como módulo interno `routes/notion_routes.py` dentro de `natacha-api`.
+    - Se expondrán acciones para: crear páginas de proyecto, actualizar estado y loguear resúmenes diarios.
+  - Próximos pasos (prioridad alta, pero después de Calendar y Drive):
+    1. Implementar cliente mínimo de Notion usando `NOTION_TOKEN`.
+    2. Crear una ruta `/notion/ping` y `/notion/create-page` como MVP.
+    3. Conectar estas rutas con los flujos de memoria y tareas (Natacha Ventas / Proveedores / Sistema).
+
+---
+
 ## Natacha API - Registry (Cloud Run)
 
 **Estado actual verificado (Cloud Run real, 2025-11-22):**
 
 - URL: `https://natacha-api-422255208682.us-central1.run.app`
-- Revisión activa: `natacha-api-00028-w52`
+- Revisión activa: `natacha-api-00033-jg4`
 - Service Account actual: `422255208682-compute@developer.gserviceaccount.com`
 - Secret montado: `NATACHA_API_KEY`
 - Health: `/health` → OK
@@ -287,7 +343,7 @@ Cuando `context_bundle` arme el objeto `summary`, debe combinar tres capas:
 - `scripts/registry_check.py` → compara REGISTRY vs Cloud Run:
   - Debe ver:
     - URL = `https://natacha-api-422255208682.us-central1.run.app`
-    - Revisión = `natacha-api-00028-w52`
+    - Revisión = `natacha-api-00033-jg4`
     - Service Account = `422255208682-compute@developer.gserviceaccount.com`
     - Secret = `NATACHA_API_KEY`
 

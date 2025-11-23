@@ -21,6 +21,7 @@ from routes.project_routes import router as project_router
 from routes.ops_routes import router as ops_routes
 from routes.semantic_v2_routes import router as semantic_v2_router
 from routes.natacha_healthcheck import router as natacha_healthcheck_router  # ⬅️ NUEVO
+from routes.calendar_routes import router as calendar_router
 
 # === Carga automática de memoria desde Google Cloud Storage ===
 import subprocess
@@ -96,6 +97,7 @@ app.include_router(actions_openapi.router)       # /actions/openapi.json
 app.include_router(natacha_routes.router)        # /natacha/respond
 app.include_router(semantic_v2_router)           # /memory/v2/semantic/*
 app.include_router(natacha_healthcheck_router)   # ⬅️ NUEVO: /natacha/healthcheck
+app.include_router(calendar_router)
 
 # --- Módulos opcionales ---
 safe_include("routes.core_bridge")
