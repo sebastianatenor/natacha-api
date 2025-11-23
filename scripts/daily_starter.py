@@ -1,11 +1,10 @@
 import os
 import sys
 import argparse
-from datetime import datetime
+from datetime import datetime, date
 from typing import Any, Dict, List
 
 import requests
-
 
 SERVICE_URL = os.getenv(
     "SERVICE_URL",
@@ -61,6 +60,34 @@ def format_eventos(eventos: List[Dict[str, Any]]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def shorten_estado_general(text: str) -> str:
+    """
+    Recorta el bloque de summary para que el DAILY STARTER muestre
+    sólo el contexto más accionable y no todo el brief estratégico.
+    """
+    if not text:
+        return "(sin summary)"
+
+    # Separar en líneas y sacar vacías
+    lines = [l for l in text.splitlines() if l.strip()]
+
+    trimmed: List[str] = []
+    for line in lines:
+        # Cortamos si empieza el Brief o el marcador [...]
+        if line.startswith("Brief Ejecutivo"):
+            break
+        if line.strip() == "[...]":
+            break
+
+        trimmed.append(line)
+
+        # Límite de seguridad por si no aparece "Brief Ejecutivo"
+        if len(trimmed) >= 8:
+            break
+
+    return "\n".join(trimmed) if trimmed else text
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Daily starter pack – Agenda ejecutiva del día con Natacha."
@@ -99,7 +126,6 @@ def main():
         print(agenda)
         sys.exit(1)
 
-    from datetime import datetime, date  # al inicio del archivo, si aún no está
 
     hoy = date.today().strftime("%Y-%m-%d")
     print("================================================================================")
@@ -107,8 +133,10 @@ def main():
     print("================================================================================")
     print()
 
-    # BLOQUE 1 – Estado general
-    estado_general = agenda.get("estado_general") or "(sin summary)"
+    # BLOQUE 1 – Estado general (recortado)
+    raw_estado_general = agenda.get("estado_general") or "(sin summary)"
+    estado_general = shorten_estado_general(raw_estado_general)
+
     print("🧠 ESTADO GENERAL")
     print("─────────────────")
     print(estado_general)
