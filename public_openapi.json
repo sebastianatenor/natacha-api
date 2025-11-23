@@ -700,6 +700,60 @@
           }
         }
       }
+    },
+    "/natacha/agenda_hoy": {
+      "get": {
+        "operationId": "getAgendaHoy",
+        "tags": [
+          "natacha",
+          "agenda"
+        ],
+        "summary": "Agenda ejecutiva del día para un usuario/proyecto",
+        "description": "Devuelve un resumen ejecutivo del estado general, tareas relevantes, eventos próximos y una recomendación prioritaria para el día.",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Identificador del usuario (por ejemplo, 'sebastian')."
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "description": "Proyecto actual (por ejemplo, 'LLVC')."
+          },
+          {
+            "name": "hours_ahead",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 12
+            },
+            "description": "Ventana de horas hacia adelante para mirar eventos."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agenda ejecutiva generada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgendaHoyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -749,6 +803,103 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "AgendaTaskItem": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "due": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "state"
+        ]
+      },
+      "AgendaEventItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "start": {
+            "type": "string"
+          },
+          "end": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "summary",
+          "start",
+          "end"
+        ]
+      },
+      "AgendaHoyResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          },
+          "project": {
+            "type": "string",
+            "nullable": true
+          },
+          "estado_general": {
+            "type": "string"
+          },
+          "puntos_clave": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tareas_relevantes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgendaTaskItem"
+            }
+          },
+          "eventos_hoy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgendaEventItem"
+            }
+          },
+          "recomendacion_del_dia": {
+            "type": "string"
+          },
+          "generated_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "user_id",
+          "estado_general",
+          "puntos_clave",
+          "tareas_relevantes",
+          "eventos_hoy",
+          "recomendacion_del_dia",
+          "generated_at"
+        ]
       }
     }
   }
