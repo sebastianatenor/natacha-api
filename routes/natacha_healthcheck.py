@@ -56,6 +56,7 @@ def natacha_healthcheck(payload: HealthcheckRequest):
     - Que recent no esté vacío.
     - Que semantic_v2 responda algo para el proyecto actual.
     - Que el motor de tasks esté reachable.
+    - Que el proxy de Calendar responda y devuelva eventos (aunque sean de demo).
 
     Devuelve un snapshot compacto para diagnóstico ejecutivo.
     """
@@ -67,7 +68,13 @@ def natacha_healthcheck(payload: HealthcheckRequest):
     # 1) context_bundle (core de memoria ejecutiva)
     ctx = _safe_get(
         f"{SERVICE_URL}/memory/engine/context_bundle",
-        params={"user_id": user_id, "project": project, "semantic_project": project, "semantic_q": "estado LLVC", "semantic_limit": 5},
+        params={
+            "user_id": user_id,
+            "project": project,
+            "semantic_project": project,
+            "semantic_q": "estado LLVC",
+            "semantic_limit": 5,
+        },
     )
 
     summary = ctx.get("summary")
@@ -92,24 +99,70 @@ def natacha_healthcheck(payload: HealthcheckRequest):
     )
     checks["tasks_engine_reachable"] = tasks_resp.get("status") == "ok"
 
+    # 3) Calendar proxy (nuevo)
+    calendar_health = _safe_get(f"{SERVICE_URL}/calendar/proxy/health")
+
+    # Consideramos OK si el proxy responde y el servicio objetivo dice status="ok"
+    cal_proxy_ok = (
+        isinstance(calendar_health, dict)
+        and calendar_health.get("proxy_status") == "ok"
+        and isinstance(calendar_health.get("target_status"), dict)
+        and calendar_health["target_status"].get("status") == "ok"
+    )
+    checks["calendar_proxy_ok"] = cal_proxy_ok
+
+    # Traer eventos de calendar vía proxy (pueden ser de demo)
+    calendar_events_resp = _safe_get(
+        f"{SERVICE_URL}/calendar/proxy/list",
+        params={"hours_ahead": 8},
+    )
+
+    events_raw = calendar_events_resp.get("events")
+    calendar_preview: List[Dict[str, Any]] = []
+
+    if isinstance(events_raw, list):
+        for ev in events_raw[:3]:
+            # Normalizamos a un formato compacto
+            calendar_preview.append(
+                {
+                    "id": ev.get("id"),
+                    "summary": ev.get("summary"),
+                    "start": ev.get("start"),
+                    "end": ev.get("end"),
+                    "location": ev.get("location"),
+                }
+            )
+
     # Snapshot de contexto (compacto)
     context_snapshot: Dict[str, Any] = {
         "system_rule": system_rule,
         "summary": summary,
-        "recent_sample": (recent.get("items", [])[:5] if isinstance(recent, dict) else []),
-        "semantic_v2_status": semantic_v2.get("status") if isinstance(semantic_v2, dict) else None,
+        "recent_sample": (
+            recent.get("items", [])[:5] if isinstance(recent, dict) else []
+        ),
+        "semantic_v2_status": (
+            semantic_v2.get("status") if isinstance(semantic_v2, dict) else None
+        ),
+        "calendar_preview": calendar_preview,
+        "calendar_proxy_status": calendar_health.get("proxy_status")
+        if isinstance(calendar_health, dict)
+        else None,
     }
 
     # Protocolo de sanidad ejecutiva (lo ponemos explícito para inspeccionarlo fácil)
     protocol: Dict[str, Any] = {
-        "version": "exec-health-v1",
-        "description": "Checklist ejecutivo de sanidad cognitiva de Natacha para Sebastián.",
+        "version": "exec-health-v2",
+        "description": (
+            "Checklist ejecutivo de sanidad cognitiva de Natacha para Sebastián, "
+            "incluyendo memoria, tareas y calendario."
+        ),
         "questions": [
             "¿Tengo cargada la system_rule core-v1?",
             "¿Tengo un summary actualizado para este user_id/proyecto?",
             "¿Estoy viendo memorias recientes relevantes (recent)?",
             "¿La memoria semántica v2 devuelve algo coherente para este proyecto?",
-            "¿El motor de tareas responde y lista pendientes?"
+            "¿El motor de tareas responde y lista pendientes?",
+            "¿El proxy de Calendar responde y veo los próximos eventos?",
         ],
     }
 
@@ -120,9 +173,18 @@ def natacha_healthcheck(payload: HealthcheckRequest):
         tasks_sample = items[:5]
 
     # Determinar severidad general
-    if all(checks.values()):
+    # (si calendario falla pero el resto está ok, lo marcamos como 'attention')
+    core_ok = (
+        checks.get("system_rule_present")
+        and checks.get("summary_present")
+        and checks.get("recent_non_empty")
+        and checks.get("protocol_found_in_semantic_v2")
+        and checks.get("tasks_engine_reachable")
+    )
+
+    if core_ok and checks.get("calendar_proxy_ok"):
         overall_status = "ok"
-    elif checks.get("system_rule_present") and checks.get("summary_present"):
+    elif core_ok:
         overall_status = "attention"
     else:
         overall_status = "critical"
