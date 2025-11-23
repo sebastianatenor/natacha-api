@@ -99,7 +99,9 @@ def main():
         print(agenda)
         sys.exit(1)
 
-    hoy = datetime.utcnow().strftime("%Y-%m-%d")
+    from datetime import datetime, date  # al inicio del archivo, si aún no está
+
+    hoy = date.today().strftime("%Y-%m-%d")
     print("================================================================================")
     print(f"📅 DAILY STARTER PACK – {hoy} | user: {args.user_id} | project: {args.project}")
     print("================================================================================")
