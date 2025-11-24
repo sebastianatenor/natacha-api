@@ -98,7 +98,7 @@ app.include_router(ops_routes)                   # /ops/*
 app.include_router(actions_openapi.router)       # /actions/openapi.json
 app.include_router(natacha_routes.router)        # /natacha/respond
 app.include_router(semantic_v2_router)           # /memory/v2/semantic/*
-app.include_router(natacha_healthcheck_router)   # ⬅️ NUEVO: /natacha/healthcheck
+app.include_router(natacha_healthcheck_router)   # /natacha/healthcheck
 app.include_router(calendar_router)
 app.include_router(agenda_router)                # /natacha/agenda_hoy
 
@@ -162,17 +162,22 @@ def debug_routes():
 def openapi_public():
     """
     Devuelve la especificación pública reducida para ChatGPT Actions.
+
+    En este entorno, sirve la versión SLIM:
+    docs/openapi.natacha_agent.slim.json
+    (generada a partir del OpenAPI completo, filtrando a ~14 operaciones).
     """
     base_dir = Path(__file__).parent
-    path = base_dir / "public_openapi.json"
+    path = base_dir / "docs" / "openapi.natacha_agent.slim.json"
 
     if not path.exists():
+        # Fallback amigable si el archivo no está (no rompe el servicio)
         return {
             "openapi": "3.1.0",
             "info": {
-                "title": "Natacha Public API (missing file)",
+                "title": "Natacha Public API (missing slim file)",
                 "version": "1.0.0",
-                "description": "public_openapi.json no encontrado en el contenedor.",
+                "description": "openapi.natacha_agent.slim.json no encontrado en el contenedor.",
             },
             "paths": {},
         }
