@@ -236,7 +236,7 @@ def memory_search(
         return _post_filter(results)
 
 
-@router.get("/memory/search", tags=["memory"])
+@router.get("/memory/search_safe", tags=["memory"])
 def memory_search_safe(
     project: str = Query(default=None),
     channel: str = Query(default=None),
@@ -244,8 +244,9 @@ def memory_search_safe(
     limit: int = Query(default=20, le=100),
 ):
     """
-    Versión con fallback: si Firestore pide índice, traemos últimos por timestamp
-    y filtramos en memoria para evitar 500.
+    Búsqueda de memorias con fallback:
+    - Si Firestore pide índice, trae los últimos por timestamp y filtra en memoria.
+    - Soporta filtros por project, channel y texto (query).
     """
     db = get_db()
     col = db.collection("assistant_memory")
@@ -255,6 +256,7 @@ def memory_search_safe(
         return q2.limit(min(200, max(20, limit))).stream()
 
     try:
+        # Intento A: filtros directos en Firestore (cuando project/channel vienen)
         if project or channel:
             q = col
             if project:
@@ -269,6 +271,7 @@ def memory_search_safe(
                 data["id"] = d.id
                 results.append(data)
         else:
+            # Sin filtros → más nuevos por timestamp
             docs = _stream_latest()
             results = []
             for d in docs:
@@ -292,11 +295,33 @@ def memory_search_safe(
     if query:
         q_lower = query.lower()
         results = [
-            x for x in results
-            if q_lower in ((x.get("summary") or "") + " " + (x.get("detail") or "")).lower()
+            x
+            for x in results
+            if q_lower in (
+                (x.get("summary") or "") + " " + (x.get("detail") or "")
+            ).lower()
         ]
 
     return results[:limit]
+
+
+@router.get("/memory/search", tags=["memory"])
+def memory_search_legacy(
+    project: str = Query(default=None),
+    channel: str = Query(default=None),
+    query: str = Query(default=None),
+    limit: int = Query(default=20, le=100),
+):
+    """
+    Alias histórico de /memory/search_safe para compatibilidad.
+    """
+    return memory_search_safe(
+        project=project,
+        channel=channel,
+        query=query,
+        limit=limit,
+    )
+
 
 # --- Back-compat alias ---
 v1_router = router

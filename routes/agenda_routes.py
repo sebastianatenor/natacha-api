@@ -41,7 +41,7 @@ def agenda_hoy(
     - eventos próximos desde /calendar/proxy/list
     """
 
-    # 1) Contexto ejecutivo (summary + highlights)
+    # 1) Contexto ejecutivo (summary + highlights + next_steps)
     ctx_params: Dict[str, Any] = {
         "user_id": user_id,
         "recent_limit": 20,
@@ -60,6 +60,8 @@ def agenda_hoy(
     summary_block = ctx.get("summary") or {}
     estado_general = summary_block.get("summary") or "(sin summary)"
     puntos_clave = summary_block.get("highlights") or []
+    # 👇 Nuevo: usamos los next_steps del context_bundle
+    next_steps: List[str] = summary_block.get("next_steps") or []
 
     # 2) Tareas relevantes (filtradas por user_id y project)
     tasks_resp = _safe_get(
@@ -145,7 +147,10 @@ def agenda_hoy(
 
     # 4) Recomendación del día
     recomendacion: str
-    if tareas_relevantes:
+    if next_steps:
+        # Si hay próximos pasos de la memoria semántica, los priorizamos.
+        recomendacion = next_steps[0]
+    elif tareas_relevantes:
         # Priorizar tareas que contengan keywords de negocio
         tareas_negocio = [
             t
@@ -165,6 +170,7 @@ def agenda_hoy(
         "project": project,
         "estado_general": estado_general,
         "puntos_clave": puntos_clave,
+        "proximos_pasos": next_steps,
         "tareas_relevantes": tareas_relevantes,
         "eventos_hoy": eventos_hoy,
         "recomendacion_del_dia": recomendacion,

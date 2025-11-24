@@ -273,6 +273,17 @@ Estado actual (2025-11-22):
     2. Implementar cliente de Google Calendar usando credenciales ya existentes del proyecto.
     3. Exponer estos endpoints a través del OpenAPI público para que Natacha (ChatGPT) pueda usarlos como acción.
 
+**Estado actual módulo /calendar dentro de natacha-api (2025-11-23)**
+
+- Existe el módulo `routes/calendar_routes.py` con:
+  - `GET /calendar/status` → estado del módulo calendario.
+  - `GET /calendar/proxy/health` → chequea salud del servicio legado de calendario.
+  - `GET /calendar/proxy/list` → obtiene eventos de demo (`/calendar/demo-events`) desde el servicio legado.
+- `GET /natacha/agenda_hoy` ya consume `GET /calendar/proxy/list` para construir la agenda del día.
+- El servicio `natacha-calendar-service` se mantiene como **legado/experimental** mientras se implementa la integración oficial con Google Calendar dentro de `natacha-api`.
+- Próximo paso futuro:
+  - Reemplazar el consumo del servicio legado por integración directa con Google Calendar en este mismo módulo (`routes/calendar_routes.py`), manteniendo las mismas firmas (`/calendar/status`, `/calendar/proxy/list`).
+
 - 🟠 Google Drive
   - Objetivo: acceso a documentos y archivos (contratos, cuadros de costos, briefs de proyectos) para que Natacha pueda resumir y buscar.
   - Estado actual:

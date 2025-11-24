@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+daily_starter.py — Agenda ejecutiva v2 con engine semántico
+
+- Llama a /memory/engine/context_bundle_v2
+- Muestra:
+  * Prioridad absoluta del día (headline)
+  * Tareas pendientes principales (ordenadas por engine v2)
+  * Eventos relevantes (si el bundle trae eventos)
+
+Uso típico:
+
+  BASE="https://natacha-api-mkwskljrhq-uc.a.run.app" \\
+    python3 scripts/daily_starter.py --user sebastian --project LLVC --limit 10
+"""
+
 import os
 import sys
 import argparse
@@ -6,37 +22,23 @@ from typing import Any, Dict, List
 
 import requests
 
-SERVICE_URL = os.getenv(
-    "SERVICE_URL",
-    "https://natacha-api-422255208682.us-central1.run.app",
-)
 
-
-def _safe_get(url: str, params: Dict[str, Any]) -> Dict[str, Any]:
-    try:
-        r = requests.get(url, params=params, timeout=10)
-        r.raise_for_status()
-        return r.json()
-    except Exception as e:
-        return {"status": "error", "error": str(e), "url": url, "params": params}
-
-
-def format_tareas(tareas: List[Dict[str, Any]]) -> str:
-    if not tareas:
-        return "  - (no hay tareas registradas para este proyecto)\n"
-
-    lines = []
-    for t in tareas:
-        title = t.get("title", "(sin título)")
-        state = t.get("state", "")
-        due = t.get("due") or ""
-        due_txt = f" — vence: {due}" if due else ""
-        lines.append(f"  - [{state}] {title}{due_txt}")
-    return "\n".join(lines) + "\n"
+def _get_base() -> str:
+    """
+    Resolve de BASE / SERVICE_URL, con default al endpoint canónico.
+    """
+    base = os.getenv("BASE") or os.getenv("SERVICE_URL")
+    if not base:
+        base = "https://natacha-api-422255208682.us-central1.run.app"
+    return base.rstrip("/")
 
 
 def _short_hour(ts: str) -> str:
-    # ts viene como ISO8601, lo mostramos HH:MM (UTC)
+    """
+    Recorta una ISO8601 a HH:MM (hora local/naive).
+    """
+    if not ts:
+        return ""
     try:
         dt = datetime.fromisoformat(ts.replace("Z", ""))
         return dt.strftime("%H:%M")
@@ -44,53 +46,47 @@ def _short_hour(ts: str) -> str:
         return ts
 
 
+def format_tareas(tareas: List[Dict[str, Any]]) -> str:
+    if not tareas:
+        return "  - (no hay tareas pendientes registradas para este proyecto)\n"
+
+    lines: List[str] = []
+    for t in tareas:
+        title = t.get("title", "(sin título)")
+        state = t.get("state", "")
+        due = t.get("due") or ""
+        if due:
+            due_txt = f" — vence: {due}"
+        else:
+            due_txt = ""
+        lines.append(f"  - [{state}] {title}{due_txt}")
+    return "\n".join(lines) + "\n"
+
+
 def format_eventos(eventos: List[Dict[str, Any]]) -> str:
     if not eventos:
-        return "  - (no hay eventos en el calendario demo)\n"
+        return "  - (no hay eventos registrados en el bundle v2)\n"
 
-    lines = []
+    lines: List[str] = []
     for e in eventos:
         summary = e.get("summary", "(sin título)")
         loc = e.get("location") or ""
         start = e.get("start") or ""
         end = e.get("end") or ""
-        rango = f"{_short_hour(start)}–{_short_hour(end)}" if start and end else ""
+        rango = ""
+        if start or end:
+            rango = f"{_short_hour(start)}–{_short_hour(end)}".strip("–")
         loc_txt = f" @ {loc}" if loc else ""
-        lines.append(f"  - {rango}  {summary}{loc_txt}")
+        if rango:
+            lines.append(f"  - {rango}  {summary}{loc_txt}")
+        else:
+            lines.append(f"  - {summary}{loc_txt}")
     return "\n".join(lines) + "\n"
-
-
-def shorten_estado_general(text: str) -> str:
-    """
-    Recorta el bloque de summary para que el DAILY STARTER muestre
-    sólo el contexto más accionable y no todo el brief estratégico.
-    """
-    if not text:
-        return "(sin summary)"
-
-    # Separar en líneas y sacar vacías
-    lines = [l for l in text.splitlines() if l.strip()]
-
-    trimmed: List[str] = []
-    for line in lines:
-        # Cortamos si empieza el Brief o el marcador [...]
-        if line.startswith("Brief Ejecutivo"):
-            break
-        if line.strip() == "[...]":
-            break
-
-        trimmed.append(line)
-
-        # Límite de seguridad por si no aparece "Brief Ejecutivo"
-        if len(trimmed) >= 8:
-            break
-
-    return "\n".join(trimmed) if trimmed else text
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Daily starter pack – Agenda ejecutiva del día con Natacha."
+        description="Daily starter v2 – Agenda ejecutiva del día con Natacha (engine de contexto v2)."
     )
     parser.add_argument(
         "--user",
@@ -105,77 +101,53 @@ def main():
         help="Proyecto actual (default: LLVC)",
     )
     parser.add_argument(
-        "--hours-ahead",
-        dest="hours_ahead",
+        "--limit",
+        dest="limit",
         type=int,
-        default=12,
-        help="Ventana de horas hacia adelante para eventos (default: 12)",
+        default=10,
+        help="Cantidad máxima de tareas a mostrar (default: 10)",
     )
     args = parser.parse_args()
 
-    params = {
+    base = _get_base()
+    url = f"{base}/memory/engine/context_bundle_v2"
+
+    params: Dict[str, Any] = {
         "user_id": args.user_id,
         "project": args.project,
-        "hours_ahead": args.hours_ahead,
+        "limit": args.limit,
     }
 
-    agenda = _safe_get(f"{SERVICE_URL}/natacha/agenda_hoy", params=params)
-
-    if agenda.get("status") != "ok":
-        print("❌ Error al obtener agenda_hoy")
-        print(agenda)
+    try:
+        resp = requests.get(url, params=params, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception as e:
+        print("❌ Error llamando a context_bundle_v2:", repr(e), file=sys.stderr)
+        print(f"URL: {url}", file=sys.stderr)
+        print(f"Params: {params}", file=sys.stderr)
         sys.exit(1)
 
+    summary = data.get("summary") or {}
+    tasks_block = data.get("tasks") or {}
+    events = data.get("events") or []
 
-    hoy = date.today().strftime("%Y-%m-%d")
-    print("================================================================================")
-    print(f"📅 DAILY STARTER PACK – {hoy} | user: {args.user_id} | project: {args.project}")
-    print("================================================================================")
+    headline = summary.get("headline") or "Sin headline en summary v2."
+    pending_tasks: List[Dict[str, Any]] = tasks_block.get("pending") or []
+    pending_top = pending_tasks[: args.limit]
+
+    today = date.today().isoformat()
+
+    print(f"=== Agenda ejecutiva Natacha — {today} ===")
     print()
-
-    # BLOQUE 1 – Estado general (recortado)
-    raw_estado_general = agenda.get("estado_general") or "(sin summary)"
-    estado_general = shorten_estado_general(raw_estado_general)
-
-    print("🧠 ESTADO GENERAL")
-    print("─────────────────")
-    print(estado_general)
+    print("Prioridad absoluta del día:")
+    print(f"  • {headline}")
     print()
-
-    # BLOQUE 2 – Puntos clave
-    puntos = agenda.get("puntos_clave") or []
-    print("⭐ PUNTOS CLAVE")
-    print("───────────────")
-    if not puntos:
-        print("  - (sin puntos clave cargados)")
-    else:
-        for p in puntos:
-            # cada item ya viene como texto largo; lo mostramos como bullet
-            print(f"  - {p}")
-    print()
-
-    # BLOQUE 3 – Tareas relevantes
-    tareas = agenda.get("tareas_relevantes") or []
-    print("📋 TAREAS RELEVANTES")
-    print("─────────────────────")
-    print(format_tareas(tareas))
-
-    # BLOQUE 4 – Eventos de hoy
-    eventos = agenda.get("eventos_hoy") or []
-    print("📆 AGENDA DE HOY (Calendar demo)")
-    print("────────────────────────────────")
-    print(format_eventos(eventos))
-
-    # BLOQUE 5 – Recomendación del día
-    recomendacion = agenda.get("recomendacion_del_dia") or "(sin recomendación)"
-    print("🎯 RECOMENDACIÓN DEL DÍA")
-    print("────────────────────────")
-    print(f"  → {recomendacion}")
-    print()
-
-    gen_at = agenda.get("generated_at", "")
-    if gen_at:
-        print(f"(Generado por /natacha/agenda_hoy en: {gen_at})")
+    print("Tareas pendientes principales:")
+    print(format_tareas(pending_top))
+    print("Eventos relevantes:")
+    print(format_eventos(events))
+    print(f"(Fuente: /memory/engine/context_bundle_v2 — base={base})")
 
 
 if __name__ == "__main__":
