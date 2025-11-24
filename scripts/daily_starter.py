@@ -64,23 +64,50 @@ def format_tareas(tareas: List[Dict[str, Any]]) -> str:
 
 
 def format_eventos(eventos: List[Dict[str, Any]]) -> str:
-    if not eventos:
-        return "  - (no hay eventos registrados en el bundle v2)\n"
+    """
+    Formatea los eventos para el daily starter.
 
-    lines: List[str] = []
+    Soporta varios formatos:
+    - Lista de dicts crudos (summary, start, end, location).
+    - Lista de strings ya formateados.
+    - Bloque dict: {"items": [...], "next_event": {...}, "count": N}
+    """
+    # Puede venir None
+    if eventos is None:
+        return "  - (no hay eventos registrados en el calendario)\n"
+
+    # Normalizar si viene como bloque tipo {"items": [...], "next_event": ..., "count": ...}
+    if isinstance(eventos, dict):
+        raw = eventos
+        eventos = raw.get("items") or raw.get("eventos") or []
+        if not isinstance(eventos, list):
+            eventos = [eventos] if eventos else []
+
+    # Después de normalizar, si está vacío → mensaje estándar
+    if not eventos:
+        return "  - (no hay eventos registrados en el calendario)\n"
+
+    lines = []
     for e in eventos:
-        summary = e.get("summary", "(sin título)")
-        loc = e.get("location") or ""
-        start = e.get("start") or ""
-        end = e.get("end") or ""
-        rango = ""
-        if start or end:
-            rango = f"{_short_hour(start)}–{_short_hour(end)}".strip("–")
-        loc_txt = f" @ {loc}" if loc else ""
-        if rango:
+        # Caso 1: ya viene como string formateado
+        if isinstance(e, str):
+            lines.append(f"  - {e}")
+            continue
+
+        # Caso 2: dict crudo de evento
+        if isinstance(e, dict):
+            summary = e.get("summary", "(sin título)")
+            loc = e.get("location") or ""
+            start = e.get("start") or ""
+            end = e.get("end") or ""
+            rango = f"{_short_hour(start)}–{_short_hour(end)}" if start and end else ""
+            loc_txt = f" @ {loc}" if loc else ""
             lines.append(f"  - {rango}  {summary}{loc_txt}")
-        else:
-            lines.append(f"  - {summary}{loc_txt}")
+            continue
+
+        # Fallback por si llega algo raro
+        lines.append(f"  - {str(e)}")
+
     return "\n".join(lines) + "\n"
 
 
