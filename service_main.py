@@ -13,16 +13,20 @@ from routes import (
     v1_routes,
     natacha_routes,
     actions_openapi,
-    memory_engine_routes,  # motor de contexto /memory/engine/*
+    memory_engine_routes,
 )
 from routes.tasks_routes import router as tasks_router
 from routes.people_routes import router as people_router
 from routes.project_routes import router as project_router
 from routes.ops_routes import router as ops_routes
 from routes.semantic_v2_routes import router as semantic_v2_router
-from routes.natacha_healthcheck import router as natacha_healthcheck_router  # ⬅️ NUEVO
+from routes.natacha_healthcheck import router as natacha_healthcheck_router
 from routes.calendar_routes import router as calendar_router
 from routes.agenda_routes import router as agenda_router
+
+# === NUEVO: Notion ===
+from routes.notion_routes import router as notion_router
+from routes.notion_blueprint_routes import router as notion_blueprint_router
 
 
 # === Carga automática de memoria desde Google Cloud Storage ===
@@ -86,21 +90,25 @@ app.add_middleware(
 )
 
 # === Routers principales ===
-app.include_router(memory_routes.router)         # /memory/add, /memory/search
-app.include_router(memory_routes.v1_router)      # /memory/engine/* v1, etc.
-app.include_router(memory_engine_routes.router)  # /memory/engine/context_bundle
-app.include_router(health_route.router)          # /health, /meta
-app.include_router(v1_routes.router)             # /v1/memory/*
-app.include_router(tasks_router)                 # /tasks/add, /tasks/list, /tasks/update
+app.include_router(memory_routes.router)
+app.include_router(memory_routes.v1_router)
+app.include_router(memory_engine_routes.router)
+app.include_router(health_route.router)
+app.include_router(v1_routes.router)
+app.include_router(tasks_router)
 app.include_router(people_router)
 app.include_router(project_router)
-app.include_router(ops_routes)                   # /ops/*
-app.include_router(actions_openapi.router)       # /actions/openapi.json
-app.include_router(natacha_routes.router)        # /natacha/respond
-app.include_router(semantic_v2_router)           # /memory/v2/semantic/*
-app.include_router(natacha_healthcheck_router)   # /natacha/healthcheck
+app.include_router(ops_routes)
+app.include_router(actions_openapi.router)
+app.include_router(natacha_routes.router)
+app.include_router(semantic_v2_router)
+app.include_router(natacha_healthcheck_router)
 app.include_router(calendar_router)
-app.include_router(agenda_router)                # /natacha/agenda_hoy
+app.include_router(agenda_router)
+
+# === NUEVO: rutas de Notion ===
+app.include_router(notion_router)
+app.include_router(notion_blueprint_router)
 
 # --- Módulos opcionales ---
 safe_include("routes.core_bridge")
@@ -124,27 +132,22 @@ for r in app.routes:
     except Exception as e:
         print("[ROUTE_ERR]", r, e)
 
+
 # memory v1 explícito (si existe)
 try:
     from app.api_v1.memory_v1_routes import router as memory_v1_router
-
     app.include_router(memory_v1_router)
 except Exception:
     pass
 
 
 # ================================================================
-# DEBUG: listar rutas registradas en tiempo de ejecución
+# DEBUG: listar rutas
 # ================================================================
 from fastapi.routing import APIRoute  # type: ignore
 
-
 @app.get("/debug/routes", include_in_schema=False)
 def debug_routes():
-    """
-    Devuelve las rutas registradas en esta instancia de FastAPI.
-    Sirve para comparar local vs Cloud Run.
-    """
     rutas = []
     for route in app.routes:
         if isinstance(route, APIRoute):
@@ -156,22 +159,14 @@ def debug_routes():
 
 
 # ================================================================
-# OPENAPI PÚBLICO PARA CHATGPT
+# OpenAPI público para ChatGPT
 # ================================================================
 @app.get("/openapi_public.json", include_in_schema=False)
 def openapi_public():
-    """
-    Devuelve la especificación pública reducida para ChatGPT Actions.
-
-    En este entorno, sirve la versión SLIM:
-    docs/openapi.natacha_agent.slim.json
-    (generada a partir del OpenAPI completo, filtrando a ~14 operaciones).
-    """
     base_dir = Path(__file__).parent
     path = base_dir / "docs" / "openapi.natacha_agent.slim.json"
 
     if not path.exists():
-        # Fallback amigable si el archivo no está (no rompe el servicio)
         return {
             "openapi": "3.1.0",
             "info": {
@@ -187,7 +182,7 @@ def openapi_public():
 
 
 # ================================================================
-# CUSTOM OPENAPI (INTERNO)
+# OpenAPI interno
 # ================================================================
 def custom_openapi():
     if app.openapi_schema:
@@ -207,11 +202,10 @@ def custom_openapi():
     app.openapi_schema = schema
     return app.openapi_schema
 
+app.openapi = custom_openapi
 
-app.openapi = custom_openapi  # type: ignore
 
-
-# === Endpoint raíz ===
+# === Root endpoint ===
 @app.get("/")
 def root():
     return {
