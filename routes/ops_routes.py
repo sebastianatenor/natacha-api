@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Query
 from fastapi.responses import JSONResponse
 from google.cloud.firestore import Query as FireQuery
 from google.cloud import firestore
@@ -49,7 +49,32 @@ def take_snapshot():
 
 
 @router.get("/ops/snapshots")
-def list_snapshots(limit: int = 10):
+def list_snapshots(
+    limit: int = Query(
+        10,
+        ge=1,
+        le=50,
+        description="Cantidad máxima de snapshots a devolver (máx 50).",
+    ),
+    project: str | None = Query(
+        None,
+        description="Filtro de proyecto (por campo 'project' o por tag, ej. 'LLVC' o 'Natacha').",
+    ),
+    include_raw: bool = Query(
+        False,
+        description="Si es true, incluye el contenido crudo (raw/memories/tasks).",
+    ),
+):
+    """
+    Lista snapshots operativos en formato SLIM por defecto.
+
+    - Por defecto devuelve solo metadata liviana:
+      id, created_at, project, tags, kind, importance, source, user_id, note,
+      total_memories y total_tasks.
+    - Si include_raw=true, agrega el contenido crudo:
+      - snapshots nuevos: campo 'raw'
+      - snapshots manuales: 'memories' y 'tasks'
+    """
     db = get_db()
     if db is None:
         return JSONResponse({"status": "unavailable"}, status_code=503)
@@ -59,8 +84,56 @@ def list_snapshots(limit: int = 10):
         .order_by("created_at", direction=FireQuery.DESCENDING)
         .limit(limit)
     )
-    snaps = [dict(doc.to_dict(), id=doc.id) for doc in snaps_ref.stream()]
-    return snaps
+    raw_snaps = [dict(doc.to_dict(), id=doc.id) for doc in snaps_ref.stream()]
+
+    # Filtro opcional por proyecto:
+    # respeta tanto el campo 'project' como que el nombre del proyecto esté en 'tags'.
+    if project:
+        filtered = []
+        for s in raw_snaps:
+            proj = s.get("project")
+            tags = s.get("tags") or []
+            if proj == project or (isinstance(tags, list) and project in tags):
+                filtered.append(s)
+        raw_snaps = filtered
+
+    items = []
+    for s in raw_snaps:
+        base = {
+            "id": s.get("id"),
+            "created_at": s.get("created_at"),
+            "project": s.get("project"),
+            "tags": s.get("tags", []),
+            "kind": s.get("kind"),
+            "importance": s.get("importance"),
+            "source": s.get("source"),
+            "user_id": s.get("user_id"),
+            "note": s.get("note"),
+            # Para snapshots manuales tipo /ops/snapshot:
+            "total_memories": s.get("total_memories"),
+            "total_tasks": s.get("total_tasks"),
+        }
+
+        # Solo incluimos contenido pesado si lo pedís explícitamente
+        if include_raw:
+            if "raw" in s:
+                # snapshots del motor de memoria (schema nuevo)
+                base["raw"] = s.get("raw")
+            else:
+                # snapshots manuales que tenían 'memories' y 'tasks' embebidos
+                if "memories" in s:
+                    base["memories"] = s.get("memories")
+                if "tasks" in s:
+                    base["tasks"] = s.get("tasks")
+
+        # Limpiamos claves None para que la respuesta quede prolija
+        compact = {k: v for k, v in base.items() if v is not None}
+        items.append(compact)
+
+    return {
+        "count": len(items),
+        "items": items,
+    }
 
 
 @router.get("/ops/summary")
@@ -186,13 +259,15 @@ def _tasks_snapshot(get_client, limit: int = 3):
         q = db.collection("assistant_tasks").order_by("created_at", direction="DESCENDING")
         items = []
         for i, doc in enumerate(q.stream()):
-            if i >= limit: break
-            d = doc.to_dict(); d["id"] = doc.id
+            if i >= limit:
+                break
+            d = doc.to_dict()
+            d["id"] = doc.id
             items.append({
-                "id": d.get("id",""),
-                "title": d.get("title",""),
-                "state": d.get("state",""),
-                "created_at": d.get("created_at","")
+                "id": d.get("id", ""),
+                "title": d.get("title", ""),
+                "state": d.get("state", ""),
+                "created_at": d.get("created_at", "")
             })
         return {"count": len(items), "items": items}
     except Exception as e:
