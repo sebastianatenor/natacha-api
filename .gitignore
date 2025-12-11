@@ -97,3 +97,12 @@ main.py
 .archive_bak/
 .github/workflows/*.ym
 .github/workflows/*.bak*
+
+# === Natacha FASE 1 Cleanup ===
+venv311/
+__pycache__/
+*.log
+*.patch
+*.tmp
+*.bak
+.DS_Store
