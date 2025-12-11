@@ -1,8 +1,8 @@
 """
 ops.cognitive_evolution
 -----------------------
-Módulo base del motor cognitivo evolutivo de Natacha.
-Permite calcular métricas cognitivas y evaluar el estado evolutivo del sistema.
+Motor cognitivo evolutivo para Natacha.
+Genera reflexiones, lee introspecciones y produce un estado cognitivo real.
 """
 
 from fastapi import APIRouter
@@ -13,54 +13,85 @@ from pathlib import Path
 
 router = APIRouter(prefix="/ops/cognitive", tags=["Cognitive Evolution"])
 
-MEMORY_PATH = Path("/app/memory_store.jsonl")
+# Memoria cognitiva local
+MEMORY_PATH = Path("./memory_store.jsonl")
 
 
 def _load_latest_reflection() -> Dict[str, Any]:
-    """Carga la última reflexión/meta-reflexión desde el archivo local."""
+    """Devuelve la última reflexión/meta-reflexión registrada."""
     if not MEMORY_PATH.exists():
-        return {"status": "error", "message": "No se encontró memory_store.jsonl"}
+        return {"status": "error", "message": "memory_store.jsonl no encontrado"}
 
     try:
         with MEMORY_PATH.open("r", encoding="utf-8") as f:
-            lines = f.readlines()[-5:]
-        reflections = [json.loads(line) for line in lines if "meta_reflection" in line or "reflection" in line]
-        return reflections[-1] if reflections else {"status": "error", "message": "Sin reflexiones registradas"}
+            lines = f.readlines()
+
+        reflections = []
+        for line in lines:
+            try:
+                obj = json.loads(line)
+                if "reflection" in obj or "meta_reflection" in obj:
+                    reflections.append(obj)
+            except:
+                continue
+
+        return reflections[-1] if reflections else {"status": "no_reflections"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
 
+def _append_reflection(data: Dict[str, Any]):
+    """Guarda una reflexión en el archivo de memoria."""
+    with MEMORY_PATH.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(data) + "\n")
+
+
+@router.post("/reflect")
+def write_reflection(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Agrega una reflexión cognitiva manual o automática.
+    """
+    reflection = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "reflection": payload,
+    }
+    _append_reflection(reflection)
+    return {"status": "ok", "saved": reflection}
+
+
+@router.post("/meta")
+def write_meta_reflection(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Agrega una meta-reflexión (evaluación del sistema sobre sí mismo).
+    """
+    meta = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "meta_reflection": payload,
+    }
+    _append_reflection(meta)
+    return {"status": "ok", "saved": meta}
+
+
 @router.get("/status")
 def cognitive_status() -> Dict[str, Any]:
-    """Devuelve el estado cognitivo actual."""
+    """Devuelve estado cognitivo basado en la última meta-reflexión."""
     latest = _load_latest_reflection()
+
+    if "meta_reflection" not in latest:
+        return {
+            "status": "no_data",
+            "engine": "Cognitive Evolution v2",
+            "message": "No hay meta-reflexiones aún"
+        }
+
+    issues = len(latest["meta_reflection"].get("issues", []))
+    score = max(0, 100 - issues * 4)
+
     return {
         "timestamp": datetime.utcnow().isoformat(),
-        "engine": "Cognitive Evolution v1",
-        "latest_meta_reflection": latest.get("detail") if isinstance(latest, dict) else None,
-        "status": "ok" if "error" not in latest.get("status", "") else "degraded"
+        "engine": "Cognitive Evolution v2",
+        "score": score,
+        "trend": "improving" if score > 75 else "needs_attention",
+        "latest": latest["meta_reflection"],
+        "status": "ok"
     }
-
-
-@router.post("/evolve")
-def run_evolution() -> Dict[str, Any]:
-    """Ejecuta un ciclo de evolución cognitiva basado en las introspecciones."""
-    latest = _load_latest_reflection()
-
-    score = 0.0
-    trend = "unknown"
-
-    if "detail" in latest:
-        issues = len(latest["detail"].get("issues", []))
-        score = max(0, 100 - issues * 5)
-        trend = "improving" if score > 75 else "stable_or_worse"
-
-    result = {
-        "timestamp": datetime.utcnow().isoformat(),
-        "cognitive_score": score,
-        "trend": trend,
-        "summary": "Autoevaluación cognitiva completada.",
-        "source": "introspection/meta_reflection"
-    }
-
-    return {"status": "ok", "result": result}

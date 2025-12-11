@@ -22,3 +22,25 @@ def run_affective_training():
         "confidence": confidence,
         "model_version": "v1.0-sim"
     }
+
+# ---------------------------------------------------------
+#  API INTERNA PARA UNIFIED CORE
+# ---------------------------------------------------------
+
+from datetime import datetime
+
+def get_affective_state():
+    """
+    Devuelve un estado afectivo compacto para el motor unificado.
+    No usa aleatoriedad para evitar ruido en cada llamada.
+    """
+    return {
+        "engine": "affective-train-v1",
+        "timestamp": datetime.utcnow().isoformat(),
+        "mood": "neutral",
+        "energy": 0.6,
+        "confidence": 0.8,
+        "status": "ok"
+    }
+
+

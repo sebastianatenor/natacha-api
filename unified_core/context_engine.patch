@@ -1,0 +1,101 @@
+--- a/unified_core/context_engine.py
++++ b/unified_core/context_engine.py
+@@ -95,20 +95,38 @@ def build_context_bundle(
+     # ----------------------------
+     # 3) Memorias recientes (raw mejorado)
+     # ----------------------------
+-    try:
+-        recent_items = list_recent_memories(
+-            user_id=user_id,
+-            limit=recent_limit,
+-            include_fallback=include_global_fallback,
+-        )
+-    except Exception as e:
+-        recent_items = [{"error": str(e)}]
++    try:
++        raw_recent = list_recent_memories(
++            user_id=user_id,
++            limit=recent_limit,
++        )
++        recent_items = []
++        seen = set()
++        for r in raw_recent:
++            txt = r.get("note") or r.get("text") or ""
++            if txt in seen:
++                continue
++            seen.add(txt)
++            recent_items.append(r)
++    except Exception as e:
++        recent_items = [{"error": str(e)}]
+
+@@ -121,14 +139,20 @@ def build_context_bundle(
+     # ----------------------------
+     # 4) Estado afectivo
+     # ----------------------------
+-    try:
+-        affective_state = get_affective_state()
+-    except Exception:
+-        affective_state = {"status": "unavailable"}
++    try:
++        affective_state = get_affective_state(user_id=user_id)
++    except Exception as e:
++        affective_state = {"status": "error", "detail": str(e)}
+
+@@ -136,14 +160,20 @@ def build_context_bundle(
+     # ----------------------------
+     # 5) Estado cognitivo
+     # ----------------------------
+-    try:
+-        cognitive_state = get_cognitive_state()
+-    except Exception:
+-        cognitive_state = {"status": "unavailable"}
++    try:
++        cognitive_state = get_cognitive_state()
++    except Exception as e:
++        cognitive_state = {"status": "error", "detail": str(e)}
+
+@@ -153,13 +183,26 @@ def build_context_bundle(
+     # ----------------------------
+     # 6) Resumen semántico
+     # ----------------------------
+-    summary_block = {
+-        "query": "estado general",
+-        "summary": None,
+-        "items": [],
+-        "error": "semantic summary not yet wired"
+-    }
++    from natacha_core import semantic_memory_v2
++    try:
++        summary_block = semantic_memory_v2.summarize(
++            user_id=user_id,
++            project="LLVC",
++            q="estado general",
++            limit=8,
++            max_tokens=220,
++        )
++    except Exception as e:
++        summary_block = {"error": str(e), "summary": None, "items": []}
+
+@@ -173,14 +216,27 @@ def build_context_bundle(
+-    return {
+-        "status": "placeholder",
+-        "user_id": user_id,
+-        "recent_limit": recent_limit,
+-        "include_global_fallback": include_global_fallback,
+-        "message": "Unified context engine initialized but not yet active.",
+-    }
++    bundle = {
++        "status": "ok",
++        "engine": "v7-unified",
++        "user_id": user_id,
++        "system_rule": system_rule,
++        "summary": summary_block,
++        "recent": {
++            "count": len(recent_items),
++            "items": recent_items,
++        },
++        "affective_state": affective_state,
++        "cognitive_state": cognitive_state,
++    }
++
++    return bundle
