@@ -1,58 +1,84 @@
 import os
 import json
-import subprocess
+import threading
 from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
 # ================================================================
-# 1) BOOT SEQUENCE – Memory Sync
+# 1) BOOT SEQUENCE – Memory Sync (Cloud Run SAFE)
 # ================================================================
 
 def load_memory_from_gcs():
     """
     Sincroniza memory_store.jsonl desde GCS SOLO en Cloud Run.
-    En local no hace nada.
+    Usa google-cloud-storage.
+    ⚠️ Se ejecuta en background, nunca bloquea el arranque.
     """
-    gcs_path = "gs://natacha-memory-store/memory_store.jsonl"
-    local_path = "/app/memory_store.jsonl"
-
     in_cloud_run = os.getenv("K_SERVICE") is not None
 
-    if in_cloud_run:
-        print("[BOOT] Cloud Run environment detected. Syncing memory...")
-        try:
-            subprocess.run(
-                ["gsutil", "cp", gcs_path, local_path],
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-            print(f"[OK] Memory synced from {gcs_path}")
-        except Exception as e:
-            print(f"[WARN] Memory sync failed: {e}")
-    else:
+    if not in_cloud_run:
         print("[BOOT] Local environment: skipping memory sync.")
+        return
+
+    print("[BOOT] Cloud Run detected. Starting async memory sync…")
+
+    try:
+        from google.cloud import storage
+
+        bucket_name = "natacha-memory-store"
+        blob_name = "memory_store.jsonl"
+
+        # Cloud Run: SOLO /tmp es writable
+        local_path = "/tmp/memory_store.jsonl"
+
+        client = storage.Client()
+        bucket = client.bucket(bucket_name)
+        blob = bucket.blob(blob_name)
+
+        blob.download_to_filename(local_path)
+
+        print(f"[OK] Memory synced from gs://{bucket_name}/{blob_name}")
+
+    except Exception as e:
+        # ⚠️ JAMÁS romper el arranque
+        print(f"[WARN] Memory sync skipped: {e}")
 
 
-# Ejecutar sincronización inicial
-load_memory_from_gcs()
+def start_memory_sync_background():
+    """
+    Wrapper para ejecutar la sync en thread daemon.
+    """
+    t = threading.Thread(
+        target=load_memory_from_gcs,
+        daemon=True
+    )
+    t.start()
 
 
 # ================================================================
-# 2) Inicialización de FastAPI
+# 2) Inicialización de FastAPI (RÁPIDA)
 # ================================================================
 
 app = FastAPI(
     title="Natacha API",
-    version="20.0-unified-engine",
+    version="20.1-cloudrun-safe",
     description="Natacha – API central con motores afectivo, cognitivo y contexto unificado."
 )
 
+# ================================================================
+# 3) Startup hook (CRÍTICO para Cloud Run)
+# ================================================================
+
+@app.on_event("startup")
+def on_startup():
+    start_memory_sync_background()
+
 
 # ================================================================
-# 3) CORS
+# 4) CORS
 # ================================================================
 
 app.add_middleware(
@@ -63,9 +89,8 @@ app.add_middleware(
     allow_credentials=True,
 )
 
-
 # ================================================================
-# 4) Función segura para incluir módulos
+# 5) Función segura para incluir módulos
 # ================================================================
 
 def safe_include(module_name: str):
@@ -88,19 +113,20 @@ def safe_include(module_name: str):
 
 
 # ================================================================
-# 5) Routers principales
+# 6) Routers principales
 # ================================================================
 
-from routes import memory_routes, health_route, v1_routes
+from routes import health_route
+from routes.context_unified import router as context_unified_router
+from routes.memory_unified import router as memory_unified_router
 
-app.include_router(memory_routes.router)
-app.include_router(memory_routes.v1_router)
+app.include_router(memory_unified_router)
+app.include_router(context_unified_router)
 app.include_router(health_route.router)
-app.include_router(v1_routes.router)
 
 
 # ================================================================
-# 6) Módulos opcionales (auto-loading)
+# 7) Módulos opcionales (auto-loading)
 # ================================================================
 
 # Extensiones nuevas
@@ -124,37 +150,29 @@ safe_include("ops.introspection.meta_reflect")
 safe_include("ops.self_diagnostics")
 safe_include("ops.firestore_adapter")
 
-# Router público para context_bundle
-safe_include("routes.context_unified")
+
+# ================================================================
+# 8) Memory v1 (legacy)
+# ================================================================
+
+print("[INFO] Legacy memory v1 routes disabled (Phase 2)")
 
 
 # ================================================================
-# 7) Memory v1 (si existe)
-# ================================================================
-
-try:
-    from app.api_v1.memory_v1_routes import router as memory_v1_router
-    app.include_router(memory_v1_router)
-    print("[OK] Included legacy memory v1 routes")
-except Exception:
-    print("[INFO] No legacy memory v1 routes available.")
-
-
-# ================================================================
-# 8) Root endpoint
+# 9) Root endpoint
 # ================================================================
 
 @app.get("/")
 def root():
     return {
         "status": "ok",
-        "engine": "natacha-unified-v20",
-        "message": "Natacha API – fully operational 🚀"
+        "engine": "natacha-unified-v20.1",
+        "message": "Natacha API – Cloud Run ready 🚀"
     }
 
 
 # ================================================================
-# 9) OpenAPI PÚBLICO para ChatGPT
+# 10) OpenAPI PÚBLICO para ChatGPT
 # ================================================================
 
 @app.get("/openapi_public.json", include_in_schema=False)
@@ -180,7 +198,7 @@ def openapi_public():
 
 
 # ================================================================
-# 10) Custom OpenAPI interno
+# 11) Custom OpenAPI interno
 # ================================================================
 
 def custom_openapi():
@@ -189,7 +207,7 @@ def custom_openapi():
 
     schema = get_openapi(
         title="Natacha Internal API",
-        version="20.0",
+        version="20.1",
         description="Esquema interno unificado de Natacha",
         routes=app.routes,
     )
