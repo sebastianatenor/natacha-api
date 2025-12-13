@@ -1,5 +1,5 @@
 # ===========================
-# BASE IMAGE — Python 3.10 LTS (compatible con transformers, torch y embeddings)
+# BASE IMAGE — Python 3.10
 # ===========================
 FROM python:3.10-slim
 
@@ -20,27 +20,20 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # ===========================
-# Python libs (primer pase)
+# Python deps
 # ===========================
 COPY requirements.txt /app/
 
 RUN pip install --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Pre-download SentenceTransformer model at build time
-RUN python - <<EOF
-from sentence_transformers import SentenceTransformer
-SentenceTransformer("all-MiniLM-L6-v2")
-print("Model cached successfully")
-EOF
-
 # ===========================
-# Copiar todo el proyecto
+# Copy project
 # ===========================
 COPY . /app
 
 # ===========================
-# Variables de entorno
+# Env
 # ===========================
 ENV PYTHONPATH=/app
 ENV PORT=8080
@@ -50,4 +43,4 @@ ENV PORT=8080
 # ===========================
 EXPOSE 8080
 
-CMD ["sh", "-c", "scripts/bootstrap_memory.sh && uvicorn service_main:app --host 0.0.0.0 --port 8080"]
+CMD ["uvicorn", "service_main:app", "--host", "0.0.0.0", "--port", "8080"]
