@@ -2,11 +2,11 @@
 
 from fastapi import APIRouter
 
-# Importamos el router ya existente (legacy pero funcional)
+# Importamos el router legacy TAL CUAL está
 from routes.memory_engine_routes import router as legacy_router
 
-# Creamos un router limpio
-router = APIRouter(prefix="/memory/engine", tags=["memory-engine"])
+# Alias SIN prefix (hereda el del router legacy)
+router = APIRouter(tags=["memory-engine-alias"])
 
-# Reutilizamos todas las rutas existentes
+# Re-exporta las rutas existentes
 router.include_router(legacy_router)
