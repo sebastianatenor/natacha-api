@@ -1,3 +1,4 @@
+
 # unified_core/memory_lazy.py
 
 import json
@@ -27,20 +28,21 @@ def _load(self):
         return
 
     if not os.path.exists(MEMORY_STORE_PATH):
-        raise RuntimeError(f"Memory store not found at {MEMORY_STORE_PATH}")
+        self._items = []
+        self.store_loaded = True
+        self.store_path = None
+        return
 
     items = []
     with open(MEMORY_STORE_PATH, "r", encoding="utf-8") as f:
-        for line in f:
+        for i, line in enumerate(f):
             line = line.strip()
             if not line:
                 continue
-
-            obj = json.loads(line)
-
-            # 👉 criterio mínimo de memoria válida
-            if "text" in obj:
-                items.append(obj)
+            try:
+                items.append(json.loads(line))
+            except Exception as e:
+                print(f"[MEMORY LOAD ERROR] line {i}: {e}")
 
     self._items = items
     self.store_loaded = True
