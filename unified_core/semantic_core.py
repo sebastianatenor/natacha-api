@@ -6,6 +6,12 @@ Carga SentenceTransformer de forma lazy y segura.
 import os
 from typing import Optional, List, Union
 from sentence_transformers import SentenceTransformer
+import os
+
+os.environ["HF_HOME"] = "/tmp/huggingface"
+os.environ["TRANSFORMERS_CACHE"] = "/tmp/huggingface"
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+
 from huggingface_hub import login
 
 
