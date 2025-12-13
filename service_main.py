@@ -56,8 +56,8 @@ def start_memory_sync_background():
 
 app = FastAPI(
     title="Natacha API",
-    version="20.1-cloudrun-safe",
-    description="Natacha – API central con motores afectivo, cognitivo y contexto unificado."
+    version="20.2-clean-memory",
+    description="Natacha – API central con memoria lazy unificada (Cloud Run safe)."
 )
 
 # ================================================================
@@ -66,7 +66,7 @@ app = FastAPI(
 
 @app.on_event("startup")
 def on_startup():
-    # Memory sync
+    # Memory sync (lazy, async)
     start_memory_sync_background()
 
     # Auto-warmup NO BLOQUEANTE
@@ -91,7 +91,7 @@ app.add_middleware(
 )
 
 # ================================================================
-# 5) Safe include
+# 5) Safe include helper
 # ================================================================
 
 def safe_include(module_name: str):
@@ -110,26 +110,25 @@ def safe_include(module_name: str):
 
 
 # ================================================================
-# 6) Routers principales
+# 6) Routers PRINCIPALES (UNIFICADOS)
 # ================================================================
 
 from routes import health_route
 from routes.context_unified import router as context_unified_router
 from routes.memory_unified import router as memory_unified_router
 
+app.include_router(health_route.router)
 app.include_router(memory_unified_router)
 app.include_router(context_unified_router)
-app.include_router(health_route.router)
 
 # ================================================================
-# 7) Módulos opcionales
+# 7) Módulos opcionales / introspección
 # ================================================================
 
 safe_include("ops.extensions.core_bridge_ext")
 safe_include("ops.affective_train")
 safe_include("ops.cognitive_evolution")
 
-safe_include("unified_core.context_engine")
 safe_include("unified_core.snapshot_engine")
 
 safe_include("ops.introspection.code_scan")
@@ -146,28 +145,23 @@ safe_include("routes.system_decide")
 safe_include("routes.system_diagnose")
 safe_include("routes.warmup")
 
-safe_include("routes.memory_engine_alias")
+# ❌ IMPORTANTE: NO se incluye memory_engine_alias
+print("[INFO] Legacy memory routes DISABLED (A2 clean)")
 
 # ================================================================
-# 8) Legacy memory
-# ================================================================
-
-print("[INFO] Legacy memory v1 routes disabled (Phase 2)")
-
-# ================================================================
-# 9) Root
+# 8) Root
 # ================================================================
 
 @app.get("/")
 def root():
     return {
         "status": "ok",
-        "engine": "natacha-unified-v20.1",
-        "message": "Natacha API – Cloud Run ready 🚀"
+        "engine": "natacha-unified-v20.2",
+        "message": "Natacha API – Clean memory / Cloud Run ready 🚀"
     }
 
 # ================================================================
-# 10) OpenAPI público
+# 9) OpenAPI público
 # ================================================================
 
 @app.get("/openapi_public.json", include_in_schema=False)
@@ -189,7 +183,7 @@ def openapi_public():
         return json.load(f)
 
 # ================================================================
-# 11) OpenAPI interno
+# 10) OpenAPI interno
 # ================================================================
 
 def custom_openapi():
@@ -198,8 +192,8 @@ def custom_openapi():
 
     schema = get_openapi(
         title="Natacha Internal API",
-        version="20.1",
-        description="Esquema interno unificado de Natacha",
+        version="20.2",
+        description="Esquema interno unificado de Natacha (clean memory)",
         routes=app.routes,
     )
 
