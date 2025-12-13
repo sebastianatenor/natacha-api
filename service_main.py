@@ -150,6 +150,10 @@ safe_include("ops.introspection.meta_reflect")
 safe_include("ops.self_diagnostics")
 safe_include("ops.firestore_adapter")
 
+# Internal benchmarks
+safe_include("routes.benchmark")
+
+safe_include("routes.warmup")
 
 # ================================================================
 # 8) Memory v1 (legacy)
