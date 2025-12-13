@@ -6,9 +6,7 @@ memory_lazy.py — Unified Memory Loader (Cloud Run safe)
 - Uses NDJSON store in /tmp
 """
 
-from typing import Optional
 from pathlib import Path
-
 
 _MEMORY_INDEX = None
 
@@ -19,14 +17,14 @@ def get_memory_index():
     if _MEMORY_INDEX is not None:
         return _MEMORY_INDEX
 
-    # Lazy import (CRÍTICO)
-    from unified_core.memory_unified_index import UnifiedMemoryIndex
+    # 🔴 IMPORT CORRECTO (engine real)
+    from unified_core.memory_unified import MemoryUnified
 
     store_path = Path("/tmp/memory_store.jsonl")
 
-    memory = UnifiedMemoryIndex(
-        store_path=store_path,
-        auto_load=True,   # carga el NDJSON al primer uso
+    memory = MemoryUnified(
+        store_path=str(store_path),
+        lazy=True,
     )
 
     _MEMORY_INDEX = memory
