@@ -1,14 +1,72 @@
-.gcloudignore
-.git
+k# ============================
+# ARCHIVOS A EXCLUIR DEL DEPLOY
+# ============================
+
+# Git
+.git/
 .gitignore
+
+# Python caches
 __pycache__/
+**/__pycache__/
 *.pyc
 *.pyo
 *.pyd
-.venv/
+
+# Entornos virtuales (muy pesados)
 venv/
-# No excluir código fuente
-!routes/**
-!service_main.py
+venv*/
+**/venv/
+**/venv*/
+venv311/
+venv_py312_backup/
+venv_py313/
+
+# Logs y dumps
+logs/
+*.log
+
+# Snapshots enormes
+infra_snapshots/
+snapshots/
+
+# Backups y restauraciones
+backups/
+restored_*/
+*.tar.gz
+
+# Memory store – no debe subir al container
+memory_store.jsonl
+memory_store_backup.jsonl
+vector_memory.jsonl
+*.jsonl
+
+# Archivos de herramientas y trabajo
+*.zip
+*.gz
+*.csv
+*.ipynb
+*.pdf
+
+# Archivos de Mac
+.DS_Store
+
+# Directorios grandes que no son necesarios en el contenedor
+lab/
+tests/
+docs/
+build/
+
+# ============================
+# EXCEPCIONES: LO QUE SÍ QUEREMOS SUBIR
+# ============================
 !Dockerfile
 !requirements.txt
+!service_main.py
+!main.py
+!app/**
+!routes/**
+!unified_core/**
+!ops/**
+!config/**
+!utils/**

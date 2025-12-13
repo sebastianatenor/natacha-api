@@ -1,6 +1,16 @@
 fastapi==0.115.3
 uvicorn[standard]==0.30.6
+
+numpy<2
+
 google-cloud-firestore==2.18.0
 google-auth==2.35.0
 requests==2.32.3
-google-cloud-storage>=2.16.0
+google-cloud-storage==3.7.0
+
+sentence-transformers==2.2.2
+huggingface-hub==0.14.1
+
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.2.2+cpu
+torchvision==0.17.2+cpu

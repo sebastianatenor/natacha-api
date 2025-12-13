@@ -1,28 +1,34 @@
 from fastapi import APIRouter, Query
-from typing import Optional
+from unified_core.context_engine_v4 import build_context_bundle
 
-from unified_core.context_engine import build_context_bundle
-
-router = APIRouter(prefix="/context", tags=["context-unified"])
+router = APIRouter()
 
 
-@router.get("/unified")
+@router.get("/context/unified")
 def unified_context(
-    user_id: Optional[str] = Query(None),
-    recent_limit: int = Query(20, ge=1, le=200)
+    user_id: str,
+    query: str = Query(default="", description="Consulta opcional para relevancia semántica"),
+    limit: int = Query(default=20, description="Cantidad de eventos recientes a recuperar"),
+    fallback: bool = Query(default=True, description="Activar fallback si hay poco contexto"),
 ):
     """
-    Endpoint oficial del motor unificado de contexto (v7).
-    Totalmente compatible y seguro.
+    Unified Context v4 – versión estable EXACTAMENTE alineada con la firma real.
+    No agrega parámetros inválidos.
     """
+
     bundle = build_context_bundle(
         user_id=user_id,
-        recent_limit=recent_limit,
-        include_global_fallback=True,
+        limit=limit,
+        fallback=fallback,
+        query=query,
     )
 
     return {
         "status": "ok",
-        "engine_version": "v7",
+        "engine": "v4",
+        "user_id": user_id,
+        "query": query,
+        "limit": limit,
+        "fallback": fallback,
         "bundle": bundle,
     }

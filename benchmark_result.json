@@ -1,0 +1,13 @@
+{
+  "status": "ok",
+  "count_texts": 5,
+  "dim": 384,
+  "seconds_load_or_skip": 0.0,
+  "seconds_embed": 0.0379,
+  "seconds_total": 0.0379,
+  "_meta": {
+    "service": "natacha-api",
+    "env": "cloud-run",
+    "timestamp_utc": "2025-12-13T00:41:52.257294"
+  }
+}

@@ -3,24 +3,16 @@ context_engine.py — Natacha Unified Core (v7)
 ---------------------------------------------
 
 Core unificado del cerebro de Natacha.
-
-Objetivo:
-- Integrar memoria cruda + memoria semántica + estado emocional + estado cognitivo.
-- Ser 100% compatible con el contexto legacy mientras migramos.
 """
 
 from typing import Optional, Dict, Any
 
 # -------------------------------------------------------------
-# Imports reales desde el motor existente
+# Unified memory access (LAZY + SINGLETON)
 # -------------------------------------------------------------
-from memory_engine import (
-    list_recent_memories,
-    consolidate_memory,
-    COL_SYSTEM,
-    COL_SUMMARY,
-    db,
-)
+from unified_core.memory_lazy import get_memory_index
+
+memory = get_memory_index()
 
 # -------------------------------------------------------------
 # Estado afectivo
@@ -44,28 +36,16 @@ except Exception:
 # Reglas del sistema
 # -------------------------------------------------------------
 def _load_system_rule(version: str = "core-v1"):
-    doc = db.collection(COL_SYSTEM).document(version).get()
-    return doc.to_dict() if doc.exists else None
+    return memory.get_system_rule(version)
 
 # -------------------------------------------------------------
-# Summary consolidado (por usuario o global)
+# Summary consolidado
 # -------------------------------------------------------------
 def _load_summary(user_id: Optional[str]):
-    key = user_id or "global"
-    doc = db.collection(COL_SUMMARY).document(key).get()
-    if doc.exists:
-        return doc.to_dict()
-
-    if user_id:
-        # fallback global
-        global_doc = db.collection(COL_SUMMARY).document("global").get()
-        if global_doc.exists:
-            return global_doc.to_dict()
-
-    return None
+    return memory.get_summary(user_id)
 
 # -------------------------------------------------------------
-#  Context Engine v7 (FINAL)
+# Context Engine v7
 # -------------------------------------------------------------
 def build_context_bundle(
     user_id: Optional[str] = None,
@@ -73,10 +53,9 @@ def build_context_bundle(
     include_global_fallback: bool = True,
 ) -> Dict[str, Any]:
 
-    # 1) Regla del sistema
     system_rule = _load_system_rule("core-v1")
 
-    # 2) Summary semántico via semantic_memory_v2
+    # Semantic summary
     try:
         from natacha_core import semantic_memory_v2
         semantic_summary = semantic_memory_v2.summarize(
@@ -92,31 +71,19 @@ def build_context_bundle(
             "items": [],
         }
 
-    # 3) Memorias recientes (raw)
+    # Recent memories
     try:
-        recent_items = list_recent_memories(
+        recent_items = memory.list_recent(
             user_id=user_id,
             limit=recent_limit,
         )
     except Exception as e:
         recent_items = [{"error": str(e)}]
 
-    # 4) Estado emocional
-    try:
-        affective_state = get_affective_state()
-    except Exception:
-        affective_state = {"status": "unavailable"}
+    affective_state = get_affective_state()
+    cognitive_state = get_cognitive_state()
 
-    # 5) Estado cognitivo
-    try:
-        cognitive_state = get_cognitive_state()
-    except Exception:
-        cognitive_state = {"status": "unavailable"}
-
-    # ----------------------------
-    # 6) Bundle final unificado (v7)
-    # ----------------------------
-    bundle = {
+    return {
         "status": "ok",
         "engine": "v7-unified",
         "user_id": user_id,
@@ -129,5 +96,3 @@ def build_context_bundle(
         "affective_state": affective_state,
         "cognitive_state": cognitive_state,
     }
-
-    return bundle
