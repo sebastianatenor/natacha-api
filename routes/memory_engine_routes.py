@@ -1,31 +1,26 @@
 from typing import Optional, Dict, Any
-from fastapi import APIRouter, Query
-
-# ============================================================
-# Lazy loader (Cloud Run safe)
-# ============================================================
-
-_memory_index = None
-
-
-def get_memory():
-    """
-    Lazy + singleton access to unified memory index.
-    Nunca se ejecuta en import time.
-    """
-    global _memory_index
-    if _memory_index is None:
-        from unified_core.memory_lazy import get_memory_index
-        _memory_index = get_memory_index()
-    return _memory_index
-
+from fastapi import APIRouter, Query, HTTPException
 
 router = APIRouter(prefix="/memory/engine", tags=["memory-engine"])
 
 
-# ============================================================
-# Routes
-# ============================================================
+# ------------------------------------------------------------
+# Lazy loader (CRÍTICO para Cloud Run)
+# ------------------------------------------------------------
+def get_memory():
+    try:
+        from unified_core.memory_lazy import get_memory_index
+        return get_memory_index()
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Memory engine unavailable: {e}"
+        )
+
+
+# ------------------------------------------------------------
+# Endpoints
+# ------------------------------------------------------------
 
 @router.post("/raw")
 def memory_raw(payload: Dict[str, Any]):
