@@ -29,8 +29,6 @@ def load_memory_from_gcs():
 
         bucket_name = "natacha-memory-store"
         blob_name = "memory_store.jsonl"
-
-        # Cloud Run: SOLO /tmp es writable
         local_path = "/tmp/memory_store.jsonl"
 
         client = storage.Client()
@@ -41,7 +39,6 @@ def load_memory_from_gcs():
         print(f"[OK] Memory synced from gs://{bucket_name}/{blob_name}")
 
     except Exception as e:
-        # Nunca romper el arranque
         print(f"[WARN] Memory sync skipped: {e}")
 
 
@@ -54,7 +51,7 @@ def start_memory_sync_background():
 
 
 # ================================================================
-# 2) Inicialización de FastAPI (LIVIANA)
+# 2) Inicialización FastAPI
 # ================================================================
 
 app = FastAPI(
@@ -69,21 +66,14 @@ app = FastAPI(
 
 @app.on_event("startup")
 def on_startup():
-    # 1) Memory sync
+    # Memory sync
     start_memory_sync_background()
 
-    # 2) Auto-warmup semántico (NO bloqueante)
+    # Auto-warmup NO BLOQUEANTE
     try:
         from ops.startup.auto_warmup import maybe_auto_warmup
-
-        # Ejecutar siempre en thread para no afectar startup
-        threading.Thread(
-            target=maybe_auto_warmup,
-            daemon=True
-        ).start()
-
-        print("[STARTUP] Auto-warmup thread launched")
-
+        maybe_auto_warmup()
+        print("[STARTUP] Auto-warmup evaluated")
     except Exception as e:
         print(f"[STARTUP][AUTO-WARMUP][ERROR] {e}")
 
@@ -101,7 +91,7 @@ app.add_middleware(
 )
 
 # ================================================================
-# 5) Función segura para incluir módulos
+# 5) Safe include
 # ================================================================
 
 def safe_include(module_name: str):
