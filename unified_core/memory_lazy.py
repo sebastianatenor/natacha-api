@@ -1,104 +1,77 @@
-# unified_core/memory_lazy.py
-
-import json
 import os
-from typing import Optional, List, Dict, Any
+from typing import Optional
 
-MEMORY_STORE_PATH = "/tmp/memory_store.jsonl"
-
-
-class MemoryLazyIndex:
-    """
-    Lazy-loaded unified memory engine.
-    Loads the NDJSON memory store only when first accessed.
-    """
-
+class MemoryLazyEngine:
     def __init__(self):
-        self._items: Optional[List[Dict[str, Any]]] = None
-        self.store_loaded: bool = False
         self.store_path: Optional[str] = None
+        self.items_count: int = 0
+        self._loaded = False
+
+        self.bucket_name = "natacha-memory-store"
+        self.blob_name = "memory_store.jsonl"
+        self.local_path = "/tmp/memory_store.jsonl"
 
     # --------------------------------------------------
-    # Internal loader
+    # Availability
     # --------------------------------------------------
-    def _load(self):
-        if self._items is not None:
-            return
 
-        if not os.path.exists(MEMORY_STORE_PATH):
-            self._items = []
-            self.store_loaded = True
-            self.store_path = None
-            return
+    def store_available(self) -> bool:
+        """
+        Store is available if:
+        - already loaded OR
+        - local file exists OR
+        - remote GCS object exists
+        """
+        if self._loaded:
+            return True
 
-        items = []
-        with open(MEMORY_STORE_PATH, "r", encoding="utf-8") as f:
-            for i, line in enumerate(f):
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    items.append(json.loads(line))
-                except Exception as e:
-                    print(f"[MEMORY LOAD ERROR] line {i}: {e}")
+        if os.path.exists(self.local_path):
+            return True
 
-        self._items = items
-        self.store_loaded = True
-        self.store_path = MEMORY_STORE_PATH
-
-    # --------------------------------------------------
-    # Observability
-    # --------------------------------------------------
-    def status(self) -> dict:
-        return {
-            "engine": "memory_unified",
-            "store_loaded": self.store_loaded,
-            "store_path": self.store_path,
-            "items_count": len(self._items) if self._items else 0,
-        }
+        # Remote check (GCS)
+        try:
+            from google.cloud import storage
+            client = storage.Client()
+            bucket = client.bucket(self.bucket_name)
+            blob = bucket.blob(self.blob_name)
+            return blob.exists()
+        except Exception:
+            return False
 
     # --------------------------------------------------
-    # Public API
+    # Load
     # --------------------------------------------------
-    def list_recent(self, user_id: Optional[str] = None, limit: int = 20):
-        self._load()
-        return list(reversed(self._items))[:limit]
 
-    def save_raw(self, payload: Dict[str, Any]):
-        self._load()
-        self._items.append(payload)
-        return payload.get("_id")
+    def ensure_loaded(self) -> bool:
+        """
+        Load memory store lazily.
+        Safe to call multiple times.
+        """
+        if self._loaded:
+            return True
 
-    def consolidate(self, user_id: Optional[str] = None):
-        self._load()
-        return {"count": len(self._items)}
+        try:
+            from google.cloud import storage
 
-    def build_context_bundle(
-        self,
-        user_id: Optional[str],
-        recent_limit: int,
-        include_global_fallback: bool = True,
-    ):
-        self._load()
-        return {
-            "status": "ok",
-            "engine": "memory_unified",
-            "user_id": user_id,
-            "recent": {
-                "count": min(len(self._items), recent_limit),
-                "items": list(reversed(self._items))[:recent_limit],
-            },
-        }
+            client = storage.Client()
+            bucket = client.bucket(self.bucket_name)
+            blob = bucket.blob(self.blob_name)
 
+            blob.download_to_filename(self.local_path)
 
-# --------------------------------------------------
-# Singleton accessor
-# --------------------------------------------------
-_memory_index: Optional[MemoryLazyIndex] = None
+            self.store_path = self.local_path
+
+            # Count items
+            with open(self.local_path, "r", encoding="utf-8") as f:
+                self.items_count = sum(1 for _ in f)
+
+            self._loaded = True
+            return True
+
+        except Exception as e:
+            print(f"[MEMORY][WARN] Failed to load memory: {e}")
+            return False
 
 
-def get_memory_index() -> MemoryLazyIndex:
-    global _memory_index
-    if _memory_index is None:
-        _memory_index = MemoryLazyIndex()
-    return _memory_index
+# Singleton
+memory_engine = MemoryLazyEngine()
