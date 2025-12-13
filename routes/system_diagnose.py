@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 from typing import Dict, Any
-import traceback
 
 from routes.system_state import system_state
 from ops.system_interpreter import interpret_system_state
@@ -14,49 +13,45 @@ router = APIRouter(
 @router.get("/diagnose")
 def system_diagnose() -> Dict[str, Any]:
     """
-    Diagnóstico del sistema.
-    ⚠️ Este endpoint NUNCA debe romper ni devolver 500.
-    Siempre responde JSON, incluso ante errores internos.
+    Diagnóstico interpretado del sistema.
+    Cloud Run aware:
+    - Si semantic/memory están disponibles pero no cargados,
+      intenta verificación lazy NO bloqueante.
     """
 
+    raw_state = system_state()
+
+    # --------------------------------------------------
+    # 🔹 Lazy materialization (SAFE)
+    # --------------------------------------------------
+
     try:
-        raw_state = system_state()
+        # Semantic core: solo tocamos si hay token y no está cargado
+        semantic = raw_state.get("semantic", {})
+        if semantic.get("hf_token_present") and not semantic.get("loaded"):
+            from unified_core.semantic_core import get_semantic_core
+            core = get_semantic_core()
+            core.ensure_loaded()
+            semantic["loaded"] = True
+    except Exception:
+        pass  # Nunca romper diagnóstico
 
-        try:
-            diagnosis = interpret_system_state(raw_state)
-        except Exception as e:
-            # Error lógico de interpretación (lazy memory, semantic aún no listo, etc.)
-            return {
-                "state": raw_state,
-                "diagnosis": {
-                    "status": "degraded",
-                    "issues": [],
-                    "warnings": [
-                        "Diagnosis interpreter failed"
-                    ],
-                    "error": str(e),
-                    "summary": {
-                        "semantic_loaded": raw_state.get("semantic", {}).get("loaded"),
-                        "memory_present": raw_state.get("memory", {}).get("store_available"),
-                        "cloud_run": raw_state.get("runtime", {}).get("cloud_run"),
-                    },
-                },
-            }
+    try:
+        # Memory: solo verificamos si el archivo ya está sincronizado
+        memory = raw_state.get("memory", {})
+        if not memory.get("store_loaded"):
+            from unified_core.memory_lazy import memory_engine
+            if memory_engine.store_available():
+                memory_engine.ensure_loaded()
+                memory["store_loaded"] = True
+                memory["store_path"] = memory_engine.store_path
+                memory["items_count"] = memory_engine.items_count
+    except Exception:
+        pass  # Diagnóstico siempre responde
 
-        return {
-            "state": raw_state,
-            "diagnosis": diagnosis,
-        }
+    diagnosis = interpret_system_state(raw_state)
 
-    except Exception as e:
-        # Error CRÍTICO e inesperado → igual respondemos JSON
-        return {
-            "state": None,
-            "diagnosis": {
-                "status": "error",
-                "issues": ["system_diagnose_crash"],
-                "warnings": [],
-                "error": str(e),
-                "trace": traceback.format_exc(),
-            },
-        }
+    return {
+        "state": raw_state,
+        "diagnosis": diagnosis
+    }
