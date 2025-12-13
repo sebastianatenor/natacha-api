@@ -2,44 +2,53 @@ import os
 import time
 from fastapi import APIRouter, HTTPException
 
+from unified_core.semantic_core import get_semantic_core
+
 router = APIRouter(tags=["internal"])
 
-_last_warmup = 0
+# Rate limit global (proceso)
+_last_warmup_ts = 0
 MIN_SECONDS_BETWEEN_WARMUPS = 300  # 5 minutos
 
 
 @router.post("/__warmup")
 def warmup_semantic_core():
     """
-    Warmup protegido:
-    - Solo si está habilitado
-    - Rate-limited
+    Warmup del Semantic Core (singleton real).
     - Cloud Run safe
+    - Rate-limited
+    - Estado consistente con system_state / diagnose
     """
-    global _last_warmup
+    global _last_warmup_ts
 
+    # Feature flag (seguridad)
     if os.getenv("NATACHA_ENABLE_WARMUP", "false") != "true":
         raise HTTPException(status_code=403, detail="Warmup disabled")
 
     now = time.time()
-    if now - _last_warmup < MIN_SECONDS_BETWEEN_WARMUPS:
+
+    # Rate limit
+    if now - _last_warmup_ts < MIN_SECONDS_BETWEEN_WARMUPS:
         return {
             "status": "skipped",
             "message": "Warmup recently executed",
-            "seconds_since_last": round(now - _last_warmup, 2)
+            "seconds_since_last": round(now - _last_warmup_ts, 2),
         }
 
     start = time.time()
 
-    from unified_core.semantic_core import get_semantic_core
-
     core = get_semantic_core()
+    already_loaded = core.is_loaded()
+
+    # Carga real (idempotente)
     core.ensure_loaded()
 
-    _last_warmup = time.time()
+    _last_warmup_ts = time.time()
 
     return {
         "status": "ok",
         "message": "Semantic core warmed",
-        "load_time_seconds": round(_last_warmup - start, 2)
+        "already_loaded": already_loaded,
+        "loaded": core.is_loaded(),
+        "load_time_seconds": round(_last_warmup_ts - start, 2),
     }
