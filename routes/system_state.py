@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from typing import Dict, Any
 import time
+import os
 
 router = APIRouter(
     prefix="/ops/system",
@@ -11,61 +12,79 @@ router = APIRouter(
 @router.get("/state")
 def system_state() -> Dict[str, Any]:
     """
-    Vista unificada del estado del sistema.
-    NO ejecuta lógica nueva.
-    SOLO agrega información existente.
+    Vista unificada REAL del estado del sistema.
+    SOLO LECTURA. CERO efectos colaterales.
     """
 
     state: Dict[str, Any] = {
         "timestamp": time.time(),
+        "runtime": {},
         "infra": {},
-        "diagnostics": {},
+        "semantic": {},
+        "memory": {},
         "introspection": {},
         "context": {}
     }
 
     # --------------------------------------------------
-    # Infra (health / deps / source)
+    # Runtime / Entorno
     # --------------------------------------------------
-    try:
-        from routes.health_route import health
-        state["infra"]["health"] = "ok"
-    except Exception as e:
-        state["infra"]["health"] = f"error: {e}"
-
-    try:
-        from routes.health_route import deps
-        state["infra"]["deps"] = "ok"
-    except Exception as e:
-        state["infra"]["deps"] = f"error: {e}"
-
-    try:
-        from routes.health_route import debug_source
-        state["infra"]["debug_source"] = "ok"
-    except Exception as e:
-        state["infra"]["debug_source"] = f"error: {e}"
+    state["runtime"] = {
+        "cloud_run": bool(os.getenv("K_SERVICE")),
+        "revision": os.getenv("K_REVISION"),
+        "service": os.getenv("K_SERVICE"),
+        "python": os.getenv("PYTHON_VERSION"),
+    }
 
     # --------------------------------------------------
-    # Diagnostics
+    # Infra (health endpoints existen)
     # --------------------------------------------------
     try:
-        from ops.self_diagnostics import run_diagnostics
-        state["diagnostics"]["self"] = "available"
+        import routes.health_route
+        state["infra"]["health_routes"] = "loaded"
     except Exception as e:
-        state["diagnostics"]["self"] = f"error: {e}"
+        state["infra"]["health_routes"] = f"error: {e}"
+
+    # --------------------------------------------------
+    # Semantic Core (estado real)
+    # --------------------------------------------------
+    try:
+        from unified_core.semantic_core import get_semantic_core
+        core = get_semantic_core()
+        state["semantic"] = {
+            "loaded": core._model is not None,
+            "hf_token_present": bool(os.getenv("HF_TOKEN")),
+        }
+    except Exception as e:
+        state["semantic"] = {"error": str(e)}
+
+    # --------------------------------------------------
+    # Memory engine
+    # --------------------------------------------------
+    try:
+        import routes.memory_unified
+        state["memory"]["engine"] = "memory_unified"
+    except Exception as e:
+        state["memory"]["engine"] = f"error: {e}"
+
+    try:
+        path = "/app/memory_store.jsonl"
+        state["memory"]["store_present"] = os.path.exists(path)
+    except Exception as e:
+        state["memory"]["store_present"] = f"error: {e}"
 
     # --------------------------------------------------
     # Introspection
     # --------------------------------------------------
     try:
-        from ops.introspection.history_reader import read_history
-        state["introspection"]["history"] = "available"
+        import ops.introspection.history_reader
+        state["introspection"]["history"] = "loaded"
     except Exception as e:
         state["introspection"]["history"] = f"error: {e}"
 
     try:
-        from ops.introspection.meta_reflect import meta_reflect
-        state["introspection"]["meta"] = "available"
+        import ops.introspection.meta_reflect
+        state["introspection"]["meta"] = "loaded"
     except Exception as e:
         state["introspection"]["meta"] = f"error: {e}"
 
@@ -73,8 +92,8 @@ def system_state() -> Dict[str, Any]:
     # Context
     # --------------------------------------------------
     try:
-        from routes.context_unified import router as context_router
-        state["context"]["unified"] = "available"
+        import routes.context_unified
+        state["context"]["unified"] = "loaded"
     except Exception as e:
         state["context"]["unified"] = f"error: {e}"
 
