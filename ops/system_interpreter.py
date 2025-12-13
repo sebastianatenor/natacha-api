@@ -1,64 +1,40 @@
+"""
+System Interpreter
+Lee system_state y devuelve diagnóstico interpretado.
+NO inicializa servicios.
+NO escribe estado.
+"""
 from typing import Dict, Any
 
-
 def interpret_system_state(state: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Interpreta el estado crudo del sistema y devuelve una evaluación semántica.
-    NO ejecuta acciones. SOLO razona.
-    """
+    issues = []
+    warnings = []
 
-    interpretation = {
-        "overall": "unknown",
-        "signals": [],
-        "warnings": [],
-        "notes": []
-    }
+    # Semantic
+    if not state.get("semantic", {}).get("loaded"):
+        warnings.append("Semantic core not loaded")
 
-    # -------------------------
-    # Semantic core
-    # -------------------------
-    semantic = state.get("semantic", {})
-    if not semantic.get("loaded"):
-        interpretation["signals"].append("semantic_cold")
-        interpretation["notes"].append(
-            "Semantic core not loaded yet (expected if no warmup)."
-        )
-
-    if not semantic.get("hf_token_present"):
-        interpretation["warnings"].append(
-            "HF_TOKEN not present; HuggingFace rate limits may apply."
-        )
-
-    # -------------------------
     # Memory
-    # -------------------------
-    memory = state.get("memory", {})
-    if not memory.get("store_present"):
-        interpretation["warnings"].append(
-            "Memory store file not present in runtime."
-        )
+    if not state.get("memory", {}).get("store_present"):
+        warnings.append("Memory store not present")
 
-    # -------------------------
-    # Introspection
-    # -------------------------
-    intro = state.get("introspection", {})
-    if intro.get("history") == "loaded":
-        interpretation["signals"].append("introspection_available")
+    # Infra
+    if state.get("infra", {}).get("health_routes") != "loaded":
+        issues.append("Health routes missing")
 
-    # -------------------------
-    # Context
-    # -------------------------
-    context = state.get("context", {})
-    if context.get("unified") == "loaded":
-        interpretation["signals"].append("context_unified")
+    status = "ok"
+    if issues:
+        status = "error"
+    elif warnings:
+        status = "degraded"
 
-    # -------------------------
-    # Overall state
-    # -------------------------
-    if len(interpretation["warnings"]) == 0:
-        interpretation["overall"] = "healthy"
-    else:
-        interpretation["overall"] = "degraded"
-
-    return interpretation
-
+    return {
+        "status": status,
+        "issues": issues,
+        "warnings": warnings,
+        "summary": {
+            "semantic_loaded": state.get("semantic", {}).get("loaded"),
+            "memory_present": state.get("memory", {}).get("store_present"),
+            "cloud_run": state.get("runtime", {}).get("cloud_run"),
+        }
+    }
