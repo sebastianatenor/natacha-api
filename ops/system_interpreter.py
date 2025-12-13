@@ -1,40 +1,39 @@
-"""
-System Interpreter
-Lee system_state y devuelve diagnóstico interpretado.
-NO inicializa servicios.
-NO escribe estado.
-"""
 from typing import Dict, Any
 
+
 def interpret_system_state(state: Dict[str, Any]) -> Dict[str, Any]:
-    issues = []
+    """
+    Interpreta el estado del sistema de forma consistente con lazy memory.
+    """
+
+    semantic = state.get("semantic", {})
+    memory = state.get("memory", {})
+    runtime = state.get("runtime", {})
+
+    semantic_loaded = bool(semantic.get("loaded"))
+    memory_loaded = bool(memory.get("store_loaded"))
+    memory_available = bool(memory.get("store_available"))
+
+    # 🧠 NUEVA lógica correcta
+    memory_present = memory_loaded or memory_available
+
     warnings = []
 
-    # Semantic
-    if not state.get("semantic", {}).get("loaded"):
+    if not semantic_loaded:
         warnings.append("Semantic core not loaded")
 
-    # Memory
-    if not state.get("memory", {}).get("store_present"):
+    if not memory_present:
         warnings.append("Memory store not present")
 
-    # Infra
-    if state.get("infra", {}).get("health_routes") != "loaded":
-        issues.append("Health routes missing")
-
-    status = "ok"
-    if issues:
-        status = "error"
-    elif warnings:
-        status = "degraded"
+    status = "optimal" if not warnings else "degraded"
 
     return {
         "status": status,
-        "issues": issues,
+        "issues": [],
         "warnings": warnings,
         "summary": {
-            "semantic_loaded": state.get("semantic", {}).get("loaded"),
-            "memory_present": state.get("memory", {}).get("store_present"),
-            "cloud_run": state.get("runtime", {}).get("cloud_run"),
+            "semantic_loaded": semantic_loaded,
+            "memory_present": memory_present,
+            "cloud_run": bool(runtime.get("cloud_run")),
         }
     }
