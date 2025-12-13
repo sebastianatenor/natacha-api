@@ -68,6 +68,13 @@ app = FastAPI(
     description="Natacha – API central con motores afectivo, cognitivo y contexto unificado."
 )
 
+# Auto-warmup interno (no endpoint)
+try:
+    from ops.startup.auto_warmup import maybe_auto_warmup
+    maybe_auto_warmup()
+except Exception as e:
+    print(f"[AUTO-WARMUP][SKIP] {e}")
+
 # ================================================================
 # 3) Startup hook (CRÍTICO para Cloud Run)
 # ================================================================
