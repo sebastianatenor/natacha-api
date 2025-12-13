@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 
 from unified_core.memory_lazy import get_memory_index
 from unified_core.vectorstore.store import vector_store
@@ -31,14 +31,8 @@ class ContextEngineV4:
         return {"type": "recent_messages", "count": len(recent), "messages": recent}
 
     def _semantic_block(self, sem):
-        texts = [x.get("text", "") for x in sem]
-        vectors = [x.get("vector", []) for x in sem]
-        return {
-            "type": "semantic_relevance",
-            "count": len(texts),
-            "texts": texts,
-            "vectors": vectors,
-        }
+        texts = [x["text"] for x in sem]
+        return {"type": "semantic_relevance", "count": len(texts), "texts": texts}
 
     def _select_semantic(self, query: str, k: int = 5):
         try:
@@ -61,9 +55,10 @@ class ContextEngineV4:
         fallback: bool = True,
         query: str = "",
     ):
-        # 🔑 MEMORIA UNIFICADA LAZY
         memory = get_memory_index()
-        recent = memory.list_recent(user_id=user_id, limit=limit)
+
+        # 🔑 ESTA ES LA CLAVE
+        recent = memory.list_recent(limit=limit)
 
         semantic_hits = self._select_semantic(query, k=5) if query else []
         priority = self._select_priority_items(recent)
@@ -98,12 +93,7 @@ class ContextEngineV4:
 context_engine_v4 = ContextEngineV4()
 
 
-def build_context_bundle(
-    user_id: str,
-    limit: int = 20,
-    fallback: bool = True,
-    query: str = "",
-):
+def build_context_bundle(user_id: str, limit: int = 20, fallback: bool = True, query: str = ""):
     return context_engine_v4.build_context_bundle(
         user_id=user_id,
         limit=limit,
