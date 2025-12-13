@@ -1,73 +1,88 @@
-"""
-memory_lazy.py — Unified Memory Engine (FINAL)
+# unified_core/memory_lazy.py
 
-- Single source of truth for memory
-- Lazy load
-- Cloud Run safe
-- NDJSON backed
-"""
-
-from pathlib import Path
 import json
+import os
+from typing import Optional, List, Dict, Any
 
-_MEMORY = None
+MEMORY_STORE_PATH = "/tmp/memory_store.jsonl"
 
 
-class UnifiedMemory:
-    def __init__(self, store_path: str):
-        self.store_path = Path(store_path)
-        self._items = None
+class MemoryLazyIndex:
+    """
+    Lazy-loaded unified memory engine.
+    Loads the NDJSON memory store only when first accessed.
+    """
 
+    def __init__(self):
+        self._items: Optional[List[Dict[str, Any]]] = None
+        self.store_loaded: bool = False
+        self.store_path: Optional[str] = None
+
+    # --------------------------------------------------
+    # Internal loader (LA CLAVE)
+    # --------------------------------------------------
     def _load(self):
         if self._items is not None:
             return
 
-        self._items = []
-        if not self.store_path.exists():
-            return
+        if not os.path.exists(MEMORY_STORE_PATH):
+            raise RuntimeError(f"Memory store not found at {MEMORY_STORE_PATH}")
 
-        with self.store_path.open() as f:
+        items = []
+        with open(MEMORY_STORE_PATH, "r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    self._items.append(json.loads(line))
-                except Exception:
+                line = line.strip()
+                if not line:
                     continue
+                items.append(json.loads(line))
 
-    # -------- API usada por routes --------
+        # 🔴 ESTA ES LA PARTE IMPORTANTE
+        self._items = items
+        self.store_loaded = True
+        self.store_path = MEMORY_STORE_PATH
 
-    def list_recent(self, user_id=None, limit=20):
+    # --------------------------------------------------
+    # Public API
+    # --------------------------------------------------
+    def list_recent(self, user_id: Optional[str] = None, limit: int = 20):
         self._load()
-        items = self._items or []
-        if user_id:
-            items = [i for i in items if i.get("user_id") == user_id]
-        return list(reversed(items))[:limit]
+        return list(reversed(self._items))[:limit]
 
-    def save_raw(self, payload):
+    def save_raw(self, payload: Dict[str, Any]):
         self._load()
         self._items.append(payload)
-        return len(self._items)
+        return payload.get("_id")
 
-    def consolidate(self, user_id=None):
+    def consolidate(self, user_id: Optional[str] = None):
         self._load()
         return {"count": len(self._items)}
 
-    def save_system_rule(self, note, version):
-        return {"version": version, "note": note}
-
-    def build_context_bundle(self, **kwargs):
+    def build_context_bundle(
+        self,
+        user_id: Optional[str],
+        recent_limit: int,
+        include_global_fallback: bool = True,
+    ):
         self._load()
         return {
             "status": "ok",
             "engine": "memory_unified",
-            "count": len(self._items),
-            "items": self._items[-20:],
+            "user_id": user_id,
+            "recent": {
+                "count": min(len(self._items), recent_limit),
+                "items": list(reversed(self._items))[:recent_limit],
+            },
         }
 
 
-def get_memory_index():
-    global _MEMORY
+# --------------------------------------------------
+# Singleton accessor
+# --------------------------------------------------
+_memory_index: Optional[MemoryLazyIndex] = None
 
-    if _MEMORY is None:
-        _MEMORY = UnifiedMemory("/tmp/memory_store.jsonl")
 
-    return _MEMORY
+def get_memory_index() -> MemoryLazyIndex:
+    global _memory_index
+    if _memory_index is None:
+        _memory_index = MemoryLazyIndex()
+    return _memory_index
