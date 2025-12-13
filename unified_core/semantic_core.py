@@ -10,9 +10,10 @@ from sentence_transformers import SentenceTransformer
 class SemanticCore:
     def __init__(self):
         self._model: Optional[SentenceTransformer] = None
+        self._loaded: bool = False   # 👈 NUEVO
 
     def ensure_loaded(self):
-        if self._model is not None:
+        if self._loaded:
             return
 
         print("[SEMANTIC] Loading SentenceTransformer model…")
@@ -28,15 +29,14 @@ class SemanticCore:
 
         self._model = SentenceTransformer(
             "sentence-transformers/all-MiniLM-L6-v2",
-            use_auth_token=hf_token   # 🔑 ESTA ES LA CLAVE
+            use_auth_token=hf_token
         )
 
+        self._loaded = True          # 👈 CLAVE
         print("[SEMANTIC] Model loaded successfully")
 
-    def embed(self, texts: Union[str, List[str]]):
-        self.ensure_loaded()
-        return self._model.encode(texts)
-
+    def is_loaded(self) -> bool:
+        return self._loaded
 
 _semantic_core_instance: Optional[SemanticCore] = None
 

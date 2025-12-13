@@ -1,38 +1,53 @@
-FROM python:3.13-slim
+# ===========================
+# BASE IMAGE — Python 3.10 LTS (compatible con transformers, torch y embeddings)
+# ===========================
+FROM python:3.10-slim
 
+# ===========================
+# System deps
+# ===========================
+RUN apt-get update && apt-get install -y \
+    git \
+    gcc \
+    g++ \
+    libglib2.0-0 \
+    libc6 \
+    && rm -rf /var/lib/apt/lists/*
+
+# ===========================
+# Workdir
+# ===========================
 WORKDIR /app
+
+# ===========================
+# Python libs (primer pase)
+# ===========================
 COPY requirements.txt /app/
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements.txt && pip check || true
 
-# --- cache-buster / runtime marker ---
-ARG REV=dev
-ENV RUNTIME_REV=$REV
-ENV PYTHONPATH=/app
+RUN pip install --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir -r requirements.txt
 
-# 1. deps base para levantar rápido (antes de copiar el repo)
-RUN pip install --no-cache-dir \
-    fastapi \
-    uvicorn[standard] \
-    google-cloud-firestore \
-    google-auth \
-    requests \
-    google-cloud-storage==2.16.0
+# Pre-download SentenceTransformer model at build time
+RUN python - <<EOF
+from sentence_transformers import SentenceTransformer
+SentenceTransformer("all-MiniLM-L6-v2")
+print("Model cached successfully")
+EOF
 
-# 2. copiar TODO el proyecto
+# ===========================
+# Copiar todo el proyecto
+# ===========================
 COPY . /app
-RUN ls -la /app/routes || true
-RUN python -c 'import importlib,sys; print("[BUILD] trying import routes.memory_v2"); m=importlib.import_module("routes.memory_v2"); rp=getattr(getattr(m,"router",None),"prefix",None); print("[BUILD] memory_v2 import OK; prefix=", rp)'
-# registrar revisión para invalidar caché de capas
-RUN echo "$RUNTIME_REV" > /app/.rev
 
-# 3. si hay requirements.txt, instalarlos (idempotente)
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
-    && ( [ -f requirements.txt ] && pip install --no-cache-dir -r requirements.txt || true ) \
-    && pip check || true
+# ===========================
+# Variables de entorno
+# ===========================
+ENV PYTHONPATH=/app
+ENV PORT=8080
 
-# 4. puerto
+# ===========================
+# Expose & run
+# ===========================
 EXPOSE 8080
 
-# 5. comando
-CMD ["uvicorn", "service_main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["sh", "-c", "scripts/bootstrap_memory.sh && uvicorn service_main:app --host 0.0.0.0 --port 8080"]

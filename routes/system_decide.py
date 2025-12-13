@@ -49,13 +49,6 @@ def system_decide() -> Dict[str, Any]:
     else:
         status = "actionable"
 
-    memory = get_memory_index()
-
-    if not memory.store_loaded:
-        recommendations.append({
-            "action": "initialize_memory_store",
-            "reason": "memory store not loaded in runtime"
-        })
     return {
         "timestamp": now,
         "status": status,

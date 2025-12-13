@@ -1,4 +1,3 @@
-
 # unified_core/memory_lazy.py
 
 import json
@@ -22,45 +21,41 @@ class MemoryLazyIndex:
     # --------------------------------------------------
     # Internal loader
     # --------------------------------------------------
+    def _load(self):
+        if self._items is not None:
+            return
 
-def _load(self):
-    if self._items is not None:
-        return
+        if not os.path.exists(MEMORY_STORE_PATH):
+            self._items = []
+            self.store_loaded = True
+            self.store_path = None
+            return
 
-    if not os.path.exists(MEMORY_STORE_PATH):
-        self._items = []
+        items = []
+        with open(MEMORY_STORE_PATH, "r", encoding="utf-8") as f:
+            for i, line in enumerate(f):
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    items.append(json.loads(line))
+                except Exception as e:
+                    print(f"[MEMORY LOAD ERROR] line {i}: {e}")
+
+        self._items = items
         self.store_loaded = True
-        self.store_path = None
-        return
-
-    items = []
-    with open(MEMORY_STORE_PATH, "r", encoding="utf-8") as f:
-        for i, line in enumerate(f):
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                items.append(json.loads(line))
-            except Exception as e:
-                print(f"[MEMORY LOAD ERROR] line {i}: {e}")
-
-    self._items = items
-    self.store_loaded = True
-    self.store_path = MEMORY_STORE_PATH
+        self.store_path = MEMORY_STORE_PATH
 
     # --------------------------------------------------
-    # 🔹 NUEVO: método seguro para health / state
+    # Observability
     # --------------------------------------------------
-    def ensure_loaded(self) -> bool:
-        """
-        Ensures the memory store is loaded.
-        Safe to call multiple times.
-        """
-        try:
-            self._load()
-            return True
-        except Exception:
-            return False
+    def status(self) -> dict:
+        return {
+            "engine": "memory_unified",
+            "store_loaded": self.store_loaded,
+            "store_path": self.store_path,
+            "items_count": len(self._items) if self._items else 0,
+        }
 
     # --------------------------------------------------
     # Public API
