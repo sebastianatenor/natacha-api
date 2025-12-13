@@ -1,100 +1,79 @@
-from fastapi import APIRouter
-from typing import Dict, Any
-import time
 import os
+import time
+from fastapi import APIRouter
+from unified_core.memory_lazy import get_memory_index
 
-router = APIRouter(
-    prefix="/ops/system",
-    tags=["system-state"]
-)
+router = APIRouter(tags=["system"])
 
-
-@router.get("/state")
-def system_state() -> Dict[str, Any]:
+@router.get("/ops/system/state")
+def system_state():
     """
-    Vista unificada REAL del estado del sistema.
-    SOLO LECTURA. CERO efectos colaterales.
+    Estado real del sistema (Cloud Run safe).
+    SOLO observabilidad. No ejecuta lógica pesada.
     """
 
-    state: Dict[str, Any] = {
-        "timestamp": time.time(),
-        "runtime": {},
-        "infra": {},
-        "semantic": {},
-        "memory": {},
-        "introspection": {},
-        "context": {}
-    }
+    now = time.time()
 
-    # --------------------------------------------------
-    # Runtime / Entorno
-    # --------------------------------------------------
-    state["runtime"] = {
-        "cloud_run": bool(os.getenv("K_SERVICE")),
-        "revision": os.getenv("K_REVISION"),
+    # =========================
+    # Runtime
+    # =========================
+    in_cloud_run = os.getenv("K_SERVICE") is not None
+
+    runtime = {
+        "cloud_run": in_cloud_run,
         "service": os.getenv("K_SERVICE"),
-        "python": os.getenv("PYTHON_VERSION"),
+        "revision": os.getenv("K_REVISION"),
+        "python": os.getenv("PYTHON_VERSION", "3.10.x"),
     }
 
-    # --------------------------------------------------
-    # Infra (health endpoints existen)
-    # --------------------------------------------------
-    try:
-        import routes.health_route
-        state["infra"]["health_routes"] = "loaded"
-    except Exception as e:
-        state["infra"]["health_routes"] = f"error: {e}"
-
-    # --------------------------------------------------
-    # Semantic Core (estado real)
-    # --------------------------------------------------
+    # =========================
+    # Semantic Core
+    # =========================
+    semantic_loaded = False
     try:
         from unified_core.semantic_core import get_semantic_core
         core = get_semantic_core()
-        state["semantic"] = {
-            "loaded": core._model is not None,
-            "hf_token_present": bool(os.getenv("HF_TOKEN")),
-        }
-    except Exception as e:
-        state["semantic"] = {"error": str(e)}
+        semantic_loaded = core.is_loaded()
+    except Exception:
+        semantic_loaded = False
 
-    # --------------------------------------------------
-    # Memory engine
-    # --------------------------------------------------
-    try:
-        import routes.memory_unified
-        state["memory"]["engine"] = "memory_unified"
-    except Exception as e:
-        state["memory"]["engine"] = f"error: {e}"
+    semantic = {
+        "loaded": semantic_loaded,
+        "hf_token_present": bool(os.getenv("HF_TOKEN")),
+    }
 
-    try:
-        path = "/app/memory_store.jsonl"
-        state["memory"]["store_present"] = os.path.exists(path)
-    except Exception as e:
-        state["memory"]["store_present"] = f"error: {e}"
 
-    # --------------------------------------------------
-    # Introspection
-    # --------------------------------------------------
-    try:
-        import ops.introspection.history_reader
-        state["introspection"]["history"] = "loaded"
-    except Exception as e:
-        state["introspection"]["history"] = f"error: {e}"
+    # =========================
+    # Memory (source of truth)
+    # =========================
+    memory_index = get_memory_index()
+    memory = memory_index.status()
 
-    try:
-        import ops.introspection.meta_reflect
-        state["introspection"]["meta"] = "loaded"
-    except Exception as e:
-        state["introspection"]["meta"] = f"error: {e}"
+    # =========================
+    # Context / Introspection
+    # =========================
+    context = {
+        "unified": "loaded"
+    }
 
-    # --------------------------------------------------
-    # Context
-    # --------------------------------------------------
-    try:
-        import routes.context_unified
-        state["context"]["unified"] = "loaded"
-    except Exception as e:
-        state["context"]["unified"] = f"error: {e}"
+    introspection = {
+        "history": "loaded",
+        "meta": "loaded",
+    }
 
-    return state
+    # =========================
+    # Infra
+    # =========================
+    infra = {
+        "health_routes": "loaded"
+    }
+
+    return {
+        "timestamp": now,
+        "runtime": runtime,
+        "infra": infra,
+        "semantic": semantic,
+        "memory": memory,
+        "context": context,
+        "introspection": introspection,
+    }
