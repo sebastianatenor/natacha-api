@@ -1,35 +1,31 @@
 from typing import Optional, Dict, Any
 from fastapi import APIRouter, Query
 
-from unified_core import memory_lazy
+import unified_core.memory_lazy as memory_lazy
 
+# --------------------------------------------------
+# Router (DEBE IR PRIMERO)
+# --------------------------------------------------
+router = APIRouter(prefix="/memory/engine", tags=["memory-engine"])
+
+# --------------------------------------------------
+# Lazy memory singleton
+# --------------------------------------------------
 memory = memory_lazy.get_memory_index()
 
-@router.get("/_debug_methods")
-def debug_methods():
-    return {
-        "methods": dir(memory)
-    }
-
-router = APIRouter(prefix="/memory/memory/engine", tags=["memory-engine"])
-
-memory = get_memory_index()
-
-
+# --------------------------------------------------
+# Endpoints
+# --------------------------------------------------
 @router.get("/recent")
 def memory_recent(
     user_id: Optional[str] = None,
     limit: int = Query(20, ge=1, le=200),
 ):
-    try:
-        items = memory.list_recent(user_id=user_id, limit=limit)
-        return {"count": len(items), "items": items}
-    except Exception as e:
-        return {
-            "count": 0,
-            "items": [],
-            "error": str(e),
-        }
+    items = memory.list_recent(user_id=user_id, limit=limit)
+    return {
+        "count": len(items),
+        "items": items,
+    }
 
 
 @router.post("/raw")
@@ -52,5 +48,16 @@ def memory_context_bundle(
     return memory.build_context_bundle(
         user_id=user_id,
         recent_limit=recent_limit,
-        include_global_fallback=True,
     )
+
+
+# --------------------------------------------------
+# Debug endpoint (OPCIONAL pero seguro)
+# --------------------------------------------------
+@router.get("/_debug_methods")
+def debug_methods():
+    return {
+        "methods": sorted(
+            [m for m in dir(memory) if not m.startswith("_")]
+        )
+    }
