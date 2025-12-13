@@ -153,6 +153,9 @@ safe_include("ops.firestore_adapter")
 # Internal benchmarks
 safe_include("routes.benchmark")
 
+# System State
+safe_include("routes.system_state")
+
 safe_include("routes.warmup")
 
 # ================================================================
