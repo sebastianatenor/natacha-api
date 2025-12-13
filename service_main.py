@@ -155,10 +155,11 @@ safe_include("routes.benchmark")
 
 # System State
 safe_include("routes.system_state")
+safe_include("routes.system_decide")
 
 safe_include("routes.system_diagnose")
-
 safe_include("routes.warmup")
+
 
 # ================================================================
 # 8) Memory v1 (legacy)
