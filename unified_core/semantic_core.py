@@ -1,5 +1,5 @@
 """
-Semantic Core – Cloud Run Safe (HF explicit token)
+Semantic Core – Cloud Run Safe (HF explicit auth)
 """
 
 import os
@@ -17,30 +17,27 @@ class SemanticCore:
 
         print("[SEMANTIC] Loading SentenceTransformer model…")
 
-        # 🔑 token explícito (NO confiar en auto-detect)
         hf_token = os.getenv("HF_TOKEN")
+        if not hf_token:
+            raise RuntimeError("HF_TOKEN missing")
 
-        # 📦 cache forzado a /tmp (Cloud Run safe)
+        # Cloud Run writable cache
         os.environ.setdefault("HF_HOME", "/tmp/huggingface")
         os.environ.setdefault("TRANSFORMERS_CACHE", "/tmp/huggingface")
         os.environ.setdefault("SENTENCE_TRANSFORMERS_HOME", "/tmp/huggingface")
 
-        if hf_token:
-            self._model = SentenceTransformer(
-                "sentence-transformers/all-MiniLM-L6-v2",
-                token=hf_token
-            )
-        else:
-            raise RuntimeError("HF_TOKEN missing – cannot load semantic model")
+        self._model = SentenceTransformer(
+            "sentence-transformers/all-MiniLM-L6-v2",
+            use_auth_token=hf_token   # 🔑 ESTA ES LA CLAVE
+        )
 
-        print("[SEMANTIC] Model loaded")
+        print("[SEMANTIC] Model loaded successfully")
 
     def embed(self, texts: Union[str, List[str]]):
         self.ensure_loaded()
         return self._model.encode(texts)
 
 
-# Singleton lazy
 _semantic_core_instance: Optional[SemanticCore] = None
 
 
