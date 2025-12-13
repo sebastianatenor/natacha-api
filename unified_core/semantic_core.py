@@ -1,23 +1,22 @@
 """
-Semantic Core – Cloud Run Safe
-Inicializa SentenceTransformer SOLO cuando se necesita.
-Compatible con warmup explícito y HF token.
+Semantic Core – Cloud Run Hardened
+- Lazy load
+- HF token support
+- In-memory embedding cache
 """
 
 import os
-from typing import Optional, List, Union
+import hashlib
+from typing import Optional, List, Union, Dict
 from sentence_transformers import SentenceTransformer
 
 
 class SemanticCore:
     def __init__(self):
         self._model: Optional[SentenceTransformer] = None
+        self._cache: Dict[str, List[float]] = {}
 
     def ensure_loaded(self):
-        """
-        Fuerza la carga del modelo si todavía no está cargado.
-        Usa HF_TOKEN si está disponible.
-        """
         if self._model is None:
             print("[SEMANTIC] Loading SentenceTransformer model…")
 
@@ -33,9 +32,36 @@ class SemanticCore:
 
             print("[SEMANTIC] Model loaded")
 
+    def _hash(self, text: str) -> str:
+        return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
     def embed(self, texts: Union[str, List[str]]):
         self.ensure_loaded()
-        return self._model.encode(texts)
+
+        if isinstance(texts, str):
+            texts = [texts]
+
+        vectors = []
+        missing = []
+        missing_idx = []
+
+        for i, t in enumerate(texts):
+            h = self._hash(t)
+            if h in self._cache:
+                vectors.append(self._cache[h])
+            else:
+                vectors.append(None)
+                missing.append(t)
+                missing_idx.append(i)
+
+        if missing:
+            new_vecs = self._model.encode(missing)
+            for i, vec in zip(missing_idx, new_vecs):
+                h = self._hash(texts[i])
+                self._cache[h] = vec.tolist()
+                vectors[i] = self._cache[h]
+
+        return vectors
 
 
 # Singleton lazy
