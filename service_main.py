@@ -1,4 +1,4 @@
-kimport os
+import os
 import json
 import threading
 from pathlib import Path
@@ -72,11 +72,18 @@ def on_startup():
     # 1) Memory sync
     start_memory_sync_background()
 
-    # 2) Auto-warmup semántico (no endpoint)
+    # 2) Auto-warmup semántico (NO bloqueante)
     try:
         from ops.startup.auto_warmup import maybe_auto_warmup
-        maybe_auto_warmup()
-        print("[STARTUP] Auto-warmup evaluated")
+
+        # Ejecutar siempre en thread para no afectar startup
+        threading.Thread(
+            target=maybe_auto_warmup,
+            daemon=True
+        ).start()
+
+        print("[STARTUP] Auto-warmup thread launched")
+
     except Exception as e:
         print(f"[STARTUP][AUTO-WARMUP][ERROR] {e}")
 
