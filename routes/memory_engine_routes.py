@@ -13,8 +13,15 @@ def memory_recent(
     user_id: Optional[str] = None,
     limit: int = Query(20, ge=1, le=200),
 ):
-    items = memory.list_recent(user_id=user_id, limit=limit)
-    return {"count": len(items), "items": items}
+    try:
+        items = memory.list_recent(user_id=user_id, limit=limit)
+        return {"count": len(items), "items": items}
+    except Exception as e:
+        return {
+            "count": 0,
+            "items": [],
+            "error": str(e),
+        }
 
 
 @router.post("/raw")
