@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
 from unified_core.context_engine_v4 import build_context_bundle
-from unified_core.memory_lazy import get_memory_state
+from ops.system_state import system_state
 
 router = APIRouter()
 
@@ -14,7 +14,7 @@ def unified_context(
 ):
     """
     Unified Context v4
-    Expone explícitamente el estado de memoria para agentes externos (ChatGPT / OpenAPI).
+    Expone estado de memoria usando system_state (Cloud Run safe).
     """
 
     bundle = build_context_bundle(
@@ -24,7 +24,8 @@ def unified_context(
         query=query,
     )
 
-    memory_state = get_memory_state()
+    state = system_state()
+    memory = state.get("memory", {})
 
     return {
         "status": "ok",
@@ -34,9 +35,9 @@ def unified_context(
         "limit": limit,
         "fallback": fallback,
         "memory": {
-            "present": memory_state.get("store_loaded", False),
-            "items_count": memory_state.get("items_count", 0),
-            "engine": memory_state.get("engine", "unknown"),
+            "present": memory.get("store_loaded", False),
+            "items_count": memory.get("items_count", 0),
+            "engine": memory.get("engine", "unknown"),
         },
         "bundle": bundle,
     }
