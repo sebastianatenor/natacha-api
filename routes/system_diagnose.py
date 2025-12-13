@@ -1,9 +1,8 @@
-# routes/system_diagnose.py
-
 from fastapi import APIRouter
 from typing import Dict, Any
+import traceback
 
-from routes.context_unified import unified_context
+from routes.system_state import system_state
 from ops.system_interpreter import interpret_system_state
 
 router = APIRouter(
@@ -16,25 +15,48 @@ router = APIRouter(
 def system_diagnose() -> Dict[str, Any]:
     """
     Diagnóstico del sistema.
-    La memoria se evalúa SOLO desde context/unified.
+    ⚠️ Este endpoint NUNCA debe romper ni devolver 500.
+    Siempre responde JSON, incluso ante errores internos.
     """
 
-    # Estado crudo del sistema
-    from routes.system_state import system_state
-    raw_state = system_state()
+    try:
+        raw_state = system_state()
 
-    # Forzamos lectura de contexto (esto activa lazy memory si existe)
-    context = unified_context(user_id="__system__", limit=5)
+        try:
+            diagnosis = interpret_system_state(raw_state)
+        except Exception as e:
+            # Error lógico de interpretación (lazy memory, semantic aún no listo, etc.)
+            return {
+                "state": raw_state,
+                "diagnosis": {
+                    "status": "degraded",
+                    "issues": [],
+                    "warnings": [
+                        "Diagnosis interpreter failed"
+                    ],
+                    "error": str(e),
+                    "summary": {
+                        "semantic_loaded": raw_state.get("semantic", {}).get("loaded"),
+                        "memory_present": raw_state.get("memory", {}).get("store_available"),
+                        "cloud_run": raw_state.get("runtime", {}).get("cloud_run"),
+                    },
+                },
+            }
 
-    memory_ok = context["memory"]["items_count"] > 0
+        return {
+            "state": raw_state,
+            "diagnosis": diagnosis,
+        }
 
-    # Inyectamos verdad real
-    raw_state["memory"]["store_loaded"] = memory_ok
-    raw_state["memory"]["items_count"] = context["memory"]["items_count"]
-
-    diagnosis = interpret_system_state(raw_state)
-
-    return {
-        "state": raw_state,
-        "diagnosis": diagnosis,
-    }
+    except Exception as e:
+        # Error CRÍTICO e inesperado → igual respondemos JSON
+        return {
+            "state": None,
+            "diagnosis": {
+                "status": "error",
+                "issues": ["system_diagnose_crash"],
+                "warnings": [],
+                "error": str(e),
+                "trace": traceback.format_exc(),
+            },
+        }
