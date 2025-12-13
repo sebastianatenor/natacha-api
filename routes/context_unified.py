@@ -1,20 +1,19 @@
 from fastapi import APIRouter, Query
 from unified_core.context_engine_v4 import build_context_bundle
-from ops.system_state import system_state
 
-router = APIRouter()
+router = APIRouter(tags=["context"])
 
 
 @router.get("/context/unified")
 def unified_context(
     user_id: str,
     query: str = Query(default="", description="Consulta opcional para relevancia semántica"),
-    limit: int = Query(default=20, description="Cantidad de eventos recientes a recuperar"),
-    fallback: bool = Query(default=True, description="Activar fallback si hay poco contexto"),
+    limit: int = Query(default=20, description="Cantidad de eventos recientes"),
+    fallback: bool = Query(default=True, description="Usar fallback si hay poco contexto"),
 ):
     """
     Unified Context v4
-    Expone estado de memoria usando system_state (Cloud Run safe).
+    Cloud Run safe: NO importa system_state ni ops.*
     """
 
     bundle = build_context_bundle(
@@ -24,9 +23,6 @@ def unified_context(
         query=query,
     )
 
-    state = system_state()
-    memory = state.get("memory", {})
-
     return {
         "status": "ok",
         "engine": "v4",
@@ -34,10 +30,5 @@ def unified_context(
         "query": query,
         "limit": limit,
         "fallback": fallback,
-        "memory": {
-            "present": memory.get("store_loaded", False),
-            "items_count": memory.get("items_count", 0),
-            "engine": memory.get("engine", "unknown"),
-        },
         "bundle": bundle,
     }
