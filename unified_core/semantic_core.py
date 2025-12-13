@@ -1,18 +1,10 @@
 """
-Semantic Core – Cloud Run Safe (HF Token Compatible)
-Carga SentenceTransformer de forma lazy y segura.
+Semantic Core – Cloud Run Safe (HF explicit token)
 """
 
 import os
 from typing import Optional, List, Union
 from sentence_transformers import SentenceTransformer
-import os
-
-os.environ["HF_HOME"] = "/tmp/huggingface"
-os.environ["TRANSFORMERS_CACHE"] = "/tmp/huggingface"
-os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-
-from huggingface_hub import login
 
 
 class SemanticCore:
@@ -25,17 +17,23 @@ class SemanticCore:
 
         print("[SEMANTIC] Loading SentenceTransformer model…")
 
+        # 🔑 token explícito (NO confiar en auto-detect)
         hf_token = os.getenv("HF_TOKEN")
 
+        # 📦 cache forzado a /tmp (Cloud Run safe)
+        os.environ.setdefault("HF_HOME", "/tmp/huggingface")
+        os.environ.setdefault("TRANSFORMERS_CACHE", "/tmp/huggingface")
+        os.environ.setdefault("SENTENCE_TRANSFORMERS_HOME", "/tmp/huggingface")
+
         if hf_token:
-            # ✅ Forma CORRECTA actual
-            login(token=hf_token, add_to_git_credential=False)
-            print("[SEMANTIC] HuggingFace token loaded")
+            self._model = SentenceTransformer(
+                "sentence-transformers/all-MiniLM-L6-v2",
+                token=hf_token
+            )
+        else:
+            raise RuntimeError("HF_TOKEN missing – cannot load semantic model")
 
-        # 🔥 Descarga autenticada si hay token
-        self._model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-
-        print("[SEMANTIC] Model loaded successfully")
+        print("[SEMANTIC] Model loaded")
 
     def embed(self, texts: Union[str, List[str]]):
         self.ensure_loaded()
