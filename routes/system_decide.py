@@ -44,12 +44,6 @@ def system_decide() -> Dict[str, Any]:
             "reason": "semantic core not loaded"
         })
 
-    if not summary.get("memory_present"):
-        recommendations.append({
-            "action": "initialize_memory_store",
-            "reason": "memory store not present on disk"
-        })
-
     if not recommendations:
         status = "optimal"
     else:
