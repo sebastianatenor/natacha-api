@@ -1,67 +1,39 @@
 """
-Semantic Core – Cloud Run Hardened
-- Lazy load
-- HF token support
-- In-memory embedding cache
+Semantic Core – Cloud Run Safe (HF Token Compatible)
+Carga SentenceTransformer de forma lazy y segura.
 """
 
 import os
-import hashlib
-from typing import Optional, List, Union, Dict
+from typing import Optional, List, Union
 from sentence_transformers import SentenceTransformer
+from huggingface_hub import login
 
 
 class SemanticCore:
     def __init__(self):
         self._model: Optional[SentenceTransformer] = None
-        self._cache: Dict[str, List[float]] = {}
 
     def ensure_loaded(self):
-        if self._model is None:
-            print("[SEMANTIC] Loading SentenceTransformer model…")
+        if self._model is not None:
+            return
 
-            hf_token = os.getenv("HF_TOKEN")
+        print("[SEMANTIC] Loading SentenceTransformer model…")
 
-            if hf_token:
-                self._model = SentenceTransformer(
-                    "all-MiniLM-L6-v2",
-                    use_auth_token=hf_token
-                )
-            else:
-                self._model = SentenceTransformer("all-MiniLM-L6-v2")
+        hf_token = os.getenv("HF_TOKEN")
 
-            print("[SEMANTIC] Model loaded")
+        if hf_token:
+            # ✅ Forma CORRECTA actual
+            login(token=hf_token, add_to_git_credential=False)
+            print("[SEMANTIC] HuggingFace token loaded")
 
-    def _hash(self, text: str) -> str:
-        return hashlib.sha256(text.encode("utf-8")).hexdigest()
+        # 🔥 Descarga autenticada si hay token
+        self._model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+
+        print("[SEMANTIC] Model loaded successfully")
 
     def embed(self, texts: Union[str, List[str]]):
         self.ensure_loaded()
-
-        if isinstance(texts, str):
-            texts = [texts]
-
-        vectors = []
-        missing = []
-        missing_idx = []
-
-        for i, t in enumerate(texts):
-            h = self._hash(t)
-            if h in self._cache:
-                vectors.append(self._cache[h])
-            else:
-                vectors.append(None)
-                missing.append(t)
-                missing_idx.append(i)
-
-        if missing:
-            new_vecs = self._model.encode(missing)
-            for i, vec in zip(missing_idx, new_vecs):
-                h = self._hash(texts[i])
-                self._cache[h] = vec.tolist()
-                vectors[i] = self._cache[h]
-
-        return vectors
+        return self._model.encode(texts)
 
 
 # Singleton lazy
