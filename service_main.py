@@ -1,4 +1,4 @@
-import os
+kimport os
 import json
 import threading
 from pathlib import Path
@@ -14,8 +14,7 @@ from fastapi.openapi.utils import get_openapi
 def load_memory_from_gcs():
     """
     Sincroniza memory_store.jsonl desde GCS SOLO en Cloud Run.
-    Usa google-cloud-storage.
-    ⚠️ Se ejecuta en background, nunca bloquea el arranque.
+    Se ejecuta en background, nunca bloquea el arranque.
     """
     in_cloud_run = os.getenv("K_SERVICE") is not None
 
@@ -39,18 +38,14 @@ def load_memory_from_gcs():
         blob = bucket.blob(blob_name)
 
         blob.download_to_filename(local_path)
-
         print(f"[OK] Memory synced from gs://{bucket_name}/{blob_name}")
 
     except Exception as e:
-        # ⚠️ JAMÁS romper el arranque
+        # Nunca romper el arranque
         print(f"[WARN] Memory sync skipped: {e}")
 
 
 def start_memory_sync_background():
-    """
-    Wrapper para ejecutar la sync en thread daemon.
-    """
     t = threading.Thread(
         target=load_memory_from_gcs,
         daemon=True
@@ -59,7 +54,7 @@ def start_memory_sync_background():
 
 
 # ================================================================
-# 2) Inicialización de FastAPI (RÁPIDA)
+# 2) Inicialización de FastAPI (LIVIANA)
 # ================================================================
 
 app = FastAPI(
@@ -68,20 +63,22 @@ app = FastAPI(
     description="Natacha – API central con motores afectivo, cognitivo y contexto unificado."
 )
 
-# Auto-warmup interno (no endpoint)
-try:
-    from ops.startup.auto_warmup import maybe_auto_warmup
-    maybe_auto_warmup()
-except Exception as e:
-    print(f"[AUTO-WARMUP][SKIP] {e}")
-
 # ================================================================
-# 3) Startup hook (CRÍTICO para Cloud Run)
+# 3) STARTUP HOOK (ÚNICO punto válido en Cloud Run)
 # ================================================================
 
 @app.on_event("startup")
 def on_startup():
+    # 1) Memory sync
     start_memory_sync_background()
+
+    # 2) Auto-warmup semántico (no endpoint)
+    try:
+        from ops.startup.auto_warmup import maybe_auto_warmup
+        maybe_auto_warmup()
+        print("[STARTUP] Auto-warmup evaluated")
+    except Exception as e:
+        print(f"[STARTUP][AUTO-WARMUP][ERROR] {e}")
 
 
 # ================================================================
@@ -101,10 +98,6 @@ app.add_middleware(
 # ================================================================
 
 def safe_include(module_name: str):
-    """
-    Importa dinámicamente un módulo y si tiene un router, lo monta.
-    Evita errores y deja logs claros.
-    """
     try:
         module = __import__(module_name, fromlist=["router"])
         router = getattr(module, "router", None)
@@ -131,52 +124,39 @@ app.include_router(memory_unified_router)
 app.include_router(context_unified_router)
 app.include_router(health_route.router)
 
-
 # ================================================================
-# 7) Módulos opcionales (auto-loading)
+# 7) Módulos opcionales
 # ================================================================
 
-# Extensiones nuevas
 safe_include("ops.extensions.core_bridge_ext")
-
-# Motores afectivo y cognitivo
 safe_include("ops.affective_train")
 safe_include("ops.cognitive_evolution")
 
-# Motores unificados de contexto
 safe_include("unified_core.context_engine")
 safe_include("unified_core.snapshot_engine")
 
-# Introspección
 safe_include("ops.introspection.code_scan")
 safe_include("ops.introspection.history_reader")
 safe_include("ops.introspection.self_reflect")
 safe_include("ops.introspection.meta_reflect")
 
-# Diagnóstico
 safe_include("ops.self_diagnostics")
 safe_include("ops.firestore_adapter")
 
-# Internal benchmarks
 safe_include("routes.benchmark")
-
-# System State
 safe_include("routes.system_state")
 safe_include("routes.system_decide")
-
 safe_include("routes.system_diagnose")
 safe_include("routes.warmup")
 
-
 # ================================================================
-# 8) Memory v1 (legacy)
+# 8) Legacy memory
 # ================================================================
 
 print("[INFO] Legacy memory v1 routes disabled (Phase 2)")
 
-
 # ================================================================
-# 9) Root endpoint
+# 9) Root
 # ================================================================
 
 @app.get("/")
@@ -187,16 +167,12 @@ def root():
         "message": "Natacha API – Cloud Run ready 🚀"
     }
 
-
 # ================================================================
-# 10) OpenAPI PÚBLICO para ChatGPT
+# 10) OpenAPI público
 # ================================================================
 
 @app.get("/openapi_public.json", include_in_schema=False)
 def openapi_public():
-    """
-    Devuelve openapi público reducido para ChatGPT Actions.
-    """
     path = Path(__file__).parent / "public_openapi.json"
 
     if not path.exists():
@@ -213,9 +189,8 @@ def openapi_public():
     with path.open() as f:
         return json.load(f)
 
-
 # ================================================================
-# 11) Custom OpenAPI interno
+# 11) OpenAPI interno
 # ================================================================
 
 def custom_openapi():
