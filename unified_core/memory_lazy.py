@@ -19,7 +19,7 @@ class MemoryLazyIndex:
         self.store_path: Optional[str] = None
 
     # --------------------------------------------------
-    # Internal loader (LA CLAVE)
+    # Internal loader
     # --------------------------------------------------
     def _load(self):
         if self._items is not None:
@@ -28,7 +28,7 @@ class MemoryLazyIndex:
         if not os.path.exists(MEMORY_STORE_PATH):
             raise RuntimeError(f"Memory store not found at {MEMORY_STORE_PATH}")
 
-        items = []
+        items: List[Dict[str, Any]] = []
         with open(MEMORY_STORE_PATH, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
@@ -36,10 +36,23 @@ class MemoryLazyIndex:
                     continue
                 items.append(json.loads(line))
 
-        # 🔴 ESTA ES LA PARTE IMPORTANTE
         self._items = items
         self.store_loaded = True
         self.store_path = MEMORY_STORE_PATH
+
+    # --------------------------------------------------
+    # 🔹 NUEVO: método seguro para health / state
+    # --------------------------------------------------
+    def ensure_loaded(self) -> bool:
+        """
+        Ensures the memory store is loaded.
+        Safe to call multiple times.
+        """
+        try:
+            self._load()
+            return True
+        except Exception:
+            return False
 
     # --------------------------------------------------
     # Public API
