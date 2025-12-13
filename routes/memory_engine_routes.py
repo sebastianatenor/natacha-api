@@ -1,7 +1,15 @@
 from typing import Optional, Dict, Any
 from fastapi import APIRouter, Query
 
-from unified_core.memory_lazy import get_memory_index
+from unified_core import memory_lazy
+
+memory = memory_lazy.get_memory_index()
+
+@router.get("/_debug_methods")
+def debug_methods():
+    return {
+        "methods": dir(memory)
+    }
 
 router = APIRouter(prefix="/memory/memory/engine", tags=["memory-engine"])
 
