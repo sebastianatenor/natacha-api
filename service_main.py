@@ -146,6 +146,8 @@ safe_include("routes.system_decide")
 safe_include("routes.system_diagnose")
 safe_include("routes.warmup")
 
+safe_include("routes.memory_engine_alias")
+
 # ================================================================
 # 8) Legacy memory
 # ================================================================
