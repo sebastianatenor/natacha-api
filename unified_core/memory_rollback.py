@@ -1,45 +1,53 @@
 import os
-from pathlib import Path
 from google.cloud import storage
 
+BUCKET_NAME = "natacha-memory-store"
+LOCAL_PATH = "/tmp/memory_store.jsonl"
 
-def rollback_memory(snapshot: str):
+
+def rollback_memory(snapshot_name: str):
     """
-    Restaura un snapshot de memoria desde GCS a /tmp/memory_store.jsonl
+    Restaura un snapshot de memoria desde GCS.
+    Prioriza gs://bucket/backups/, fallback a raíz del bucket.
     Cloud Run safe.
     """
 
-    if not snapshot.endswith(".jsonl"):
+    if os.getenv("K_SERVICE") is None:
         return {
             "status": "error",
-            "reason": "Invalid snapshot name"
+            "reason": "Rollback only allowed in Cloud Run"
         }
 
-    bucket_name = "natacha-memory-store"
-    local_path = "/tmp/memory_store.jsonl"
+    client = storage.Client()
+    bucket = client.bucket(BUCKET_NAME)
 
-    try:
-        client = storage.Client()
-        bucket = client.bucket(bucket_name)
-        blob = bucket.blob(snapshot)
+    candidates = [
+        f"backups/{snapshot_name}",
+        snapshot_name,  # backward compatibility
+    ]
 
-        if not blob.exists():
-            return {
-                "status": "error",
-                "reason": f"Snapshot not found: {snapshot}"
-            }
+    blob = None
+    used_path = None
 
-        blob.download_to_filename(local_path)
+    for path in candidates:
+        b = bucket.blob(path)
+        if b.exists():
+            blob = b
+            used_path = path
+            break
 
-        return {
-            "status": "ok",
-            "snapshot": snapshot,
-            "restored": True,
-            "path": local_path
-        }
-
-    except Exception as e:
+    if blob is None:
         return {
             "status": "error",
-            "reason": str(e)
+            "reason": f"Snapshot not found: {snapshot_name}"
         }
+
+    blob.download_to_filename(LOCAL_PATH)
+
+    return {
+        "status": "ok",
+        "snapshot": snapshot_name,
+        "restored": True,
+        "path": LOCAL_PATH,
+        "source": f"gs://{BUCKET_NAME}/{used_path}"
+    }
