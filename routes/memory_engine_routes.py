@@ -1,28 +1,29 @@
-from typing import Optional, Dict, Any
-from fastapi import APIRouter, Query
+from typing import Dict, Any
+from fastapi import APIRouter, Query, HTTPException
 
-import unified_core.memory_lazy as memory_lazy
+from unified_core.memory_reader_v2 import memory_reader_v2
+from unified_core.memory_writer_v2 import memory_writer_v2
 
 # --------------------------------------------------
-# Router (DEBE IR PRIMERO)
+# Router
 # --------------------------------------------------
 router = APIRouter(prefix="/memory/engine", tags=["memory-engine"])
 
-# --------------------------------------------------
-# Lazy memory singleton
-# --------------------------------------------------
-memory = memory_lazy.get_memory_index()
 
 # --------------------------------------------------
-# Endpoints
+# Endpoints (SAFE / LAZY / A2-COMPATIBLE)
 # --------------------------------------------------
 @router.get("/recent")
 def memory_recent(
-    user_id: Optional[str] = None,
     limit: int = Query(20, ge=1, le=200),
 ):
-    items = memory.list_recent(user_id=user_id, limit=limit)
+    """
+    Devuelve eventos recientes desde memoria unificada (read-only).
+    """
+    items = memory_reader_v2.load_recent(limit)
     return {
+        "status": "ok",
+        "engine": "memory_reader_v2",
         "count": len(items),
         "items": items,
     }
@@ -30,34 +31,38 @@ def memory_recent(
 
 @router.post("/raw")
 def memory_raw(payload: Dict[str, Any]):
-    memory_id = memory.save_raw(payload)
-    return {"status": "raw_saved", "memory_id": memory_id}
-
-
-@router.post("/consolidate")
-def memory_consolidate(user_id: Optional[str] = None):
-    result = memory.consolidate(user_id=user_id)
-    return {"status": "ok", "result": result}
-
-
-@router.get("/context_bundle")
-def memory_context_bundle(
-    user_id: Optional[str] = None,
-    recent_limit: int = Query(20, ge=1, le=200),
-):
-    return memory.build_context_bundle(
-        user_id=user_id,
-        recent_limit=recent_limit,
-    )
-
-
-# --------------------------------------------------
-# Debug endpoint (OPCIONAL pero seguro)
-# --------------------------------------------------
-@router.get("/_debug_methods")
-def debug_methods():
-    return {
-        "methods": sorted(
-            [m for m in dir(memory) if not m.startswith("_")]
+    """
+    Inserta un evento crudo en memoria (safe write).
+    """
+    try:
+        memory_id = memory_writer_v2.save_raw(payload)
+        return {
+            "status": "raw_saved",
+            "memory_id": memory_id,
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"memory write failed: {e}",
         )
-    }
+
+
+# --------------------------------------------------
+# Debug endpoint (SEGURO)
+# --------------------------------------------------
+@router.get("/_debug")
+def debug_info():
+    """
+    Debug liviano para verificar estado del reader.
+    """
+    try:
+        items = memory_reader_v2.load_recent(1)
+        return {
+            "reader": "ok",
+            "sample_items": len(items),
+        }
+    except Exception as e:
+        return {
+            "reader": "error",
+            "error": str(e),
+        }
