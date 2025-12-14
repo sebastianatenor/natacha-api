@@ -15,11 +15,18 @@ def load_memory_from_gcs():
     """
     Sincroniza memory_store.jsonl desde GCS SOLO en Cloud Run.
     Se ejecuta en background, nunca bloquea el arranque.
+    NO pisa memoria si ya existe (post-rollback safe).
     """
     in_cloud_run = os.getenv("K_SERVICE") is not None
+    local_path = "/tmp/memory_store.jsonl"
 
     if not in_cloud_run:
         print("[BOOT] Local environment: skipping memory sync.")
+        return
+
+    # 🔒 Guard: no pisar memoria ya presente (rollback / warm start)
+    if Path(local_path).exists():
+        print("[BOOT] Memory already present, skipping GCS sync.")
         return
 
     print("[BOOT] Cloud Run detected. Starting async memory sync…")
@@ -29,7 +36,6 @@ def load_memory_from_gcs():
 
         bucket_name = "natacha-memory-store"
         blob_name = "memory_store.jsonl"
-        local_path = "/tmp/memory_store.jsonl"
 
         client = storage.Client()
         bucket = client.bucket(bucket_name)
@@ -161,8 +167,8 @@ safe_include("routes.warmup")
 safe_include("routes.memory_rollback")
 safe_include("routes.memory_snapshot")
 safe_include("routes.memory_snapshots")
+safe_include("ops.memory.post_rollback")
 
-# ❌ IMPORTANTE: NO se incluye memory_engine_alias
 print("[INFO] Legacy memory routes DISABLED (A2 clean)")
 
 # ================================================================
