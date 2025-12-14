@@ -1,53 +1,44 @@
 import os
 from google.cloud import storage
 
+
 BUCKET_NAME = "natacha-memory-store"
-LOCAL_PATH = "/tmp/memory_store.jsonl"
+BACKUPS_PREFIX = "backups/"
+LOCAL_MEMORY_PATH = "/tmp/memory_store.jsonl"
 
 
-def rollback_memory(snapshot_name: str):
+def rollback_memory(snapshot: str):
     """
-    Restaura un snapshot de memoria desde GCS.
-    Prioriza gs://bucket/backups/, fallback a raíz del bucket.
+    Restaura un snapshot de memoria desde GCS backups/.
     Cloud Run safe.
     """
 
-    if os.getenv("K_SERVICE") is None:
+    try:
+        client = storage.Client()
+        bucket = client.bucket(BUCKET_NAME)
+
+        # 🔑 Siempre buscamos en backups/
+        blob_path = f"{BACKUPS_PREFIX}{snapshot}"
+        blob = bucket.blob(blob_path)
+
+        if not blob.exists():
+            return {
+                "status": "error",
+                "reason": f"Snapshot not found in backups/: {snapshot}"
+            }
+
+        blob.download_to_filename(LOCAL_MEMORY_PATH)
+
         return {
-            "status": "error",
-            "reason": "Rollback only allowed in Cloud Run"
+            "status": "ok",
+            "snapshot": snapshot,
+            "restored": True,
+            "path": LOCAL_MEMORY_PATH,
+            "source": f"gs://{BUCKET_NAME}/{blob_path}"
         }
 
-    client = storage.Client()
-    bucket = client.bucket(BUCKET_NAME)
-
-    candidates = [
-        f"backups/{snapshot_name}",
-        snapshot_name,  # backward compatibility
-    ]
-
-    blob = None
-    used_path = None
-
-    for path in candidates:
-        b = bucket.blob(path)
-        if b.exists():
-            blob = b
-            used_path = path
-            break
-
-    if blob is None:
+    except Exception as e:
         return {
             "status": "error",
-            "reason": f"Snapshot not found: {snapshot_name}"
+            "reason": str(e)
         }
-
-    blob.download_to_filename(LOCAL_PATH)
-
-    return {
-        "status": "ok",
-        "snapshot": snapshot_name,
-        "restored": True,
-        "path": LOCAL_PATH,
-        "source": f"gs://{BUCKET_NAME}/{used_path}"
-    }
