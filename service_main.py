@@ -158,6 +158,8 @@ safe_include("routes.system_state")
 safe_include("routes.system_decide")
 safe_include("routes.system_diagnose")
 safe_include("routes.warmup")
+safe_include("routes.memory_rollback")
+safe_include("routes.memory_snapshot")
 
 # ❌ IMPORTANTE: NO se incluye memory_engine_alias
 print("[INFO] Legacy memory routes DISABLED (A2 clean)")
