@@ -1,89 +1,88 @@
-kimport os
+import os
 import json
 import threading
 from pathlib import Path
 
+print("[BOOT] service_main loaded — before FastAPI init")
+
 # ================================================================
 # FAST BOOT FLAG (CRÍTICO PARA CLOUD RUN)
 # ================================================================
-
-print("[BOOT] service_main loaded — before FastAPI init")
-os.environ["NATACHA_FAST_BOOT"] = "1"
+os.environ.setdefault("NATACHA_FAST_BOOT", "1")
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
 # ================================================================
-# 1) BOOT SEQUENCE – Memory Sync (Cloud Run SAFE)
+# 1) BOOT SEQUENCE – Memory Sync (CLOUD RUN SAFE)
 # ================================================================
 
 def load_memory_from_gcs():
     """
     Sincroniza memory_store.jsonl desde GCS SOLO en Cloud Run.
-    Se ejecuta en background, nunca bloquea el arranque.
-    NO pisa memoria si ya existe (post-rollback safe).
+    Corre en background, nunca bloquea el arranque.
     """
-    in_cloud_run = os.getenv("K_SERVICE") is not None
-    local_path = "/tmp/memory_store.jsonl"
-
-    if not in_cloud_run:
-        print("[BOOT] Local environment: skipping memory sync.")
-        return
-
-    if Path(local_path).exists():
-        print("[BOOT] Memory already present, skipping GCS sync.")
-        return
-
-    print("[BOOT] Cloud Run detected. Starting async memory sync…")
-
     try:
+        in_cloud_run = os.getenv("K_SERVICE") is not None
+        local_path = "/tmp/memory_store.jsonl"
+
+        if not in_cloud_run:
+            print("[BOOT] Local environment: skipping memory sync.")
+            return
+
+        if Path(local_path).exists():
+            print("[BOOT] Memory already present, skipping GCS sync.")
+            return
+
+        print("[BOOT] Cloud Run detected. Starting async memory sync…")
+
         from google.cloud import storage
 
-        bucket_name = "natacha-memory-store"
-        blob_name = "memory_store.jsonl"
-
         client = storage.Client()
-        bucket = client.bucket(bucket_name)
-        blob = bucket.blob(blob_name)
-
+        bucket = client.bucket("natacha-memory-store")
+        blob = bucket.blob("memory_store.jsonl")
         blob.download_to_filename(local_path)
-        print(f"[OK] Memory synced from gs://{bucket_name}/{blob_name}")
+
+        print("[OK] Memory synced from GCS")
 
     except Exception as e:
         print(f"[WARN] Memory sync skipped: {e}")
 
 
-def start_memory_sync_background():
-    t = threading.Thread(target=load_memory_from_gcs, daemon=True)
+def start_background(fn):
+    t = threading.Thread(target=fn, daemon=True)
     t.start()
 
+
 # ================================================================
-# 2) Inicialización FastAPI (RÁPIDA)
+# 2) FASTAPI INIT (ULTRA RÁPIDO)
 # ================================================================
 
 app = FastAPI(
     title="Natacha API",
     version="20.3-fast-boot",
-    description="Natacha – API central con fast boot para Cloud Run."
+    description="Natacha – Cloud Run safe fast boot"
 )
 
 # ================================================================
-# 3) STARTUP HOOK (ÚNICO punto válido en Cloud Run)
+# 3) STARTUP HOOK (NO BLOQUEANTE)
 # ================================================================
 
 @app.on_event("startup")
 def on_startup():
-    start_memory_sync_background()
+    # Memory sync siempre en background
+    start_background(load_memory_from_gcs)
 
+    # Post-startup SOLO en background
     try:
         from ops.startup.post_startup import launch_post_startup
-        launch_post_startup()
-        print("[STARTUP] Post-startup launched")
+        start_background(launch_post_startup)
+        print("[STARTUP] post_startup launched in background")
     except Exception as e:
-        print(f"[STARTUP][SKIP] post_startup failed: {e}")
+        print(f"[STARTUP][SKIP] post_startup unavailable: {e}")
 
-    print("[STARTUP] Minimal startup completed (FAST BOOT)")
+    print("[STARTUP] Fast boot startup completed")
 
 # ================================================================
 # 4) CORS
@@ -98,7 +97,7 @@ app.add_middleware(
 )
 
 # ================================================================
-# 5) Safe include helper
+# 5) SAFE INCLUDE
 # ================================================================
 
 def safe_include(module_name: str):
@@ -106,7 +105,7 @@ def safe_include(module_name: str):
         module = __import__(module_name, fromlist=["router"])
         router = getattr(module, "router", None)
 
-        if router is not None:
+        if router:
             app.include_router(router)
             print(f"[OK] Included: {module_name}")
         else:
@@ -116,7 +115,7 @@ def safe_include(module_name: str):
         print(f"[SKIP] {module_name} – {e}")
 
 # ================================================================
-# 6) Routers PRINCIPALES (SIEMPRE ACTIVOS)
+# 6) RUTAS BASE (SIEMPRE ACTIVAS)
 # ================================================================
 
 from routes import health_route
@@ -128,7 +127,7 @@ app.include_router(memory_unified_router)
 app.include_router(context_unified_router)
 
 # ================================================================
-# 7) Módulos opcionales (DIFERIDOS EN FAST BOOT)
+# 7) MÓDULOS OPCIONALES (DIFERIDOS)
 # ================================================================
 
 if os.getenv("NATACHA_FAST_BOOT") != "1":
@@ -152,6 +151,7 @@ if os.getenv("NATACHA_FAST_BOOT") != "1":
     safe_include("routes.memory_rollback")
     safe_include("routes.memory_snapshot")
     safe_include("routes.memory_snapshots")
+
     safe_include("ops.memory.post_rollback")
     safe_include("ops.agent.interact")
 else:
@@ -160,7 +160,7 @@ else:
 print("[INFO] Legacy memory routes DISABLED (A2 clean)")
 
 # ================================================================
-# 8) Root
+# 8) ROOT
 # ================================================================
 
 @app.get("/")
@@ -168,11 +168,11 @@ def root():
     return {
         "status": "ok",
         "engine": "natacha-unified-v20.3-fast-boot",
-        "message": "Natacha API – Fast Boot / Cloud Run ready 🚀"
+        "message": "Natacha API – Cloud Run FAST BOOT ready 🚀"
     }
 
 # ================================================================
-# 9) OpenAPI público
+# 9) OPENAPI PUBLIC
 # ================================================================
 
 @app.get("/openapi_public.json", include_in_schema=False)
@@ -194,7 +194,7 @@ def openapi_public():
         return json.load(f)
 
 # ================================================================
-# 10) OpenAPI interno
+# 10) OPENAPI INTERNO
 # ================================================================
 
 def custom_openapi():
@@ -204,7 +204,7 @@ def custom_openapi():
     schema = get_openapi(
         title="Natacha Internal API",
         version="20.3",
-        description="Esquema interno unificado de Natacha (fast boot)",
+        description="Natacha internal API (fast boot)",
         routes=app.routes,
     )
 
@@ -215,6 +215,5 @@ def custom_openapi():
 
     app.openapi_schema = schema
     return schema
-
 
 app.openapi = custom_openapi
