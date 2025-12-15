@@ -1,7 +1,14 @@
-import os
+kimport os
 import json
 import threading
 from pathlib import Path
+
+# ================================================================
+# FAST BOOT FLAG (CRÍTICO PARA CLOUD RUN)
+# ================================================================
+
+print("[BOOT] service_main loaded — before FastAPI init")
+os.environ["NATACHA_FAST_BOOT"] = "1"
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,7 +31,6 @@ def load_memory_from_gcs():
         print("[BOOT] Local environment: skipping memory sync.")
         return
 
-    # 🔒 Guard: no pisar memoria ya presente (rollback / warm start)
     if Path(local_path).exists():
         print("[BOOT] Memory already present, skipping GCS sync.")
         return
@@ -49,21 +55,17 @@ def load_memory_from_gcs():
 
 
 def start_memory_sync_background():
-    t = threading.Thread(
-        target=load_memory_from_gcs,
-        daemon=True
-    )
+    t = threading.Thread(target=load_memory_from_gcs, daemon=True)
     t.start()
 
-
 # ================================================================
-# 2) Inicialización FastAPI
+# 2) Inicialización FastAPI (RÁPIDA)
 # ================================================================
 
 app = FastAPI(
     title="Natacha API",
-    version="20.2-clean-memory",
-    description="Natacha – API central con memoria lazy unificada (Cloud Run safe)."
+    version="20.3-fast-boot",
+    description="Natacha – API central con fast boot para Cloud Run."
 )
 
 # ================================================================
@@ -74,10 +76,14 @@ app = FastAPI(
 def on_startup():
     start_memory_sync_background()
 
-    from ops.startup.post_startup import launch_post_startup
-    launch_post_startup()
+    try:
+        from ops.startup.post_startup import launch_post_startup
+        launch_post_startup()
+        print("[STARTUP] Post-startup launched")
+    except Exception as e:
+        print(f"[STARTUP][SKIP] post_startup failed: {e}")
 
-    print("[STARTUP] Minimal startup completed (Cloud Run SAFE)")
+    print("[STARTUP] Minimal startup completed (FAST BOOT)")
 
 # ================================================================
 # 4) CORS
@@ -109,9 +115,8 @@ def safe_include(module_name: str):
     except Exception as e:
         print(f"[SKIP] {module_name} – {e}")
 
-
 # ================================================================
-# 6) Routers PRINCIPALES (UNIFICADOS)
+# 6) Routers PRINCIPALES (SIEMPRE ACTIVOS)
 # ================================================================
 
 from routes import health_route
@@ -123,31 +128,34 @@ app.include_router(memory_unified_router)
 app.include_router(context_unified_router)
 
 # ================================================================
-# 7) Módulos opcionales / introspección
+# 7) Módulos opcionales (DIFERIDOS EN FAST BOOT)
 # ================================================================
 
-safe_include("ops.extensions.core_bridge_ext")
-safe_include("ops.affective_train")
-safe_include("ops.cognitive_evolution")
+if os.getenv("NATACHA_FAST_BOOT") != "1":
+    safe_include("ops.extensions.core_bridge_ext")
+    safe_include("ops.affective_train")
+    safe_include("ops.cognitive_evolution")
 
-safe_include("ops.introspection.code_scan")
-safe_include("ops.introspection.history_reader")
-safe_include("ops.introspection.self_reflect")
-safe_include("ops.introspection.meta_reflect")
+    safe_include("ops.introspection.code_scan")
+    safe_include("ops.introspection.history_reader")
+    safe_include("ops.introspection.self_reflect")
+    safe_include("ops.introspection.meta_reflect")
 
-safe_include("ops.self_diagnostics")
-safe_include("ops.firestore_adapter")
+    safe_include("ops.self_diagnostics")
+    safe_include("ops.firestore_adapter")
 
-safe_include("routes.benchmark")
-safe_include("routes.system_state")
-safe_include("routes.system_decide")
-safe_include("routes.system_diagnose")
-safe_include("routes.warmup")
-safe_include("routes.memory_rollback")
-safe_include("routes.memory_snapshot")
-safe_include("routes.memory_snapshots")
-safe_include("ops.memory.post_rollback")
-safe_include("ops.agent.interact")
+    safe_include("routes.benchmark")
+    safe_include("routes.system_state")
+    safe_include("routes.system_decide")
+    safe_include("routes.system_diagnose")
+    safe_include("routes.warmup")
+    safe_include("routes.memory_rollback")
+    safe_include("routes.memory_snapshot")
+    safe_include("routes.memory_snapshots")
+    safe_include("ops.memory.post_rollback")
+    safe_include("ops.agent.interact")
+else:
+    print("[BOOT] FAST BOOT active — optional modules deferred")
 
 print("[INFO] Legacy memory routes DISABLED (A2 clean)")
 
@@ -159,8 +167,8 @@ print("[INFO] Legacy memory routes DISABLED (A2 clean)")
 def root():
     return {
         "status": "ok",
-        "engine": "natacha-unified-v20.2",
-        "message": "Natacha API – Clean memory / Cloud Run ready 🚀"
+        "engine": "natacha-unified-v20.3-fast-boot",
+        "message": "Natacha API – Fast Boot / Cloud Run ready 🚀"
     }
 
 # ================================================================
@@ -195,8 +203,8 @@ def custom_openapi():
 
     schema = get_openapi(
         title="Natacha Internal API",
-        version="20.2",
-        description="Esquema interno unificado de Natacha (clean memory)",
+        version="20.3",
+        description="Esquema interno unificado de Natacha (fast boot)",
         routes=app.routes,
     )
 
