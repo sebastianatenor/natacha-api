@@ -1,15 +1,18 @@
-kFROM python:3.10-slim
+FROM python:3.10-slim
 
 WORKDIR /app
 
+# System dependencies
 RUN apt-get update && apt-get install -y \
     gcc g++ git \
     && rm -rf /var/lib/apt/lists/*
 
+# Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip \
+RUN pip install --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
+# App code
 COPY . /app
 
 ENV PYTHONPATH=/app
