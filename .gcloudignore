@@ -1,4 +1,4 @@
-k# ============================
+# ============================
 # ARCHIVOS A EXCLUIR DEL DEPLOY
 # ============================
 
@@ -70,3 +70,6 @@ build/
 !ops/**
 !config/**
 !utils/**
+# Seguridad extra
+_forensics/
+*.txt
