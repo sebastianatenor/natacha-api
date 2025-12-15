@@ -118,8 +118,12 @@ def create_task_from_memory(db, memory_doc: dict):
     db.collection("assistant_memory").add(confirm_memory)
 
 
+from unified_core.legacy_guard import block_legacy_write
+
 @router.post("/memory/add")
 def memory_add(payload: dict):
+    block_legacy_write()
+    # resto del código NO se toca
     db = get_db()
 
     summary = (payload.get("summary") or "").strip()
