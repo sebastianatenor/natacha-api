@@ -2,17 +2,14 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# System dependencies
 RUN apt-get update && apt-get install -y \
-    gcc g++ git \
+    git gcc g++ libglib2.0-0 libc6 \
     && rm -rf /var/lib/apt/lists/*
 
-# Python dependencies
-COPY requirements.txt .
+COPY requirements.txt /app/requirements.txt
 RUN pip install --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+    && pip install --no-cache-dir -r /app/requirements.txt
 
-# App code
 COPY . /app
 
 ENV PYTHONPATH=/app
