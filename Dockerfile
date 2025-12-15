@@ -2,13 +2,15 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
+# System deps
 RUN apt-get update && apt-get install -y \
-    gcc g++ git \
+    git gcc g++ libglib2.0-0 libc6 \
     && rm -rf /var/lib/apt/lists/*
 
-# 👉 SOLO runtime deps
+# Python deps (runtime)
 COPY requirements.runtime.txt .
-RUN pip install --no-cache-dir -r requirements.runtime.txt
+RUN pip install --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir -r requirements.runtime.txt
 
 # App
 COPY . /app
