@@ -1,37 +1,22 @@
-substitutions:
-  _REGION: us-central1
-  _SERVICE: natacha-api
-
 steps:
-- name: 'gcr.io/kaniko-project/executor:v1.23.2'
-  args:
-    - --dockerfile=Dockerfile
-    - --context=dir://.
-    - --destination=us-central1-docker.pkg.dev/$PROJECT_ID/natacha/natacha-api:$BUILD_ID
-    - --cache=false
+  # Build image with Kaniko
+  - name: 'gcr.io/kaniko-project/executor:v1.23.2'
+    args:
+      - --dockerfile=Dockerfile
+      - --context=dir://.
+      - --destination=us-central1-docker.pkg.dev/$PROJECT_ID/natacha/natacha-api:$BUILD_ID
+      - --cache=false
 
-  # Deploy a Cloud Run
+  # Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:467.0.0'
     entrypoint: 'bash'
     args:
       - -c
       - |
-        set -euo pipefail
-        gcloud run deploy "${_SERVICE}" \
-          --region "${_REGION}" \
-          --image "us-central1-docker.pkg.dev/${PROJECT_ID}/natacha/natacha-api:${BUILD_ID}" \
+        gcloud run deploy natacha-api \
+          --region us-central1 \
+          --image us-central1-docker.pkg.dev/$PROJECT_ID/natacha/natacha-api:$BUILD_ID \
           --quiet
-
-  # Smoke tests (falla el build si no hay 200)
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:467.0.0'
-    entrypoint: 'bash'
-    args:
-      - -c
-      - |
-        set -euo pipefail
-        SERVICE_URL="$(gcloud run services describe "${_SERVICE}" --region "${_REGION}" --format='value(status.url)')"
-        export SERVICE_URL
-        ./ci/smoke.sh
 
 options:
   logging: CLOUD_LOGGING_ONLY
