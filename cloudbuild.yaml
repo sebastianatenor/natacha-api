@@ -1,9 +1,5 @@
-substitutions:
-  _REGION: us-central1
-  _SERVICE: natacha-api
-
 steps:
-  # STEP 0 — Build & push
+  # STEP 0 — Build & push ONLY (deploy desactivado a propósito)
   - name: 'gcr.io/kaniko-project/executor:v1.23.2'
     args:
       - --destination=us-central1-docker.pkg.dev/$PROJECT_ID/natacha/natacha-api:$BUILD_ID
@@ -13,17 +9,6 @@ steps:
       - --snapshotMode=time
       - --compressed-caching=true
       - --dockerfile=Dockerfile
-
-  # ❌ STEP 1 DESACTIVADO A PROPÓSITO
-  # - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:467.0.0'
-  #   entrypoint: 'bash'
-  #   args:
-  #     - -c
-  #     - |
-  #       gcloud run deploy "${_SERVICE}" \
-  #         --region "${_REGION}" \
-  #         --image "us-central1-docker.pkg.dev/${PROJECT_ID}/natacha/natacha-api:${BUILD_ID}" \
-  #         --quiet
 
 options:
   logging: CLOUD_LOGGING_ONLY
