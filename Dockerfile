@@ -2,12 +2,17 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# System deps mínimas
+# System deps
 RUN apt-get update && apt-get install -y \
     git gcc g++ libglib2.0-0 libc6 \
     && rm -rf /var/lib/apt/lists/*
 
-# Código (NO requirements)
+# Runtime deps mínimas
+RUN pip install --no-cache-dir \
+    fastapi==0.115.3 \
+    "uvicorn[standard]==0.30.6"
+
+# App
 COPY . /app
 
 ENV PYTHONPATH=/app
