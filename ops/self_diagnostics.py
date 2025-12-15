@@ -13,10 +13,9 @@ import subprocess
 router = APIRouter(prefix="/ops/self", tags=["Self Diagnostics"])
 
 CHECK_PATHS = [
-    "/app/memory_store.jsonl",
+    "/tmp/memory_store.jsonl",
     "/app/ops/introspection/meta_reflect.py",
 ]
-
 
 def _check_file_exists(path: str) -> bool:
     return Path(path).exists()

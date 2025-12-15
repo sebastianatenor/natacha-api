@@ -1,15 +1,16 @@
 import os
 import time
 from fastapi import APIRouter
-from unified_core.memory_lazy import get_memory_index
+from ops.memory.canonical_state import memory_state
 
 router = APIRouter(tags=["system"])
+
 
 @router.get("/ops/system/state")
 def system_state():
     """
     Estado real del sistema (Cloud Run safe).
-    SOLO observabilidad. No ejecuta lógica pesada.
+    SOLO observabilidad. No instancia memoria ni ejecuta lógica pesada.
     """
 
     now = time.time()
@@ -42,12 +43,11 @@ def system_state():
         "hf_token_present": bool(os.getenv("HF_TOKEN")),
     }
 
+    # =========================
+    # Memory (OBSERVATIONAL)
+    # =========================
 
-    # =========================
-    # Memory (source of truth)
-    # =========================
-    memory_index = get_memory_index()
-    memory = memory_index.status()
+    memory = memory_state()
 
     # =========================
     # Context / Introspection
