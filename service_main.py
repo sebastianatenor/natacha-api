@@ -149,8 +149,6 @@ safe_include("ops.extensions.core_bridge_ext")
 safe_include("ops.affective_train")
 safe_include("ops.cognitive_evolution")
 
-safe_include("unified_core.snapshot_engine")
-
 safe_include("ops.introspection.code_scan")
 safe_include("ops.introspection.history_reader")
 safe_include("ops.introspection.self_reflect")
@@ -168,6 +166,7 @@ safe_include("routes.memory_rollback")
 safe_include("routes.memory_snapshot")
 safe_include("routes.memory_snapshots")
 safe_include("ops.memory.post_rollback")
+safe_include("ops.agent.interact")
 
 print("[INFO] Legacy memory routes DISABLED (A2 clean)")
 
