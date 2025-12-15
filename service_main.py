@@ -72,31 +72,12 @@ app = FastAPI(
 
 @app.on_event("startup")
 def on_startup():
-    # ===============================
-    # 1) Async memory sync from GCS
-    # ===============================
     start_memory_sync_background()
 
-    # ===============================
-    # 2) Lazy memory ensure (SAFE)
-    # ===============================
-    try:
-        from unified_core.memory_lazy import get_memory_engine
-        mem = get_memory_engine()
-        mem.ensure_loaded()
-        print("[STARTUP] Memory engine ensured")
-    except Exception as e:
-        print(f"[STARTUP][MEMORY][SKIP] {e}")
+    from ops.startup.post_startup import launch_post_startup
+    launch_post_startup()
 
-    # ===============================
-    # 3) Auto-warmup semantic core
-    # ===============================
-    try:
-        from ops.startup.auto_warmup import maybe_auto_warmup
-        maybe_auto_warmup()
-        print("[STARTUP] Auto-warmup evaluated")
-    except Exception as e:
-        print(f"[STARTUP][AUTO-WARMUP][ERROR] {e}")
+    print("[STARTUP] Minimal startup completed (Cloud Run SAFE)")
 
 # ================================================================
 # 4) CORS
