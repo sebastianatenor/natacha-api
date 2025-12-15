@@ -70,6 +70,3 @@ build/
 !ops/**
 !config/**
 !utils/**
-# Seguridad extra
-_forensics/
-*.txt
