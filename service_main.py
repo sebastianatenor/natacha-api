@@ -206,10 +206,12 @@ def safe_include(module_name: str):
 from routes import health_route
 from routes.context_unified import router as context_unified_router
 from routes.memory_unified import router as memory_unified_router
+from ops.agent.interact import router as agent_router
 
 app.include_router(health_route.router)
 app.include_router(memory_unified_router)
 app.include_router(context_unified_router)
+app.include_router(agent_router)
 
 # ================================================================
 # 6.1) OS ROUTERS — EXPLICIT (PUBLIC & GPT-COMPATIBLE)
