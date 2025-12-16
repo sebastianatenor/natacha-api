@@ -22,6 +22,7 @@ def load_memory_from_gcs():
     """
     Sincroniza memory_store.jsonl desde GCS SOLO en Cloud Run.
     Corre en background, nunca bloquea el arranque.
+    IMPORTANTE: resetea el MemoryIndex al finalizar.
     """
     try:
         in_cloud_run = os.getenv("K_SERVICE") is not None
@@ -46,6 +47,11 @@ def load_memory_from_gcs():
 
         print("[OK] Memory synced from GCS")
 
+        # 🔥 CLAVE: resetear el singleton para que se reconstruya el índice
+        from unified_core.memory_lazy import reset_memory_index
+        reset_memory_index()
+        print("[MEMORY] Memory index reset after GCS sync")
+
     except Exception as e:
         print(f"[WARN] Memory sync skipped: {e}")
 
@@ -61,7 +67,7 @@ def start_background(fn):
 
 app = FastAPI(
     title="Natacha API",
-    version="20.3-fast-boot",
+    version="20.4-fast-boot",
     description="Natacha – Cloud Run safe fast boot"
 )
 
@@ -179,7 +185,7 @@ print("[INFO] Legacy memory routes DISABLED (A2 clean)")
 def root():
     return {
         "status": "ok",
-        "engine": "natacha-unified-v20.3-fast-boot",
+        "engine": "natacha-unified-v20.4-fast-boot",
         "message": "Natacha API – Cloud Run FAST BOOT ready 🚀"
     }
 
@@ -215,7 +221,7 @@ def custom_openapi():
 
     schema = get_openapi(
         title="Natacha Internal API",
-        version="20.3",
+        version="20.4",
         description="Natacha internal API (fast boot)",
         routes=app.routes,
     )
