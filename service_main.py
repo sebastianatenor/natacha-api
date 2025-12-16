@@ -65,6 +65,18 @@ app = FastAPI(
     description="Natacha – Cloud Run safe fast boot"
 )
 
+# --------------------------------------------------
+# LIVENESS / ALIVE PROBE (Cloud Run friendly)
+# --------------------------------------------------
+
+@app.get("/__alive", tags=["system"])
+async def alive():
+    return {
+        "status": "alive",
+        "service": "natacha-api",
+        "engine": "natacha-unified",
+    }
+
 # ================================================================
 # 3) STARTUP HOOK (NO BLOQUEANTE)
 # ================================================================
