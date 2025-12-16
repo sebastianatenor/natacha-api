@@ -15,6 +15,10 @@ class ContextEngineV4:
             "Use semantic relevance AND topic relevance to choose the right memory.",
         ]
 
+    # ------------------------
+    # Blocks
+    # ------------------------
+
     def _system_block(self):
         return {"type": "system", "content": self.system_rules}
 
@@ -24,7 +28,7 @@ class ContextEngineV4:
             "content": [
                 "Natacha is stable even when memory is minimal.",
                 "Primary mission: support Sebastián in operations, logistics, China suppliers and automation.",
-            ]
+            ],
         }
 
     def _recent_block(self, recent):
@@ -34,26 +38,25 @@ class ContextEngineV4:
         texts = [x["text"] for x in sem]
         return {"type": "semantic_relevance", "count": len(texts), "texts": texts}
 
-    def _vectorstore_ready(self) -> bool:
-        try:
-            items = vector_store.load_all()
-            return len(items) > 0
-        except Exception:
-            return False
+    # ------------------------
+    # Semantic selection
+    # ------------------------
 
     def _select_semantic(self, query: str, k: int = 5):
         if not query:
             return []
 
-        vector_store.ensure_loaded()
-
-        if not self._vectorstore_ready():
-            return []
-
         try:
+            # Garantiza que el vectorstore esté cargado (GCS / local)
+            vector_store.ensure_loaded()
+
             return vector_store.search(query, top_k=k)
         except Exception:
             return []
+
+    # ------------------------
+    # Priority selection
+    # ------------------------
 
     def _select_priority_items(self, recent):
         priority = []
@@ -62,6 +65,10 @@ class ContextEngineV4:
             if any(t in tags for t in ["lead", "client", "logistics", "import", "project"]):
                 priority.append(item)
         return priority[-5:]
+
+    # ------------------------
+    # Main builder
+    # ------------------------
 
     def build_context_bundle(
         self,
@@ -73,7 +80,6 @@ class ContextEngineV4:
         memory = get_memory_index()
 
         recent = memory.list_recent(limit=limit)
-
         semantic_hits = self._select_semantic(query, k=5)
         priority = self._select_priority_items(recent)
 
@@ -104,10 +110,16 @@ class ContextEngineV4:
         }
 
 
+# Singleton
 context_engine_v4 = ContextEngineV4()
 
 
-def build_context_bundle(user_id: str, limit: int = 20, fallback: bool = True, query: str = ""):
+def build_context_bundle(
+    user_id: str,
+    limit: int = 20,
+    fallback: bool = True,
+    query: str = "",
+):
     return context_engine_v4.build_context_bundle(
         user_id=user_id,
         limit=limit,
