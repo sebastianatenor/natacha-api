@@ -212,6 +212,38 @@ app.include_router(memory_unified_router)
 app.include_router(context_unified_router)
 
 # ================================================================
+# 6.1) OS ROUTERS — EXPLICIT (PUBLIC & GPT-COMPATIBLE)
+# ================================================================
+
+try:
+    from routes.system_state import router as system_state_router
+    app.include_router(system_state_router)
+    print("[OK] system_state router enabled")
+except Exception as e:
+    print(f"[SKIP] system_state router: {e}")
+
+try:
+    from routes.system_diagnose import router as system_diagnose_router
+    app.include_router(system_diagnose_router)
+    print("[OK] system_diagnose router enabled")
+except Exception as e:
+    print(f"[SKIP] system_diagnose router: {e}")
+
+try:
+    from routes.system_decide import router as system_decide_router
+    app.include_router(system_decide_router)
+    print("[OK] system_decide router enabled")
+except Exception as e:
+    print(f"[SKIP] system_decide router: {e}")
+
+try:
+    from routes.tasks_routes import router as tasks_router
+    app.include_router(tasks_router)
+    print("[OK] tasks router enabled")
+except Exception as e:
+    print(f"[SKIP] tasks router: {e}")
+
+# ================================================================
 # 7) MÓDULOS OPCIONALES (DIFERIDOS)
 # ================================================================
 
