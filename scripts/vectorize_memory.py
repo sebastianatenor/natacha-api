@@ -1,22 +1,12 @@
 import os
 from unified_core.memory_lazy import get_memory_index
 from unified_core.vectorstore.store import vector_store
-from unified_core.semantic_core import get_semantic_core
 
 def vectorize_memory(limit: int = 500):
-    print("[VECTORIZE] Starting memory vectorization")
-
-    semantic = get_semantic_core()
-    semantic.ensure_loaded()
-
     memory = get_memory_index()
-
-    if not memory.store_loaded:
-        raise RuntimeError("Memory store not loaded")
-
     items = memory.list_recent(limit=limit)
 
-    print(f"[VECTORIZE] Items to vectorize: {len(items)}")
+    print(f"[VECTORIZE] Vectorizing {len(items)} items")
 
     count = 0
     for item in items:
@@ -26,13 +16,14 @@ def vectorize_memory(limit: int = 500):
 
         meta = {
             "tags": item.get("tags", []),
-            "source": "memory_ndjson",
+            "timestamp": item.get("meta", {}).get("timestamp"),
+            "source": "ndjson_memory",
         }
 
         vector_store.add(text=text, meta=meta)
         count += 1
 
-    print(f"[VECTORIZE] Done. Vectorized {count} items")
+    print(f"[VECTORIZE] Done. Stored {count} vectors.")
 
 if __name__ == "__main__":
     vectorize_memory()
