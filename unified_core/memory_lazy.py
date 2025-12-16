@@ -1,6 +1,10 @@
 import os
 from typing import Optional
 
+# ============================================================
+# Memory Lazy Engine
+# ============================================================
+
 class MemoryLazyEngine:
     def __init__(self):
         self.store_path: Optional[str] = None
@@ -16,19 +20,12 @@ class MemoryLazyEngine:
     # --------------------------------------------------
 
     def store_available(self) -> bool:
-        """
-        Store is available if:
-        - already loaded OR
-        - local file exists OR
-        - remote GCS object exists
-        """
         if self._loaded:
             return True
 
         if os.path.exists(self.local_path):
             return True
 
-        # Remote check (GCS)
         try:
             from google.cloud import storage
             client = storage.Client()
@@ -39,14 +36,10 @@ class MemoryLazyEngine:
             return False
 
     # --------------------------------------------------
-    # Load
+    # Load (lazy, safe)
     # --------------------------------------------------
 
     def ensure_loaded(self) -> bool:
-        """
-        Load memory store lazily.
-        Safe to call multiple times.
-        """
         if self._loaded:
             return True
 
@@ -58,10 +51,8 @@ class MemoryLazyEngine:
             blob = bucket.blob(self.blob_name)
 
             blob.download_to_filename(self.local_path)
-
             self.store_path = self.local_path
 
-            # Count items
             with open(self.local_path, "r", encoding="utf-8") as f:
                 self.items_count = sum(1 for _ in f)
 
@@ -74,23 +65,30 @@ class MemoryLazyEngine:
 
 
 # ============================================================
-# BACKWARD COMPAT – module-level function (CRÍTICO)
+# Singleton
 # ============================================================
+
+memory_engine = MemoryLazyEngine()
+
+# ============================================================
+# 🔙 BACKWARD COMPATIBILITY LAYER (CRÍTICO)
+# ============================================================
+
+def get_memory_engine():
+    """
+    Legacy accessor.
+    Returns the singleton memory engine.
+    """
+    return memory_engine
+
 
 def get_memory_index():
     """
-    Backward compatibility shim.
-    Exposed at module level for legacy imports.
+    Legacy accessor used by context_engine_v4 and others.
+    Returns memory_index if present, otherwise empty dict.
     """
     try:
         from unified_core.memory_engine import memory_index
         return memory_index
     except Exception:
         return {}
-
-
-# ============================================================
-# Singleton
-# ============================================================
-
-memory_engine = MemoryLazyEngine()
