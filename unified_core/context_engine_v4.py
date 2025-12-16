@@ -45,6 +45,8 @@ class ContextEngineV4:
         if not query:
             return []
 
+        vector_store.ensure_loaded()
+
         if not self._vectorstore_ready():
             return []
 
