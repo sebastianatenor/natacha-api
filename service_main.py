@@ -1,6 +1,7 @@
 import os
 import json
 import threading
+import time
 from pathlib import Path
 
 print("[BOOT] service_main loaded — before FastAPI init")
@@ -8,11 +9,36 @@ print("[BOOT] service_main loaded — before FastAPI init")
 # ================================================================
 # FAST BOOT FLAG (CRÍTICO PARA CLOUD RUN)
 # ================================================================
-os.environ.setdefault("NATACHA_FAST_BOOT", "1")
+os.environ.setdefault("NATACHA_FAST_BOOT", os.getenv("NATACHA_FAST_BOOT", "1"))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+
+# ================================================================
+# Helpers
+# ================================================================
+
+def start_background(fn):
+    t = threading.Thread(target=fn, daemon=True)
+    t.start()
+
+
+def _safe_reset_memory_index(reason: str = ""):
+    """
+    Resetea el singleton del MemoryIndex para forzar rebuild.
+    Nunca debe romper el arranque.
+    """
+    try:
+        from unified_core.memory_lazy import reset_memory_index
+        reset_memory_index()
+        if reason:
+            print(f"[MEMORY] Memory index reset ({reason})")
+        else:
+            print("[MEMORY] Memory index reset")
+    except Exception as e:
+        print(f"[MEMORY][WARN] Could not reset memory index: {e}")
+
 
 # ================================================================
 # 1) BOOT SEQUENCE – Memory Sync (CLOUD RUN SAFE)
@@ -22,18 +48,24 @@ def load_memory_from_gcs():
     """
     Sincroniza memory_store.jsonl desde GCS SOLO en Cloud Run.
     Corre en background, nunca bloquea el arranque.
-    IMPORTANTE: resetea el MemoryIndex al finalizar.
+
+    IMPORTANTE:
+    - Si el archivo YA existe en /tmp, igual resetea MemoryIndex
+      (porque puede haber quedado cacheado en NullMemoryIndex por una llamada temprana).
     """
     try:
         in_cloud_run = os.getenv("K_SERVICE") is not None
-        local_path = "/tmp/memory_store.jsonl"
+        local_path = os.getenv("NATACHA_MEMORY_LOCAL", "/tmp/memory_store.jsonl")
+        p = Path(local_path)
 
         if not in_cloud_run:
             print("[BOOT] Local environment: skipping memory sync.")
             return
 
-        if Path(local_path).exists():
+        # Si el archivo ya existe, NO descargar de nuevo (fast), pero SÍ resetear el índice
+        if p.exists():
             print("[BOOT] Memory already present, skipping GCS sync.")
+            _safe_reset_memory_index("memory already present on boot")
             return
 
         print("[BOOT] Cloud Run detected. Starting async memory sync…")
@@ -41,24 +73,56 @@ def load_memory_from_gcs():
         from google.cloud import storage
 
         client = storage.Client()
-        bucket = client.bucket("natacha-memory-store")
-        blob = bucket.blob("memory_store.jsonl")
+        bucket_name = os.getenv("NATACHA_MEMORY_BUCKET", "natacha-memory-store")
+        blob_name = os.getenv("NATACHA_MEMORY_BLOB", "memory_store.jsonl")
+
+        bucket = client.bucket(bucket_name)
+        blob = bucket.blob(blob_name)
         blob.download_to_filename(local_path)
 
         print("[OK] Memory synced from GCS")
 
-        # 🔥 CLAVE: resetear el singleton para que se reconstruya el índice
-        from unified_core.memory_lazy import reset_memory_index
-        reset_memory_index()
-        print("[MEMORY] Memory index reset after GCS sync")
+        # CLAVE: resetear para que se reconstruya el índice con el archivo ya presente
+        _safe_reset_memory_index("after GCS sync")
 
     except Exception as e:
         print(f"[WARN] Memory sync skipped: {e}")
 
 
-def start_background(fn):
-    t = threading.Thread(target=fn, daemon=True)
-    t.start()
+def wait_and_reset_memory_index():
+    """
+    Evita la race condition:
+    si /context/unified se llama ANTES de que llegue /tmp/memory_store.jsonl,
+    el singleton queda cacheado vacío. Este watcher espera a que el archivo exista y tenga tamaño,
+    y recién ahí resetea el índice (en background).
+    """
+    try:
+        in_cloud_run = os.getenv("K_SERVICE") is not None
+        if not in_cloud_run:
+            return
+
+        local_path = os.getenv("NATACHA_MEMORY_LOCAL", "/tmp/memory_store.jsonl")
+        p = Path(local_path)
+
+        # ventana máxima de espera (segundos) – ajustable por env var
+        max_wait = int(os.getenv("NATACHA_MEMORY_WAIT_SECONDS", "30"))
+        step = float(os.getenv("NATACHA_MEMORY_WAIT_STEP", "0.5"))
+
+        waited = 0.0
+        while waited < max_wait:
+            try:
+                if p.exists() and p.stat().st_size > 0:
+                    _safe_reset_memory_index("waiter detected memory file ready")
+                    return
+            except Exception:
+                pass
+            time.sleep(step)
+            waited += step
+
+        # Si llegamos acá, no apareció (no rompemos nada)
+        print(f"[MEMORY][WARN] memory_store.jsonl not ready after {max_wait}s — continuing")
+    except Exception as e:
+        print(f"[MEMORY][WARN] waiter failed: {e}")
 
 
 # ================================================================
@@ -67,7 +131,7 @@ def start_background(fn):
 
 app = FastAPI(
     title="Natacha API",
-    version="20.4-fast-boot",
+    version="20.5-fast-boot",
     description="Natacha – Cloud Run safe fast boot"
 )
 
@@ -91,6 +155,9 @@ async def alive():
 def on_startup():
     # Memory sync siempre en background
     start_background(load_memory_from_gcs)
+
+    # Watcher anti-race: resetea cuando /tmp esté listo (aunque sync llegue tarde)
+    start_background(wait_and_reset_memory_index)
 
     # Post-startup SOLO en background
     try:
@@ -185,7 +252,7 @@ print("[INFO] Legacy memory routes DISABLED (A2 clean)")
 def root():
     return {
         "status": "ok",
-        "engine": "natacha-unified-v20.4-fast-boot",
+        "engine": "natacha-unified-v20.5-fast-boot",
         "message": "Natacha API – Cloud Run FAST BOOT ready 🚀"
     }
 
@@ -221,7 +288,7 @@ def custom_openapi():
 
     schema = get_openapi(
         title="Natacha Internal API",
-        version="20.4",
+        version="20.5",
         description="Natacha internal API (fast boot)",
         routes=app.routes,
     )
