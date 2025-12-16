@@ -3,14 +3,14 @@ Semantic Core – Cloud Run Safe (HF explicit auth)
 """
 
 import os
-from typing import Optional, List, Union
+from typing import Optional, List
 from sentence_transformers import SentenceTransformer
 
 
 class SemanticCore:
     def __init__(self):
         self._model: Optional[SentenceTransformer] = None
-        self._loaded: bool = False   # 👈 NUEVO
+        self._loaded: bool = False
 
     def ensure_loaded(self):
         if self._loaded:
@@ -32,11 +32,25 @@ class SemanticCore:
             use_auth_token=hf_token
         )
 
-        self._loaded = True          # 👈 CLAVE
+        self._loaded = True
         print("[SEMANTIC] Model loaded successfully")
 
     def is_loaded(self) -> bool:
         return self._loaded
+
+    def embed(self, text: str) -> List[float]:
+        """
+        Devuelve embedding vectorial del texto.
+        Safe para lazy-load y Cloud Run.
+        """
+        self.ensure_loaded()
+
+        if self._model is None:
+            raise RuntimeError("Semantic model not loaded")
+
+        vec = self._model.encode(text)
+        return vec.tolist()
+
 
 _semantic_core_instance: Optional[SemanticCore] = None
 
