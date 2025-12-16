@@ -86,8 +86,13 @@ def get_memory_index() -> BaseMemoryIndex:
 
 # 🔁 LEGACY ALIASES (NO BORRAR)
 def get_memory_engine() -> BaseMemoryIndex:
-    return get_memory_index()
+    engine = _MEMORY_INDEX
 
+    # 🔒 Garantía absoluta de interfaz
+    if not hasattr(engine, "ensure_loaded") or not hasattr(engine, "list_recent"):
+        return _SafeMemoryAdapter()
+
+    return engine
 
 def get_memory_store() -> BaseMemoryIndex:
     return get_memory_index()
@@ -96,3 +101,19 @@ def get_memory_store() -> BaseMemoryIndex:
 def reset_memory_index() -> None:
     global _MEMORY_INDEX
     _MEMORY_INDEX = None
+
+class _SafeMemoryAdapter:
+    """
+    Adapter final: garantiza interfaz mínima aunque no haya memoria real.
+    """
+    def ensure_loaded(self) -> None:
+        return None
+
+    def list_recent(self, limit: int = 20):
+        return []
+
+    def list_all(self):
+        return []
+
+    def add(self, *args, **kwargs):
+        return None
