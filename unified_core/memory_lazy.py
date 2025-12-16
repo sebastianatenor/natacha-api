@@ -72,22 +72,25 @@ class MemoryLazyEngine:
             print(f"[MEMORY][WARN] Failed to load memory: {e}")
             return False
 
-    # ------------------------------------------------------------
-    # BACKWARD COMPAT – requerido por context_engine_v4
-    # ------------------------------------------------------------
 
-    def get_memory_index():
-        """
-        Backward compatibility shim.
-        Returns the default memory index if available,
-        otherwise an empty structure.
-        """
-        try:
-            from unified_core.memory_engine import memory_index
-            return memory_index
-        except Exception:
-            return {}
+# ============================================================
+# BACKWARD COMPAT – module-level function (CRÍTICO)
+# ============================================================
 
+def get_memory_index():
+    """
+    Backward compatibility shim.
+    Exposed at module level for legacy imports.
+    """
+    try:
+        from unified_core.memory_engine import memory_index
+        return memory_index
+    except Exception:
+        return {}
+
+
+# ============================================================
 # Singleton
-memory_engine = MemoryLazyEngine()
+# ============================================================
 
+memory_engine = MemoryLazyEngine()
