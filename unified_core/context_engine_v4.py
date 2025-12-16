@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import List
 
 from unified_core.memory_lazy import get_memory_index
 from unified_core.vectorstore.store import vector_store
@@ -24,14 +24,14 @@ class ContextEngineV4:
             "content": [
                 "Natacha is stable even when memory is minimal.",
                 "Primary mission: support Sebastián in operations, logistics, China suppliers and automation.",
-            ]
+            ],
         }
 
     def _recent_block(self, recent):
         return {"type": "recent_messages", "count": len(recent), "messages": recent}
 
     def _semantic_block(self, sem):
-        texts = [x["text"] for x in sem]
+        texts = [x.get("text") for x in sem if isinstance(x, dict)]
         return {"type": "semantic_relevance", "count": len(texts), "texts": texts}
 
     def _select_semantic(self, query: str, k: int = 5):
@@ -40,10 +40,10 @@ class ContextEngineV4:
         except Exception:
             return []
 
-    def _select_priority_items(self, recent):
+    def _select_priority_items(self, recent: List[dict]):
         priority = []
         for item in recent:
-            tags = item.get("tags", [])
+            tags = item.get("tags", []) if isinstance(item, dict) else []
             if any(t in tags for t in ["lead", "client", "logistics", "import", "project"]):
                 priority.append(item)
         return priority[-5:]
@@ -57,7 +57,6 @@ class ContextEngineV4:
     ):
         memory = get_memory_index()
 
-        # 🔑 ESTA ES LA CLAVE
         recent = memory.list_recent(limit=limit)
 
         semantic_hits = self._select_semantic(query, k=5) if query else []
