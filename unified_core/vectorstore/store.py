@@ -20,6 +20,15 @@ class VectorStore:
         self.path = LOCAL_PATH
         self._loaded = False
 
+    def ensure_loaded(self):
+        """
+        Compatibility shim.
+        Context engine expects vector_store.ensure_loaded().
+        Delegate to semantic_core.
+        """
+        if hasattr(self.semantic_core, "ensure_loaded"):
+            self.semantic_core.ensure_loaded()
+
     def _load_from_gcs(self):
         if self._loaded:
             return
