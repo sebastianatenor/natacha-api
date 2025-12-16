@@ -6,75 +6,75 @@ from unified_core.vectorstore.store import vector_store
 
 
 class ContextEngineV4:
-    self.system_rules = [
-        "Your name is Natacha, assistant to Sebastián Atenor.",
-        "Maintain long-term continuity and recover previous context even across restarts.",
-        "Prioritize reasoning quality, memory coherence and task autonomy.",
-        "Domains: China suppliers, imports, logistics, LATAM industry intelligence, AI infra.",
-        "Use semantic relevance AND topic relevance to choose the right memory.",
-
-        # Universal Context Rule
-        "Evaluate all context by its real-world impact.",
-        "Actionable context (people, decisions, money, operations) has high priority.",
-        "Internal system context (health, metrics, introspection) has low priority.",
-        "Nothing is discarded, only ordered.",
-        "When in doubt, prioritize what enables action or decision."
-    ]
-
-    # ------------------------
-    # Blocks
-    # ------------------------
+    def __init__(self):
+        # ✅ Reglas universales del sistema (SIEMPRE ACTIVAS)
+        self.system_rules = [
+            "Your name is Natacha, assistant to Sebastián Atenor.",
+            "You must maintain long-term continuity across sessions and restarts.",
+            "Always prioritize business-critical context over generic conversation.",
+            "Primary domains: China suppliers, imports, logistics, LLVC operations, automation.",
+            "If commercial, contractual, financial or operational context exists, it must override casual chat.",
+            "Use semantic relevance AND operational priority when selecting memory.",
+        ]
 
     def _system_block(self):
-        return {"type": "system", "content": self.system_rules}
+        return {
+            "type": "system",
+            "content": self.system_rules,
+        }
 
     def _fallback_block(self):
         return {
             "type": "fallback",
             "content": [
-                "Natacha is stable even when memory is minimal.",
-                "Primary mission: support Sebastián in operations, logistics, China suppliers and automation.",
+                "Natacha is operational even with minimal memory.",
+                "Primary mission: support Sebastián in LLVC operations, sourcing, logistics and automation.",
             ],
         }
 
     def _recent_block(self, recent):
-        return {"type": "recent_messages", "count": len(recent), "messages": recent}
+        return {
+            "type": "recent_messages",
+            "count": len(recent),
+            "messages": recent,
+        }
 
     def _semantic_block(self, sem):
         texts = [x["text"] for x in sem]
-        return {"type": "semantic_relevance", "count": len(texts), "texts": texts}
+        return {
+            "type": "semantic_relevance",
+            "count": len(texts),
+            "texts": texts,
+        }
 
-    # ------------------------
-    # Semantic selection
-    # ------------------------
+    def _vectorstore_ready(self) -> bool:
+        try:
+            items = vector_store.load_all()
+            return len(items) > 0
+        except Exception:
+            return False
 
     def _select_semantic(self, query: str, k: int = 5):
         if not query:
             return []
 
-        try:
-            # Garantiza que el vectorstore esté cargado (GCS / local)
-            vector_store.ensure_loaded()
+        vector_store.ensure_loaded()
 
+        if not self._vectorstore_ready():
+            return []
+
+        try:
             return vector_store.search(query, top_k=k)
         except Exception:
             return []
-
-    # ------------------------
-    # Priority selection
-    # ------------------------
 
     def _select_priority_items(self, recent):
         priority = []
         for item in recent:
             tags = item.get("tags", [])
-            if any(t in tags for t in ["lead", "client", "logistics", "import", "project"]):
+            if any(t in tags for t in ["lead", "client", "logistics", "import", "project", "contract"]):
                 priority.append(item)
         return priority[-5:]
-
-    # ------------------------
-    # Main builder
-    # ------------------------
 
     def build_context_bundle(
         self,
@@ -84,8 +84,8 @@ class ContextEngineV4:
         query: str = "",
     ):
         memory = get_memory_index()
-
         recent = memory.list_recent(limit=limit)
+
         semantic_hits = self._select_semantic(query, k=5)
         priority = self._select_priority_items(recent)
 
@@ -98,7 +98,10 @@ class ContextEngineV4:
             blocks.append(self._semantic_block(semantic_hits))
 
         if priority:
-            blocks.append({"type": "priority_context", "messages": priority})
+            blocks.append({
+                "type": "priority_context",
+                "messages": priority,
+            })
 
         if fallback and len(recent) < 3:
             blocks.append(self._fallback_block())
