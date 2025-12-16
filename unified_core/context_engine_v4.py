@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import List
+from typing import Dict, Any, List
 
 from unified_core.memory_lazy import get_memory_index
+from unified_core.vectorstore.store import vector_store
 
 
 class ContextEngineV4:
@@ -14,10 +15,6 @@ class ContextEngineV4:
             "Use semantic relevance AND topic relevance to choose the right memory.",
         ]
 
-    # --------------------------------------------------
-    # Blocks
-    # --------------------------------------------------
-
     def _system_block(self):
         return {"type": "system", "content": self.system_rules}
 
@@ -27,44 +24,42 @@ class ContextEngineV4:
             "content": [
                 "Natacha is stable even when memory is minimal.",
                 "Primary mission: support Sebastián in operations, logistics, China suppliers and automation.",
-            ],
+            ]
         }
 
     def _recent_block(self, recent):
         return {"type": "recent_messages", "count": len(recent), "messages": recent}
 
     def _semantic_block(self, sem):
-        texts = [x.get("text") for x in sem if isinstance(x, dict)]
+        texts = [x["text"] for x in sem]
         return {"type": "semantic_relevance", "count": len(texts), "texts": texts}
 
-    # --------------------------------------------------
-    # SAFE semantic selector (FAST BOOT friendly)
-    # --------------------------------------------------
+    def _vectorstore_ready(self) -> bool:
+        try:
+            items = vector_store.load_all()
+            return len(items) > 0
+        except Exception:
+            return False
 
     def _select_semantic(self, query: str, k: int = 5):
         if not query:
             return []
 
-        try:
-            from unified_core.vectorstore.store import vector_store
-            return vector_store.search(query, top_k=k)
-        except Exception as e:
-            print(f"[CONTEXT][SEMANTIC][SKIP] {e}")
+        if not self._vectorstore_ready():
             return []
 
-    def _select_priority_items(self, recent: List[dict]):
+        try:
+            return vector_store.search(query, top_k=k)
+        except Exception:
+            return []
+
+    def _select_priority_items(self, recent):
         priority = []
         for item in recent:
-            if not isinstance(item, dict):
-                continue
             tags = item.get("tags", [])
             if any(t in tags for t in ["lead", "client", "logistics", "import", "project"]):
                 priority.append(item)
         return priority[-5:]
-
-    # --------------------------------------------------
-    # MAIN
-    # --------------------------------------------------
 
     def build_context_bundle(
         self,
@@ -75,11 +70,7 @@ class ContextEngineV4:
     ):
         memory = get_memory_index()
 
-        try:
-            recent = memory.list_recent(limit=limit)
-        except Exception as e:
-            print(f"[CONTEXT][MEMORY][ERROR] {e}")
-            recent = []
+        recent = memory.list_recent(limit=limit)
 
         semantic_hits = self._select_semantic(query, k=5)
         priority = self._select_priority_items(recent)
@@ -106,7 +97,7 @@ class ContextEngineV4:
             "recent_items": len(recent),
             "priority_items": len(priority),
             "semantic_items": len(semantic_hits),
-            "memory_loaded": getattr(memory, "store_loaded", False),
+            "memory_loaded": memory.store_loaded,
             "context_blocks": blocks,
         }
 
