@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import List
 
 from unified_core.memory_lazy import get_memory_index
-from unified_core.vectorstore.store import vector_store
 
 
 class ContextEngineV4:
@@ -14,6 +13,10 @@ class ContextEngineV4:
             "Domains: China suppliers, imports, logistics, LATAM industry intelligence, AI infra.",
             "Use semantic relevance AND topic relevance to choose the right memory.",
         ]
+
+    # --------------------------------------------------
+    # Blocks
+    # --------------------------------------------------
 
     def _system_block(self):
         return {"type": "system", "content": self.system_rules}
@@ -34,19 +37,34 @@ class ContextEngineV4:
         texts = [x.get("text") for x in sem if isinstance(x, dict)]
         return {"type": "semantic_relevance", "count": len(texts), "texts": texts}
 
+    # --------------------------------------------------
+    # SAFE semantic selector (FAST BOOT friendly)
+    # --------------------------------------------------
+
     def _select_semantic(self, query: str, k: int = 5):
+        if not query:
+            return []
+
         try:
+            from unified_core.vectorstore.store import vector_store
             return vector_store.search(query, top_k=k)
-        except Exception:
+        except Exception as e:
+            print(f"[CONTEXT][SEMANTIC][SKIP] {e}")
             return []
 
     def _select_priority_items(self, recent: List[dict]):
         priority = []
         for item in recent:
-            tags = item.get("tags", []) if isinstance(item, dict) else []
+            if not isinstance(item, dict):
+                continue
+            tags = item.get("tags", [])
             if any(t in tags for t in ["lead", "client", "logistics", "import", "project"]):
                 priority.append(item)
         return priority[-5:]
+
+    # --------------------------------------------------
+    # MAIN
+    # --------------------------------------------------
 
     def build_context_bundle(
         self,
@@ -57,9 +75,13 @@ class ContextEngineV4:
     ):
         memory = get_memory_index()
 
-        recent = memory.list_recent(limit=limit)
+        try:
+            recent = memory.list_recent(limit=limit)
+        except Exception as e:
+            print(f"[CONTEXT][MEMORY][ERROR] {e}")
+            recent = []
 
-        semantic_hits = self._select_semantic(query, k=5) if query else []
+        semantic_hits = self._select_semantic(query, k=5)
         priority = self._select_priority_items(recent)
 
         blocks = [
@@ -84,7 +106,7 @@ class ContextEngineV4:
             "recent_items": len(recent),
             "priority_items": len(priority),
             "semantic_items": len(semantic_hits),
-            "memory_loaded": memory.store_loaded,
+            "memory_loaded": getattr(memory, "store_loaded", False),
             "context_blocks": blocks,
         }
 
