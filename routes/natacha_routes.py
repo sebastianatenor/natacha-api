@@ -24,7 +24,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 class UserMessage(BaseModel):
     user_id: str = "sebastian"
     message: str
-    model: Optional[str] = "gpt-4o-mini"
+    model: Optional[str] = "gpt-4.1-mini"
 
 
 # ============================================================
@@ -156,7 +156,7 @@ def natacha_respond(payload: UserMessage):
     3. Guarda memoria (si aplica)
     4. Busca memorias semánticas relacionadas
     5. Inyecta observaciones ejecutivas (PASIVO)
-    6. Llama al modelo (si hay API key)
+    6. Llama al modelo (Responses API)
     """
 
     try:
@@ -184,7 +184,6 @@ def natacha_respond(payload: UserMessage):
             if related:
                 bullets = []
                 for item in related:
-                    text = ""
                     if isinstance(item, dict):
                         text = (
                             item.get("text")
@@ -231,17 +230,17 @@ def natacha_respond(payload: UserMessage):
                 "error": "missing_openai_api_key",
             }
 
-        # 7) Llamada al modelo
+        # 7) Llamada al modelo (Responses API)
         try:
             resp = requests.post(
-                "https://api.openai.com/v1/chat/completions",
+                "https://api.openai.com/v1/responses",
                 headers={
                     "Authorization": f"Bearer {OPENAI_API_KEY}",
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": payload.model or "gpt-4o-mini",
-                    "messages": [
+                    "model": payload.model or "gpt-4.1-mini",
+                    "input": [
                         {"role": "system", "content": system_content},
                         {"role": "user", "content": payload.message},
                     ],
@@ -251,10 +250,17 @@ def natacha_respond(payload: UserMessage):
 
             resp.raise_for_status()
             data = resp.json()
-            answer = data["choices"][0]["message"]["content"]
+
+            # Extraer texto de forma robusta
+            answer = ""
+            for item in data.get("output", []):
+                if item.get("type") == "message":
+                    for c in item.get("content", []):
+                        if c.get("type") == "output_text":
+                            answer += c.get("text", "")
 
             return {
-                "answer": answer,
+                "answer": answer.strip(),
                 "used_prompt": system_content,
                 "model_called": True,
             }
@@ -263,10 +269,10 @@ def natacha_respond(payload: UserMessage):
             return {
                 "answer": (
                     "⚠️ Hubo un problema al llamar al modelo externo. "
-                    "Revisá la API key o la red."
+                    "Revisá la configuración de OpenAI."
                 ),
                 "used_prompt": full_prompt,
-                "model_called": True,
+                "model_called": False,
                 "error": "model_call_failed",
                 "detail": str(e),
             }
