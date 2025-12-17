@@ -10,7 +10,11 @@ COPY requirements.txt /app/requirements.txt
 RUN pip install --upgrade pip \
     && pip install --no-cache-dir -r /app/requirements.txt
 
+# Copiar código
 COPY . /app
+
+# 🔥 COPIA EXPLÍCITA DE DOCS Y MANIFESTS (CRÍTICO)
+COPY docs /app/docs
 
 ENV PYTHONPATH=/app
 ENV PORT=8080
