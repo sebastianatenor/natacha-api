@@ -3,11 +3,23 @@
 from pathlib import Path
 from typing import Dict, List
 
-# ============================================================
-# MANIFEST ROOT (path absoluto, seguro en Cloud Run)
-# ============================================================
 
-BASE_DIR = Path(__file__).resolve().parents[3]
+def find_repo_root(start: Path) -> Path:
+    """
+    Sube en el filesystem hasta encontrar 'docs/manifests'.
+    Esto hace el loader robusto en Cloud Run, local y CI.
+    """
+    current = start.resolve()
+
+    for parent in [current] + list(current.parents):
+        candidate = parent / "docs" / "manifests"
+        if candidate.exists():
+            return parent
+
+    raise RuntimeError("No se pudo localizar docs/manifests en el filesystem.")
+
+
+BASE_DIR = find_repo_root(Path(__file__))
 MANIFEST_DIR = BASE_DIR / "docs" / "manifests"
 
 
