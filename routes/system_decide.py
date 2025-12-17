@@ -1,7 +1,10 @@
+# routes/system_decide.py
+
 from fastapi import APIRouter
 from typing import Dict, Any
 import time
-import requests
+
+from ops.system.manifest_decider import ManifestDecider
 from unified_core.memory_lazy import get_memory_index
 
 router = APIRouter(
@@ -9,49 +12,57 @@ router = APIRouter(
     tags=["system-decision"]
 )
 
+decider = ManifestDecider()
+
 
 @router.get("/decide")
 def system_decide() -> Dict[str, Any]:
     """
-    Decisor automático PASIVO.
-    Analiza el diagnóstico actual y sugiere acciones.
-    NO ejecuta nada.
+    Decisor ejecutivo PASIVO basado en manifiestos.
+
+    - No ejecuta acciones
+    - No modifica estado
+    - No escribe memoria
+    - Solo observa, razona y sugiere
     """
 
     now = time.time()
 
-    # Llamada interna al diagnóstico
-    try:
-        resp = requests.get("http://localhost:8080/ops/system/diagnose", timeout=2)
-        diag = resp.json()
-    except Exception as e:
-        return {
-            "timestamp": now,
-            "status": "unknown",
-            "error": f"cannot read diagnosis: {e}"
+    # -------------------------------------------------
+    # 1. Estado mínimo del sistema
+    # -------------------------------------------------
+    memory_index = get_memory_index()
+    recent_events = memory_index.recent(limit=50)
+
+    system_state = {
+        "memory": {
+            "items_count": memory_index.count()
         }
+    }
 
-    diagnosis = diag.get("diagnosis", {})
-    warnings = diagnosis.get("warnings", [])
-    summary = diagnosis.get("summary", {})
+    # -------------------------------------------------
+    # 2. Evaluación cognitiva (manifiestos)
+    # -------------------------------------------------
+    suggestions = decider.evaluate(
+        system_state=system_state,
+        recent_context=recent_events,
+        active_project=None
+    )
 
-    recommendations = []
-
-    if not summary.get("semantic_loaded"):
-        recommendations.append({
-            "action": "warmup_semantic_core",
-            "endpoint": "/__warmup",
-            "reason": "semantic core not loaded"
-        })
-
-    if not recommendations:
-        status = "optimal"
-    else:
-        status = "actionable"
-
+    # -------------------------------------------------
+    # 3. Respuesta
+    # -------------------------------------------------
     return {
         "timestamp": now,
-        "status": status,
-        "recommendations": recommendations,
-        "source": "passive_decision_engine"
+        "status": "ok",
+        "mode": "passive-manifest-decision",
+        "suggestions": [
+            {
+                "level": s.level,
+                "title": s.title,
+                "message": s.message,
+                "source_manifest": s.source_manifest
+            }
+            for s in suggestions
+        ]
     }
