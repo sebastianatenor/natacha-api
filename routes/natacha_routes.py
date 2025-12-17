@@ -1,9 +1,9 @@
 from typing import Optional
+import os
+import requests
 
 from fastapi import APIRouter
 from pydantic import BaseModel
-import os
-import requests
 
 from natacha_brain import (
     fetch_context,
@@ -16,94 +16,59 @@ router = APIRouter(prefix="/natacha", tags=["natacha"])
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+
+# ============================================================
+# MODELOS DE ENTRADA
+# ============================================================
+
 class UserMessage(BaseModel):
     user_id: str = "sebastian"
     message: str
     model: Optional[str] = "gpt-4o-mini"
 
+
 # ============================================================
-# AUTO MEMORY HELPERS
+# AUTO MEMORY HELPERS (UNIFICADOS)
 # ============================================================
 
 def _should_store_message(msg: str) -> bool:
     """
     Define si el mensaje del usuario es relevante como memoria.
-    Más adelante se puede expandir con reglas más avanzadas.
+    Regla conservadora: evita ruido.
     """
     if not msg:
         return False
 
-    # evitar guardar mensajes triviales
     trivial = ["hola", "dale", "ok", "si", "sí", "gracias"]
     if msg.lower().strip() in trivial:
         return False
 
-    # si menciona temas del negocio, lo guardamos
-    keywords = ["Sophie", "Jamin", "grúa", "China", "LLVC", "importación", "vial"]
-    if any(k.lower() in msg.lower() for k in keywords):
-        return True
+    keywords = [
+        "sophie",
+        "jamin",
+        "grúa",
+        "china",
+        "llvc",
+        "importación",
+        "vial",
+        "proveedor",
+        "cliente",
+    ]
 
-    return False
-
-
-def _store_raw_memory(user_id: str, note: str):
-    """
-    Llama al motor de memoria para guardar automáticamente la conversación.
-    Ignora errores silenciosamente para no romper el flujo.
-    """
-    try:
-        url = f"{SERVICE_URL}/memory/engine/raw"
-        payload = {
-            "user_id": user_id,
-            "note": note,
-            "kind": "conversation",
-            "importance": "normal",
-            "source": "natacha-auto"
-        }
-
-        import requests
-        requests.post(url, json=payload, timeout=5)
-
-    except Exception:
-        pass  # nunca romper la conversación por un problema de memoria
-
-# ============================================================
-# AUTO MEMORY HELPERS
-# ============================================================
-
-
-def _should_store_message(msg: str) -> bool:
-    """
-    Define si el mensaje del usuario es relevante como memoria.
-    Más adelante se puede expandir con reglas más avanzadas.
-    """
-    if not msg:
-        return False
-
-    # evitar guardar mensajes triviales
-    trivial = ["hola", "dale", "ok", "si", "sí", "gracias"]
-    if msg.lower().strip() in trivial:
-        return False
-
-    # si menciona temas del negocio, lo guardamos
-    keywords = ["Sophie", "Jamin", "grúa", "China", "LLVC", "importación", "vial"]
-    if any(k.lower() in msg.lower() for k in keywords):
-        return True
-
-    return False
+    return any(k in msg.lower() for k in keywords)
 
 
 def _store_raw_memory(user_id: str, note: str):
     """
-    Llama al motor de memoria para guardar automáticamente la conversación.
-    - Guarda memoria cruda en /memory/engine/raw
-    - Guarda memoria v2 en /memory/v2/store para búsquedas semánticas
-    Ignora errores silenciosamente para no romper el flujo.
+    Guarda memoria de conversación de forma segura.
+    - Memoria cruda
+    - Memoria v2 semántica
+    Nunca rompe el flujo conversacional.
     """
     try:
         base = SERVICE_URL.rstrip("/")
 
-        # 1) memoria cruda normalizada
+        # 1) Memoria cruda
         url_raw = f"{base}/memory/engine/raw"
         payload_raw = {
             "user_id": user_id,
@@ -114,7 +79,7 @@ def _store_raw_memory(user_id: str, note: str):
         }
         requests.post(url_raw, json=payload_raw, timeout=5)
 
-        # 2) memoria v2 para búsquedas semánticas
+        # 2) Memoria v2 (semántica)
         url_v2 = f"{base}/memory/v2/store"
         payload_v2 = {
             "items": [
@@ -132,39 +97,83 @@ def _store_raw_memory(user_id: str, note: str):
         requests.post(url_v2, json=payload_v2, timeout=5)
 
     except Exception:
-        # nunca romper la conversación por un problema de memoria
-        pass
+        pass  # nunca romper la conversación
 
+
+# ============================================================
+# EXECUTIVE / COGNITIVE OBSERVABILITY (PASIVO)
+# ============================================================
+
+def _get_executive_observations() -> str:
+    """
+    Obtiene observaciones ejecutivas PASIVAS del sistema.
+    - No ejecuta acciones
+    - No modifica estado
+    - Si falla, se ignora
+    """
+    try:
+        url = f"{SERVICE_URL}/ops/system/decide"
+        resp = requests.get(url, timeout=3)
+        data = resp.json()
+
+        suggestions = (
+            data.get("suggestions")
+            or data.get("recommendations")
+            or []
+        )
+
+        if not suggestions:
+            return ""
+
+        lines = []
+        for s in suggestions:
+            title = s.get("action") or s.get("title") or "Observation"
+            reason = s.get("reason") or s.get("message") or ""
+            lines.append(f"- {title}: {reason}")
+
+        return (
+            "\n\n[Executive Observations]\n"
+            + "\n".join(lines)
+            + "\n\nAsk the user if they want to act on any of these."
+        )
+
+    except Exception:
+        return ""
+
+
+# ============================================================
+# ENDPOINT PRINCIPAL
+# ============================================================
 
 @router.post("/respond")
 def natacha_respond(payload: UserMessage):
     """
-    Endpoint principal de Natacha:
+    Endpoint principal de Natacha.
 
-    1. Pide contexto al motor de memoria (/memory/engine/context_bundle) vía natacha_brain.fetch_context
-    2. Construye el prompt base con memoria + reglas vía natacha_brain.build_prompt
-    3. Busca memorias v2 relacionadas al mensaje actual
-    4. Agrega el mensaje del usuario
-    5. Si hay OPENAI_API_KEY, llama al modelo externo; si no, devuelve el prompt que usaría
-    6. TODOS los errores se devuelven en JSON (no hay más 'Internal Server Error' plano)
+    Flujo:
+    1. Trae contexto desde memoria
+    2. Construye prompt base
+    3. Guarda memoria (si aplica)
+    4. Busca memorias semánticas relacionadas
+    5. Inyecta observaciones ejecutivas (PASIVO)
+    6. Llama al modelo (si hay API key)
     """
 
     try:
-        # 1) Traer contexto desde el motor de memoria
+        # 1) Contexto desde memoria
         ctx = fetch_context(user_id=payload.user_id)
 
-        # 2) Construir el prompt con memoria consolidada
+        # 2) Prompt base
         base_prompt = build_prompt(ctx)
 
-        # 2b) Guardar memoria de conversación si aplica
+        # 3) Guardar memoria si aplica
         try:
             if _should_store_message(payload.message):
                 _store_raw_memory(payload.user_id, payload.message)
         except Exception:
-            # Nunca romper la respuesta por un problema de memoria
             pass
 
-        # 3) Buscar memorias semánticamente relacionadas al mensaje actual
+        # 4) Memoria semántica relacionada
         related_block = ""
         try:
             related = search_related_memories(
@@ -177,7 +186,6 @@ def natacha_respond(payload: UserMessage):
                 for item in related:
                     text = ""
                     if isinstance(item, dict):
-                        # tolerante a distintos nombres de campo
                         text = (
                             item.get("text")
                             or item.get("summary")
@@ -186,6 +194,7 @@ def natacha_respond(payload: UserMessage):
                         )
                     else:
                         text = str(item)
+
                     text = (text or "").strip()
                     if text:
                         bullets.append(f"- {text}")
@@ -196,21 +205,25 @@ def natacha_respond(payload: UserMessage):
                         + "\n".join(bullets)
                     )
         except Exception:
-            # si falla la búsqueda semántica, seguimos sin cortar
             related_block = ""
 
-        # 4) Prompt completo que se habría usado
-        system_content = (base_prompt + related_block).strip()
+        # 5) Observaciones ejecutivas (PASIVO)
+        executive_block = _get_executive_observations()
+
+        # Prompt final
+        system_content = (
+            base_prompt + executive_block + related_block
+        ).strip()
+
         full_prompt = system_content + f"\n\nUser message:\n{payload.message}"
 
-        # 5) Si no hay OPENAI_API_KEY, devolvemos el prompt y un aviso
+        # 6) Sin API key → modo diagnóstico
         if not OPENAI_API_KEY:
             return {
                 "answer": (
-                    "⚠️ Natacha está conectada al motor de memoria, "
-                    "pero falta configurar la variable de entorno OPENAI_API_KEY "
-                    "en Cloud Run para poder llamar al modelo.\n\n"
-                    "Mientras tanto, este es el prompt que usaría:\n\n"
+                    "⚠️ Natacha está conectada al motor cognitivo, "
+                    "pero falta configurar OPENAI_API_KEY.\n\n"
+                    "Este es el prompt que usaría:\n\n"
                     f"{full_prompt}"
                 ),
                 "used_prompt": full_prompt,
@@ -218,7 +231,7 @@ def natacha_respond(payload: UserMessage):
                 "error": "missing_openai_api_key",
             }
 
-        # 6) Intentar llamar al modelo externo (OpenAI u otro compatible)
+        # 7) Llamada al modelo
         try:
             resp = requests.post(
                 "https://api.openai.com/v1/chat/completions",
@@ -247,11 +260,10 @@ def natacha_respond(payload: UserMessage):
             }
 
         except Exception as e:
-            # Error en la llamada al modelo, pero la API sigue viva
             return {
                 "answer": (
                     "⚠️ Hubo un problema al llamar al modelo externo. "
-                    "Revisá la configuración de la API key o la red."
+                    "Revisá la API key o la red."
                 ),
                 "used_prompt": full_prompt,
                 "model_called": True,
@@ -260,11 +272,10 @@ def natacha_respond(payload: UserMessage):
             }
 
     except Exception as e:
-        # Cualquier error preparando contexto/prompt también vuelve en JSON
         return {
             "answer": (
-                "⚠️ Error interno en Natacha al preparar el contexto o el prompt. "
-                "Revisá logs de Cloud Run para más detalles."
+                "⚠️ Error interno preparando contexto o prompt. "
+                "Revisá logs de Cloud Run."
             ),
             "used_prompt": None,
             "model_called": False,
