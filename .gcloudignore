@@ -54,7 +54,6 @@ vector_memory.jsonl
 # Directorios grandes que no son necesarios en el contenedor
 lab/
 tests/
-docs/
 build/
 
 # ============================
@@ -70,3 +69,11 @@ build/
 !ops/**
 !config/**
 !utils/**
+
+# ============================
+# RE-INCLUIR CONSTITUCIÓN COGNITIVA
+# ============================
+!docs/
+!docs/**
+!docs/manifests/
+!docs/manifests/**
