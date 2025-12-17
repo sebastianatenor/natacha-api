@@ -4,6 +4,11 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import Optional, List
 
+from ops.cognitive.action_envelope import (
+    ActionEnvelope,
+    ActionEnvelopeBuilder,
+    ActionType
+)
 
 # ============================================================
 # ENUMS
@@ -36,43 +41,36 @@ class CognitiveDecision:
     needs_clarification: bool
     warnings: List[str]
 
+    # NUEVO
+    proposed_action: Optional[ActionEnvelope] = None
+
 
 # ============================================================
 # GUARDRAIL CORE
 # ============================================================
 
-from ops.cognitive.project_profiles import PROJECT_PROFILES
-
 class CognitiveGuardrail:
     """
     Cognitive Guardrail
     -------------------
-    Este módulo define:
-    - Qué se responde
-    - Qué se recuerda
-    - Qué NO se ejecuta
-    - Qué requiere aclaración
+    Firewall cognitivo del agente.
 
-    Es el firewall cognitivo del agente.
+    Decide:
+    - si responde
+    - si recuerda
+    - qué nivel de memoria
+    - si hay una acción potencial (NO ejecuta)
     """
 
     TRIVIAL_MESSAGES = {
         "ok", "dale", "si", "sí", "gracias", "hola", "listo"
     }
 
+    def __init__(self):
+        self.action_builder = ActionEnvelopeBuilder()
+
     def evaluate(self, payload: CognitiveInput) -> CognitiveDecision:
         msg = (payload.message or "").strip().lower()
-
-        # ----------------------------
-        # 0. Project cognitive profile
-        # ----------------------------
-        profile = None
-        if payload.project:
-            profile = PROJECT_PROFILES.get(payload.project.upper())
-
-        if profile:
-            # Ajustes futuros: tono, foco, sesgo de memoria
-            pass
 
         # ----------------------------
         # 1. Mensajes triviales
@@ -83,11 +81,12 @@ class CognitiveGuardrail:
                 store_memory=False,
                 memory_level=MemoryLevel.NONE,
                 needs_clarification=False,
-                warnings=[]
+                warnings=[],
+                proposed_action=None
             )
 
         # ----------------------------
-        # 2. Señales de sobrecarga / confusión
+        # 2. Sobrecarga / confusión
         # ----------------------------
         overload_signals = [
             "no sé por dónde",
@@ -104,11 +103,12 @@ class CognitiveGuardrail:
                 store_memory=True,
                 memory_level=MemoryLevel.EXECUTIVE,
                 needs_clarification=True,
-                warnings=[]
+                warnings=[],
+                proposed_action=None
             )
 
         # ----------------------------
-        # 3. Decisiones / estrategia / prioridades
+        # 3. Estrategia / decisiones
         # ----------------------------
         strategic_keywords = [
             "prioridad",
@@ -125,28 +125,23 @@ class CognitiveGuardrail:
                 store_memory=True,
                 memory_level=MemoryLevel.STRUCTURAL,
                 needs_clarification=False,
-                warnings=[]
+                warnings=[],
+                proposed_action=None
             )
 
         # ----------------------------
-        # 4. Acciones explícitas (NO ejecutar)
+        # 4. Intención de acción (PROPOSAL ONLY)
         # ----------------------------
-        action_verbs = [
-            "mandá",
-            "enviá",
-            "borrá",
-            "creá",
-            "eliminá",
-            "ejecutá"
-        ]
+        action = self.action_builder.build(payload.message)
 
-        if any(v in msg for v in action_verbs):
+        if action.action_type != ActionType.UNKNOWN:
             return CognitiveDecision(
                 allow_response=True,
                 store_memory=False,
                 memory_level=MemoryLevel.NONE,
                 needs_clarification=True,
-                warnings=["ACTION_REQUEST_REQUIRES_PERMISSION"]
+                warnings=["ACTION_PROPOSED_NOT_EXECUTED"],
+                proposed_action=action
             )
 
         # ----------------------------
@@ -157,5 +152,6 @@ class CognitiveGuardrail:
             store_memory=True,
             memory_level=MemoryLevel.TEMPORARY,
             needs_clarification=False,
-            warnings=[]
+            warnings=[],
+            proposed_action=None
         )
