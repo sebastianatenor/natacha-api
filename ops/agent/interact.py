@@ -12,16 +12,9 @@ from routes.natacha_routes import (
     UserMessage,
 )
 
-router = APIRouter(
-    prefix="/agent",
-    tags=["agent"]
-)
-
+router = APIRouter(prefix="/agent", tags=["agent"])
 guardrail = CognitiveGuardrail()
 
-# =========================
-# Executive Contract Models
-# =========================
 
 class AgentInteractRequest(BaseModel):
     user_id: str = "sebastian"
@@ -33,11 +26,8 @@ class AgentInteractResponse(BaseModel):
     answer: str
     model_called: bool = True
     error: Optional[str] = None
+    detail: Optional[str] = None
 
-
-# =========================
-# Agent Endpoint
-# =========================
 
 @router.post(
     "/interact",
@@ -46,16 +36,7 @@ class AgentInteractResponse(BaseModel):
     description="Canal único y estable de conversación con el núcleo cognitivo de Natacha.",
 )
 def agent_interact(payload: AgentInteractRequest):
-    """
-    Endpoint cognitivo ejecutivo OFICIAL.
-
-    - Usa CognitiveGuardrail
-    - NO ejecuta acciones
-    - SOLO propone y explica
-    """
-
     try:
-        # 1. Evaluación cognitiva (guardrail)
         decision = guardrail.evaluate(
             CognitiveInput(
                 user_id=payload.user_id,
@@ -64,41 +45,43 @@ def agent_interact(payload: AgentInteractRequest):
             )
         )
 
-        # 2. Adaptar payload al contrato del cerebro
         user_msg = UserMessage(
             user_id=payload.user_id,
             message=payload.message,
         )
 
         result = natacha_respond(user_msg)
-        answer_text = result.get("answer", "")
 
-        # 3. Explicar acción detectada (si existe)
-        if decision.proposed_action:
-            action = decision.proposed_action
+        answer_text = (result.get("answer") or "").strip()
+        err = result.get("error")
+        detail = result.get("detail") or result.get("debug") or None
+        model_called = bool(result.get("model_called", False))
 
-            action_block = (
+        # Nota cognitiva (solo si existe el atributo)
+        proposed_action = getattr(decision, "proposed_action", None)
+        if proposed_action:
+            action = proposed_action
+            answer_text += (
                 "\n\n—\n"
                 "🧠 **Nota cognitiva**:\n"
                 "Detecté una posible acción implícita en tu mensaje, "
                 "pero **no ejecuté nada**.\n\n"
                 f"- Tipo de acción detectada: **{action.action_type.value}**\n"
                 f"- Descripción: {action.description}\n\n"
-                "Si querés avanzar con esto, decime explícitamente "
-                "qué querés que haga o confirmá la acción."
+                "Si querés avanzar, confirmámelo explícitamente."
             )
-
-            answer_text += action_block
 
         return AgentInteractResponse(
             answer=answer_text,
-            model_called=result.get("model_called", True),
-            error=None
+            model_called=model_called,
+            error=err,
+            detail=detail,
         )
 
     except Exception as e:
         return AgentInteractResponse(
             answer="",
             model_called=False,
-            error=str(e),
+            error="agent_interact_exception",
+            detail=str(e),
         )
