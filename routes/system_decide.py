@@ -32,7 +32,12 @@ def system_decide() -> Dict[str, Any]:
     # 1. Estado mínimo del sistema
     # -------------------------------------------------
     memory_index = get_memory_index()
-    recent_events = memory_index.recent(limit=50)
+
+    # Compatibilidad con motor NDJSON actual
+    if hasattr(memory_index, "tail"):
+        recent_events = memory_index.tail(limit=50)
+    else:
+        recent_events = []
 
     system_state = {
         "memory": {
