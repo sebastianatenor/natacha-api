@@ -31,44 +31,41 @@ class UserMessage(BaseModel):
 def natacha_respond(payload: UserMessage):
     """
     Núcleo conversacional ESTABLE de Natacha.
-
-    - No depende de rutas HTTP internas
-    - No ejecuta acciones
-    - No rompe si memoria está en fast-boot
     """
 
     try:
-        # 1) Contexto cognitivo base (seguro)
+        # 1) Contexto cognitivo
         ctx = fetch_context(user_id=payload.user_id)
 
-        # 2) Prompt base
+        # 2) Prompt
         system_content = build_prompt(ctx).strip()
-
         full_prompt = system_content + f"\n\nUser message:\n{payload.message}"
 
-        # 3) Modo diagnóstico si no hay API key
+        # 3) Sin API key → diagnóstico
         if not OPENAI_API_KEY:
             return {
                 "answer": (
                     "⚠️ OPENAI_API_KEY no configurada.\n\n"
-                    "Este es el prompt que usaría:\n\n"
                     f"{full_prompt}"
                 ),
                 "model_called": False,
                 "error": "missing_openai_api_key",
             }
 
-        # 4) Llamada al modelo (Responses API)
+        # 4) Chat Completions (estable)
         try:
             resp = requests.post(
-                "https://api.openai.com/v1/responses",
+                "https://api.openai.com/v1/chat/completions",
                 headers={
                     "Authorization": f"Bearer {OPENAI_API_KEY}",
                     "Content-Type": "application/json",
                 },
                 json={
                     "model": payload.model or "gpt-4o-mini",
-                    "input": full_prompt,
+                    "messages": [
+                        {"role": "system", "content": system_content},
+                        {"role": "user", "content": payload.message},
+                    ],
                 },
                 timeout=30,
             )
@@ -76,10 +73,7 @@ def natacha_respond(payload: UserMessage):
             resp.raise_for_status()
             data = resp.json()
 
-            answer = (
-                data.get("output_text")
-                or data.get("output", [{}])[0].get("content", [{}])[0].get("text", "")
-            )
+            answer = data["choices"][0]["message"]["content"]
 
             return {
                 "answer": answer,
@@ -89,18 +83,14 @@ def natacha_respond(payload: UserMessage):
 
         except Exception as e:
             return {
-                "answer": (
-                    "⚠️ Error al llamar al modelo externo."
-                ),
+                "answer": "⚠️ Error al llamar al modelo externo.",
                 "model_called": False,
                 "error": str(e),
             }
 
     except Exception as e:
         return {
-            "answer": (
-                "⚠️ Error interno preparando el contexto cognitivo."
-            ),
+            "answer": "⚠️ Error interno preparando el contexto.",
             "model_called": False,
             "error": str(e),
         }
