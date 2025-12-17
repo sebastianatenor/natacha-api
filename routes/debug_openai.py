@@ -33,7 +33,7 @@ def openai_ping():
             json={
                 "model": "gpt-5.2",
                 "input": "Respondé solo con la palabra OK",
-                "max_output_tokens": 10,
+                "max_output_tokens": 32,
             },
             timeout=20,
         )
