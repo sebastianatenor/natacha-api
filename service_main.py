@@ -207,11 +207,17 @@ from routes import health_route
 from routes.context_unified import router as context_unified_router
 from routes.memory_unified import router as memory_unified_router
 from ops.agent.interact import router as agent_router
+from ops.system.manifests import router as manifests_router
+from routes.debug_openai import router as debug_openai_router
+from routes.debug_fs import router as debug_fs_router
 
 app.include_router(health_route.router)
 app.include_router(memory_unified_router)
 app.include_router(context_unified_router)
 app.include_router(agent_router)
+app.include_router(manifests_router)
+app.include_router(debug_openai_router)
+app.include_router(debug_fs_router)
 
 # ================================================================
 # 6.1) OS ROUTERS — EXPLICIT (PUBLIC & GPT-COMPATIBLE)
