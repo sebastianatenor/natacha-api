@@ -5,6 +5,7 @@ from typing import Dict, Any
 import time
 
 from ops.system.manifest_decider import ManifestDecider
+from ops.cognitive.runtime.manifest_loader import ManifestLoader
 from unified_core.memory_lazy import get_memory_index
 
 router = APIRouter(
@@ -13,6 +14,7 @@ router = APIRouter(
 )
 
 decider = ManifestDecider()
+manifest_loader = ManifestLoader()
 
 
 @router.get("/decide")
@@ -34,14 +36,14 @@ def system_decide() -> Dict[str, Any]:
     try:
         memory_index = get_memory_index()
 
-        # NDJSONMemoryIndex no garantiza API rica
-        items_count = getattr(memory_index, "items_count", None)
-        if items_count is None:
-            try:
-                # fallback seguro: len del store interno si existe
-                items_count = len(getattr(memory_index, "store", []))
-            except Exception:
-                items_count = None
+        items_count = None
+        if memory_index is not None:
+            items_count = getattr(memory_index, "items_count", None)
+            if items_count is None:
+                try:
+                    items_count = len(getattr(memory_index, "store", []))
+                except Exception:
+                    items_count = None
 
         system_state = {
             "memory": {
@@ -50,7 +52,7 @@ def system_decide() -> Dict[str, Any]:
             }
         }
 
-        recent_context = []  # PASIVO: no dependemos de eventos
+        recent_context = []  # PASIVO
 
     except Exception as e:
         system_state = {
@@ -62,7 +64,16 @@ def system_decide() -> Dict[str, Any]:
         recent_context = []
 
     # -------------------------------------------------
-    # 2. Evaluación cognitiva (manifiestos)
+    # 2. Manifiestos activos (constitución cognitiva)
+    # -------------------------------------------------
+    try:
+        active_manifests = manifest_loader.list_names()
+    except Exception as e:
+        active_manifests = []
+        system_state["manifests_error"] = str(e)
+
+    # -------------------------------------------------
+    # 3. Evaluación cognitiva (PASIVA)
     # -------------------------------------------------
     try:
         suggestions = decider.evaluate(
@@ -79,13 +90,19 @@ def system_decide() -> Dict[str, Any]:
         }]
 
     # -------------------------------------------------
-    # 3. Respuesta FINAL (nunca rompe)
+    # 4. Respuesta FINAL (nunca rompe)
     # -------------------------------------------------
     return {
         "timestamp": now,
         "status": "ok",
         "mode": "passive-manifest-decision",
-        "system_state": system_state,
+        "system_state": {
+            **system_state,
+            "manifests": {
+                "active_count": len(active_manifests),
+                "active": active_manifests
+            }
+        },
         "suggestions": [
             {
                 "level": s.level if hasattr(s, "level") else s.get("level"),
