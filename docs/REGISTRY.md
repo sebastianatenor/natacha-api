@@ -1,21 +1,67 @@
-# REGISTRY — Natacha / LLVC (única fuente de verdad)
-> Mantener siempre actualizado.
+# REGISTRY — Natacha Cognitive System (SINGLE SOURCE OF TRUTH)
 
-## Servicios (Cloud Run)
-- natacha-health-monitor — us-central1 — URL: https://natacha-health-monitor-422255208682.us-central1.run.app
+> Este archivo define el **estado vivo** del sistema Natacha.
+> Todo lo que no esté acá, se considera **inactivo**.
 
-## Uptime Checks
-- healthmonitor-mertgzh6hJg — host: natacha-health-monitor-422255208682.us-central1.run.app — path: /
+---
 
-## Alert Policies
-- CRun | HealthMonitor | Uptime / down — id: 5980311962589578804 — channel: 17012733904319805436
-- CRun | HealthMonitor | Uptime / all regions down — id: 13575294913821338865 — channel: 17012733904319805436
+## 🔧 Infraestructura Activa
 
-## Canales de Notificación
-- email — 17012733904319805436 — sebastianatenor@gmail.com
+### Cloud Run
+- Service: natacha-api
+- Region: us-central1
+- Runtime: Python 3.10
+- Mode: SAFE-BY-DEFAULT (no ejecución automática)
 
-## Dashboards
-- (pendiente consolidación única)
+---
 
-## Scripts/Helpers
-- scripts/preflight.sh — chequeos de duplicado y existencia
+## 🧠 Active Cognitive Constitution (v1 — ESTABLE)
+
+Los siguientes manifiestos están **activos**, **vigentes** y **obligatorios** para el razonamiento del sistema:
+
+1. `00_core_cognitive_manifest`
+2. `03_cognitive_guardrails`
+3. `02_memory_manifest`
+4. `10_execution_handshake_protocol`
+5. `28_human_authority`
+6. `50_fail_safe_and_degradation`
+7. `05_evolution_and_scale`
+
+Estos documentos viven en:
+`docs/manifests/`
+
+---
+
+## 🧩 Rol del sistema
+
+Natacha funciona como:
+
+- Centro cognitivo persistente
+- Sistema operativo ejecutivo
+- Capa de razonamiento y decisión
+- Orquestador de integraciones externas (NO ejecuta sin confirmación)
+- Observador y evaluador de su propio estado interno
+
+---
+
+## 🔐 Principios no negociables
+
+- Human-in-the-loop obligatorio
+- Ninguna acción sin handshake explícito
+- Autonomía gradual y reversible
+- Memoria auditable
+- Fallo seguro antes que acción incorrecta
+
+---
+
+## 📍 Estado actual
+
+- Infraestructura: ✅ estable
+- Memoria NDJSON: ✅ cargada
+- Manifiestos: ✅ definidos
+- Automatización: ❌ deshabilitada (por diseño)
+
+---
+
+> Última actualización: diciembre 2025  
+> Responsable: Sebastián Atenor
