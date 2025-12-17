@@ -1,141 +1,159 @@
-from typing import Optional, Any, Dict
+# routes/natacha_routes.py
+
 import os
-import requests
+import time
+from typing import Dict, Any, List
 
-from fastapi import APIRouter
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, Body
 
-from natacha_brain import fetch_context, build_prompt
+from unified_core.memory_lazy import get_memory_index
+from ops.system.manifest_decider import ManifestDecider
+from ops.openai_client import chat_completion
 
+# Router
 router = APIRouter(prefix="/natacha", tags=["natacha"])
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
-NATACHA_MODEL = os.getenv("NATACHA_MODEL", "gpt-5.2-chat-latest")  # estable “latest”
-MAX_OUTPUT_TOKENS = int(os.getenv("NATACHA_MAX_OUTPUT_TOKENS", "512"))  # >= 16
+MODEL = os.getenv("NATACHA_MODEL", "gpt-5.2-chat-latest")
+decider = ManifestDecider()
 
 
-class UserMessage(BaseModel):
-    user_id: str = "sebastian"
-    message: str
-    model: Optional[str] = None
+# ---------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------
 
-
-def _extract_output_text(resp_json: Dict[str, Any]) -> str:
-    """
-    Responses API devuelve:
-      - output: [{type:"message", content:[{type:"output_text", text:"..."}]}]
-    """
+def _safe_memory_state() -> Dict[str, Any]:
     try:
-        out = resp_json.get("output") or []
-        for item in out:
-            if item.get("type") == "message":
-                parts = item.get("content") or []
-                texts = []
-                for p in parts:
-                    if p.get("type") in ("output_text", "text"):
-                        t = p.get("text") or ""
-                        if t:
-                            texts.append(t)
-                if texts:
-                    return "\n".join(texts).strip()
-        # fallback viejo/cómodo si existe
-        if isinstance(resp_json.get("text"), dict):
-            return ""
+        idx = get_memory_index()
+        count = getattr(idx, "items_count", None)
+        if count is None:
+            try:
+                count = len(getattr(idx, "store", []))
+            except Exception:
+                count = None
+
+        return {
+            "loaded": True,
+            "items_count": count
+        }
+    except Exception as e:
+        return {
+            "loaded": False,
+            "error": str(e)
+        }
+
+
+def _load_active_manifests_from_fs() -> List[str]:
+    """
+    Carga pasiva de manifiestos desde /docs/manifests.
+    No depende de loaders inexistentes.
+    """
+    base_path = "/app/docs/manifests"
+    try:
+        return sorted([
+            f for f in os.listdir(base_path)
+            if f.endswith(".md") and not f.startswith("_")
+        ])
     except Exception:
-        pass
-    return ""
+        return []
 
 
-@router.post("/respond")
-def natacha_respond(payload: UserMessage):
-    # 1) Preparar contexto/prompt, tolerante a fallas
-    try:
-        ctx = fetch_context(user_id=payload.user_id)
-    except Exception as e:
-        ctx = {}
-        # no cortamos, solo registramos debug de salida
-        ctx["_context_error"] = str(e)
+def _build_system_context() -> Dict[str, Any]:
+    """
+    Contexto cognitivo PASIVO.
+    No ejecuta acciones.
+    """
+    manifests = _load_active_manifests_from_fs()
 
-    try:
-        system_content = (build_prompt(ctx) or "").strip()
-    except Exception as e:
-        system_content = ""
-        # seguimos sin romper
-        system_content = (
-            "You are Natacha, an executive cognitive assistant for LLVC.\n"
-            "Be concise, practical, and safe.\n"
-            f"[build_prompt_error]: {str(e)}"
+    system_state = {
+        "memory": _safe_memory_state(),
+        "manifests": {
+            "active_count": len(manifests),
+            "active": manifests
+        }
+    }
+
+    suggestions = decider.evaluate(
+        system_state=system_state,
+        recent_context=[],
+        active_project=None
+    )
+
+    return {
+        "system_state": system_state,
+        "suggestions": [
+            {
+                "level": getattr(s, "level", "info"),
+                "title": getattr(s, "title", ""),
+                "message": getattr(s, "message", ""),
+                "source_manifest": getattr(s, "source_manifest", "unknown"),
+            }
+            for s in suggestions
+        ]
+    }
+
+
+def _render_system_prompt(context: Dict[str, Any]) -> str:
+    lines: List[str] = []
+
+    lines.append("You are Natacha, an executive-grade AI assistant.")
+    lines.append("You MUST respect the active cognitive manifests.")
+    lines.append("You MUST NOT execute actions unless explicitly requested.")
+    lines.append("")
+
+    lines.append("=== SYSTEM STATE ===")
+    lines.append(str(context["system_state"]))
+    lines.append("")
+
+    lines.append("=== MANIFEST GUIDANCE ===")
+    for s in context["suggestions"]:
+        lines.append(
+            f"- [{s['level'].upper()}] {s['title']}: {s['message']} "
+            f"(source: {s['source_manifest']})"
         )
 
-    if not OPENAI_API_KEY:
-        return {
-            "answer": "⚠️ Falta OPENAI_API_KEY en Cloud Run.",
-            "model_called": False,
-            "error": "missing_openai_api_key",
-        }
+    return "\n".join(lines)
 
-    model = (payload.model or NATACHA_MODEL).strip()
-    user_text = (payload.message or "").strip()
 
-    # 2) Llamar a OpenAI Responses API
+# ---------------------------------------------------------
+# Main endpoint
+# ---------------------------------------------------------
+
+@router.post("/chat")
+def natacha_chat(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """
+    Chat principal del agente Natacha.
+    Consciente de manifiestos y estado cognitivo.
+    """
+
+    user_input = payload.get("message")
+    if not user_input:
+        raise HTTPException(status_code=400, detail="Missing 'message'")
+
+    timestamp = time.time()
+
+    # 1. Contexto cognitivo
+    cognitive_context = _build_system_context()
+    system_prompt = _render_system_prompt(cognitive_context)
+
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_input},
+    ]
+
     try:
-        url = f"{OPENAI_BASE_URL.rstrip('/')}/responses"
-        req_payload = {
-            "model": model,
-            "max_output_tokens": max(MAX_OUTPUT_TOKENS, 16),
-            "input": [
-                {"role": "system", "content": system_content},
-                {"role": "user", "content": user_text},
-            ],
-        }
-
-        resp = requests.post(
-            url,
-            headers={
-                "Authorization": f"Bearer {OPENAI_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json=req_payload,
-            timeout=45,
+        response = chat_completion(
+            model=MODEL,
+            messages=messages
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"LLM failure: {str(e)}"
         )
 
-        if resp.status_code >= 400:
-            body = (resp.text or "")[:4000]
-            return {
-                "answer": "⚠️ Error al llamar al modelo externo.",
-                "model_called": False,
-                "error": f"openai_http_{resp.status_code}",
-                "detail": body,
-                "debug": {
-                    "model": model,
-                    "endpoint": "/responses",
-                },
-            }
-
-        data = resp.json()
-        answer = _extract_output_text(data)
-
-        if not answer:
-            return {
-                "answer": "⚠️ OpenAI respondió pero no pude extraer texto.",
-                "model_called": False,
-                "error": "openai_parse_empty",
-                "detail": str(data)[:4000],
-                "debug": {"model": model},
-            }
-
-        return {
-            "answer": answer,
-            "model_called": True,
-            "error": None,
-        }
-
-    except Exception as e:
-        return {
-            "answer": "⚠️ Error al llamar al modelo externo (exception).",
-            "model_called": False,
-            "error": "openai_exception",
-            "detail": str(e),
-            "debug": {"model": model},
-        }
+    return {
+        "timestamp": timestamp,
+        "model": MODEL,
+        "response": response,
+        "cognitive_state": cognitive_context
+    }
