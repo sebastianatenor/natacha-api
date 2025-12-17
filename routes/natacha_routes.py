@@ -13,70 +13,64 @@ from natacha_brain import (
 router = APIRouter(prefix="/natacha", tags=["natacha"])
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
 
-
-# ============================================================
-# MODELOS
-# ============================================================
 
 class UserMessage(BaseModel):
     user_id: str = "sebastian"
     message: str
-    model: Optional[str] = "gpt-5.2"
+    model: Optional[str] = "gpt-5.2-2025-12-11"
 
-
-# ============================================================
-# ENDPOINT PRINCIPAL
-# ============================================================
 
 @router.post("/respond")
 def natacha_respond(payload: UserMessage):
-    """
-    Endpoint cognitivo principal de Natacha.
-    Usa OpenAI Responses API (GPT-5.2).
-    """
-
-    # --------------------------------------------------------
-    # 1) Construir prompt (tolerante a fallos de memoria)
-    # --------------------------------------------------------
     try:
-        ctx = fetch_context(user_id=payload.user_id)
-        base_prompt = build_prompt(ctx).strip()
-    except Exception:
-        base_prompt = (
-            "You are Natacha, an executive cognitive assistant. "
-            "The memory system is temporarily unavailable. "
-            "Respond clearly, safely, and helpfully."
-        )
+        # 1) Contexto (tolerante a fallos)
+        try:
+            ctx = fetch_context(user_id=payload.user_id)
+        except Exception:
+            ctx = {}
 
-    full_prompt = (
-        f"{base_prompt}\n\n"
-        f"User message:\n{payload.message}"
-    )
+        # 2) Prompt base
+        system_content = build_prompt(ctx).strip()
 
-    if not OPENAI_API_KEY:
-        return {
-            "answer": "⚠️ Falta configurar OPENAI_API_KEY en Cloud Run.",
-            "model_called": False,
-            "error": "missing_openai_api_key",
+        if not OPENAI_API_KEY:
+            return {
+                "answer": "⚠️ Falta OPENAI_API_KEY en Cloud Run.",
+                "model_called": False,
+                "error": "missing_openai_api_key",
+            }
+
+        # 3) OpenAI Responses API (GPT-5.2)
+        url = "https://api.openai.com/v1/responses"
+
+        req_payload = {
+            "model": payload.model or "gpt-5.2-2025-12-11",
+            "input": [
+                {
+                    "role": "system",
+                    "content": [
+                        {"type": "text", "text": system_content}
+                    ],
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": payload.message}
+                    ],
+                },
+            ],
+            # 🔴 CLAVE DEL FIX
+            "max_output_tokens": 256,
         }
 
-    # --------------------------------------------------------
-    # 2) Llamada CORRECTA a OpenAI Responses API
-    # --------------------------------------------------------
-    try:
         resp = requests.post(
-            OPENAI_RESPONSES_URL,
+            url,
             headers={
                 "Authorization": f"Bearer {OPENAI_API_KEY}",
                 "Content-Type": "application/json",
             },
-            json={
-                "model": payload.model or "gpt-5.2",
-                "input": full_prompt,
-            },
-            timeout=30,
+            json=req_payload,
+            timeout=60,
         )
 
         if resp.status_code >= 400:
@@ -84,37 +78,29 @@ def natacha_respond(payload: UserMessage):
                 "answer": "⚠️ Error al llamar al modelo externo.",
                 "model_called": False,
                 "error": f"openai_http_{resp.status_code}",
-                "detail": resp.text[:2000],
+                "detail": (resp.text or "")[:2000],
             }
 
         data = resp.json()
 
-        # ----------------------------------------------------
-        # 3) Extraer texto de salida
-        # ----------------------------------------------------
+        # Extraer texto de Responses API
         answer_text = ""
-
         for item in data.get("output", []):
             if item.get("type") == "message":
                 for block in item.get("content", []):
                     if block.get("type") == "output_text":
                         answer_text += block.get("text", "")
 
-        answer_text = answer_text.strip()
-
-        if not answer_text:
-            answer_text = "⚠️ El modelo respondió sin texto utilizable."
-
         return {
-            "answer": answer_text,
+            "answer": answer_text.strip(),
             "model_called": True,
             "error": None,
         }
 
     except Exception as e:
         return {
-            "answer": "⚠️ Error inesperado llamando al modelo.",
+            "answer": "⚠️ Error interno preparando contexto o respuesta.",
             "model_called": False,
-            "error": "openai_exception",
+            "error": "internal_error",
             "detail": str(e),
         }
