@@ -135,6 +135,13 @@ app = FastAPI(
     description="Natacha – Cloud Run safe fast boot"
 )
 
+# -------------------------------------------------
+# Natacha Chat Router (human interface)
+# -------------------------------------------------
+from routes.natacha_routes import router as natacha_router
+app.include_router(natacha_router)
+print("[OK] natacha chat router enabled")
+
 # --------------------------------------------------
 # LIVENESS / ALIVE PROBE (Cloud Run friendly)
 # --------------------------------------------------
