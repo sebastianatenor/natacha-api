@@ -3,44 +3,47 @@
 from pathlib import Path
 from typing import Dict, List
 
-
-def find_repo_root(start: Path) -> Path:
-    """
-    Sube en el filesystem hasta encontrar 'docs/manifests'.
-    Esto hace el loader robusto en Cloud Run, local y CI.
-    """
-    current = start.resolve()
-
-    for parent in [current] + list(current.parents):
-        candidate = parent / "docs" / "manifests"
-        if candidate.exists():
-            return parent
-
-    raise RuntimeError("No se pudo localizar docs/manifests en el filesystem.")
-
-
-BASE_DIR = find_repo_root(Path(__file__))
-MANIFEST_DIR = BASE_DIR / "docs" / "manifests"
+BASE_DIR = Path(__file__).resolve().parents[3]
+MANIFESTS_DIR = BASE_DIR / "docs" / "manifests"
+REGISTRY_FILE = BASE_DIR / "docs" / "REGISTRY.md"
 
 
 class ManifestLoader:
     """
-    Carga y expone manifiestos cognitivos activos.
-    Los manifiestos son contratos, no lógica ejecutable.
+    Loader de manifiestos ACTIVOS.
+    La fuente de verdad es REGISTRY.md.
     """
 
-    def __init__(self, manifest_dir: Path = MANIFEST_DIR):
-        self.manifest_dir = manifest_dir
+    def __init__(self):
         self._cache: Dict[str, str] = {}
+
+    def _read_registry(self) -> List[str]:
+        if not REGISTRY_FILE.exists():
+            return []
+
+        lines = REGISTRY_FILE.read_text(encoding="utf-8").splitlines()
+        active = []
+
+        inside_block = False
+        for line in lines:
+            line = line.strip()
+
+            if line.startswith("```"):
+                inside_block = not inside_block
+                continue
+
+            if inside_block and line.endswith(".md"):
+                active.append(line)
+
+        return active
 
     def load_all(self) -> Dict[str, str]:
         manifests: Dict[str, str] = {}
 
-        if not self.manifest_dir.exists():
-            return {}
-
-        for file in sorted(self.manifest_dir.glob("*.md")):
-            manifests[file.name] = file.read_text(encoding="utf-8")
+        for name in self._read_registry():
+            path = MANIFESTS_DIR / name
+            if path.exists():
+                manifests[name] = path.read_text(encoding="utf-8")
 
         self._cache = manifests
         return manifests
