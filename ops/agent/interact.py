@@ -1,14 +1,12 @@
-# ops/agent/interact.py
-
 from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional
 
 from ops.cognitive.cognitive_guardrail import (
     CognitiveGuardrail,
-    CognitiveInput,
-    MemoryLevel
+    CognitiveInput
 )
+
 from routes.natacha_routes import natacha_respond
 
 router = APIRouter(
@@ -34,6 +32,10 @@ class AgentInteractResponse(BaseModel):
     error: Optional[str] = None
 
 
+# =========================
+# Agent Endpoint
+# =========================
+
 @router.post(
     "/interact",
     response_model=AgentInteractResponse,
@@ -44,40 +46,46 @@ def agent_interact(payload: AgentInteractRequest):
     """
     Endpoint cognitivo ejecutivo OFICIAL.
 
-    Flujo:
-    1. Guardrail evalúa intención y riesgo
-    2. Decide memoria / aclaración / warnings
-    3. El cerebro responde bajo esas reglas
+    - Usa CognitiveGuardrail
+    - NO ejecuta acciones
+    - SOLO propone y explica
     """
 
     try:
+        # 1. Evaluación cognitiva
         decision = guardrail.evaluate(
             CognitiveInput(
                 user_id=payload.user_id,
-                message=payload.message,
                 project=payload.project,
+                message=payload.message
             )
         )
 
-        # Si requiere aclaración explícita
-        if decision.needs_clarification:
-            clarification_note = (
-                "Antes de avanzar, necesito que aclaremos esto juntos."
-            )
-        else:
-            clarification_note = ""
-
+        # 2. Respuesta base del cerebro
         result = natacha_respond(payload)
+        answer_text = result.get("answer", "")
 
-        answer = result.get("answer", "")
+        # 3. Si hay acción propuesta, se EXPLICA (no se ejecuta)
+        if decision.proposed_action:
+            action = decision.proposed_action
 
-        if clarification_note:
-            answer = f"{answer}\n\n{clarification_note}"
+            action_block = (
+                "\n\n—\n"
+                "🧠 **Nota cognitiva**:\n"
+                "Detecté una posible acción implícita en tu mensaje, "
+                "pero **no ejecuté nada**.\n\n"
+                f"- Tipo de acción detectada: **{action.action_type.value}**\n"
+                f"- Descripción: {action.description}\n\n"
+                "Si querés avanzar con esto, decime explícitamente "
+                "qué querés que haga o confirmá la acción."
+            )
+
+            answer_text += action_block
 
         return AgentInteractResponse(
-            answer=answer,
+            answer=answer_text,
             model_called=result.get("model_called", True),
-            error=result.get("error"),
+            error=None
         )
 
     except Exception as e:
