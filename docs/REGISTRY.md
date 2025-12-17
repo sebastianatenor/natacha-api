@@ -15,7 +15,7 @@
 
 ---
 
-## 🧠 Active Cognitive Constitution (v1 — ESTABLE)
+## 🧠 Active Cognitive Constitution
 
 Los siguientes manifiestos están **activos**, **vigentes** y **obligatorios** para el razonamiento del sistema:
 
