@@ -7,7 +7,10 @@ from ops.cognitive.cognitive_guardrail import (
     CognitiveInput
 )
 
-from routes.natacha_routes import natacha_respond
+from routes.natacha_routes import (
+    natacha_respond,
+    UserMessage,
+)
 
 router = APIRouter(
     prefix="/agent",
@@ -52,7 +55,7 @@ def agent_interact(payload: AgentInteractRequest):
     """
 
     try:
-        # 1. Evaluación cognitiva
+        # 1. Evaluación cognitiva (guardrail)
         decision = guardrail.evaluate(
             CognitiveInput(
                 user_id=payload.user_id,
@@ -61,11 +64,16 @@ def agent_interact(payload: AgentInteractRequest):
             )
         )
 
-        # 2. Respuesta base del cerebro
-        result = natacha_respond(payload)
+        # 2. Adaptar payload al contrato del cerebro
+        user_msg = UserMessage(
+            user_id=payload.user_id,
+            message=payload.message,
+        )
+
+        result = natacha_respond(user_msg)
         answer_text = result.get("answer", "")
 
-        # 3. Si hay acción propuesta, se EXPLICA (no se ejecuta)
+        # 3. Explicar acción detectada (si existe)
         if decision.proposed_action:
             action = decision.proposed_action
 
