@@ -25,34 +25,18 @@ def start_background(fn):
 
 
 def _safe_reset_memory_index(reason: str = ""):
-    """
-    Resetea el singleton del MemoryIndex para forzar rebuild.
-    Nunca debe romper el arranque.
-    """
     try:
         from unified_core.memory_lazy import reset_memory_index
         reset_memory_index()
-        if reason:
-            print(f"[MEMORY] Memory index reset ({reason})")
-        else:
-            print("[MEMORY] Memory index reset")
+        print(f"[MEMORY] Memory index reset {f'({reason})' if reason else ''}")
     except Exception as e:
         print(f"[MEMORY][WARN] Could not reset memory index: {e}")
-
 
 # ================================================================
 # 1) BOOT SEQUENCE – Memory Sync (CLOUD RUN SAFE)
 # ================================================================
 
 def load_memory_from_gcs():
-    """
-    Sincroniza memory_store.jsonl desde GCS SOLO en Cloud Run.
-    Corre en background, nunca bloquea el arranque.
-
-    IMPORTANTE:
-    - Si el archivo YA existe en /tmp, igual resetea MemoryIndex
-      (porque puede haber quedado cacheado en NullMemoryIndex por una llamada temprana).
-    """
     try:
         in_cloud_run = os.getenv("K_SERVICE") is not None
         local_path = os.getenv("NATACHA_MEMORY_LOCAL", "/tmp/memory_store.jsonl")
@@ -62,7 +46,6 @@ def load_memory_from_gcs():
             print("[BOOT] Local environment: skipping memory sync.")
             return
 
-        # Si el archivo ya existe, NO descargar de nuevo (fast), pero SÍ resetear el índice
         if p.exists():
             print("[BOOT] Memory already present, skipping GCS sync.")
             _safe_reset_memory_index("memory already present on boot")
@@ -71,18 +54,12 @@ def load_memory_from_gcs():
         print("[BOOT] Cloud Run detected. Starting async memory sync…")
 
         from google.cloud import storage
-
         client = storage.Client()
-        bucket_name = os.getenv("NATACHA_MEMORY_BUCKET", "natacha-memory-store")
-        blob_name = os.getenv("NATACHA_MEMORY_BLOB", "memory_store.jsonl")
-
-        bucket = client.bucket(bucket_name)
-        blob = bucket.blob(blob_name)
+        bucket = client.bucket(os.getenv("NATACHA_MEMORY_BUCKET", "natacha-memory-store"))
+        blob = bucket.blob(os.getenv("NATACHA_MEMORY_BLOB", "memory_store.jsonl"))
         blob.download_to_filename(local_path)
 
         print("[OK] Memory synced from GCS")
-
-        # CLAVE: resetear para que se reconstruya el índice con el archivo ya presente
         _safe_reset_memory_index("after GCS sync")
 
     except Exception as e:
@@ -90,61 +67,46 @@ def load_memory_from_gcs():
 
 
 def wait_and_reset_memory_index():
-    """
-    Evita la race condition:
-    si /context/unified se llama ANTES de que llegue /tmp/memory_store.jsonl,
-    el singleton queda cacheado vacío. Este watcher espera a que el archivo exista y tenga tamaño,
-    y recién ahí resetea el índice (en background).
-    """
     try:
-        in_cloud_run = os.getenv("K_SERVICE") is not None
-        if not in_cloud_run:
+        if os.getenv("K_SERVICE") is None:
             return
 
-        local_path = os.getenv("NATACHA_MEMORY_LOCAL", "/tmp/memory_store.jsonl")
-        p = Path(local_path)
-
-        # ventana máxima de espera (segundos) – ajustable por env var
+        p = Path(os.getenv("NATACHA_MEMORY_LOCAL", "/tmp/memory_store.jsonl"))
         max_wait = int(os.getenv("NATACHA_MEMORY_WAIT_SECONDS", "30"))
         step = float(os.getenv("NATACHA_MEMORY_WAIT_STEP", "0.5"))
 
         waited = 0.0
         while waited < max_wait:
-            try:
-                if p.exists() and p.stat().st_size > 0:
-                    _safe_reset_memory_index("waiter detected memory file ready")
-                    return
-            except Exception:
-                pass
+            if p.exists() and p.stat().st_size > 0:
+                _safe_reset_memory_index("waiter detected memory file ready")
+                return
             time.sleep(step)
             waited += step
 
-        # Si llegamos acá, no apareció (no rompemos nada)
-        print(f"[MEMORY][WARN] memory_store.jsonl not ready after {max_wait}s — continuing")
+        print(f"[MEMORY][WARN] memory_store.jsonl not ready after {max_wait}s")
     except Exception as e:
         print(f"[MEMORY][WARN] waiter failed: {e}")
 
-
 # ================================================================
-# 2) FASTAPI INIT (ULTRA RÁPIDO)
+# 2) FASTAPI INIT
 # ================================================================
 
 app = FastAPI(
     title="Natacha API",
-    version="20.5-fast-boot",
+    version="CEREBRO-v1-FROZEN",
     description="Natacha – Cloud Run safe fast boot"
 )
 
 # -------------------------------------------------
-# Natacha Chat Router (human interface)
+# Chat humano (Natacha)
 # -------------------------------------------------
 from routes.natacha_routes import router as natacha_router
 app.include_router(natacha_router)
 print("[OK] natacha chat router enabled")
 
-# --------------------------------------------------
-# LIVENESS / ALIVE PROBE (Cloud Run friendly)
-# --------------------------------------------------
+# -------------------------------------------------
+# Liveness
+# -------------------------------------------------
 
 @app.get("/__alive", tags=["system"])
 async def alive():
@@ -155,18 +117,14 @@ async def alive():
     }
 
 # ================================================================
-# 3) STARTUP HOOK (NO BLOQUEANTE)
+# 3) STARTUP
 # ================================================================
 
 @app.on_event("startup")
 def on_startup():
-    # Memory sync siempre en background
     start_background(load_memory_from_gcs)
-
-    # Watcher anti-race: resetea cuando /tmp esté listo (aunque sync llegue tarde)
     start_background(wait_and_reset_memory_index)
 
-    # Post-startup SOLO en background
     try:
         from ops.startup.post_startup import launch_post_startup
         start_background(launch_post_startup)
@@ -189,25 +147,7 @@ app.add_middleware(
 )
 
 # ================================================================
-# 5) SAFE INCLUDE
-# ================================================================
-
-def safe_include(module_name: str):
-    try:
-        module = __import__(module_name, fromlist=["router"])
-        router = getattr(module, "router", None)
-
-        if router:
-            app.include_router(router)
-            print(f"[OK] Included: {module_name}")
-        else:
-            print(f"[WARN] No router found in {module_name}")
-
-    except Exception as e:
-        print(f"[SKIP] {module_name} – {e}")
-
-# ================================================================
-# 6) RUTAS BASE (SIEMPRE ACTIVAS)
+# 5) ROUTERS BASE
 # ================================================================
 
 from routes import health_route
@@ -227,7 +167,7 @@ app.include_router(debug_openai_router)
 app.include_router(debug_fs_router)
 
 # ================================================================
-# 6.1) OS ROUTERS — EXPLICIT (PUBLIC & GPT-COMPATIBLE)
+# 6) OS ROUTERS (EXPLÍCITOS)
 # ================================================================
 
 try:
@@ -248,11 +188,23 @@ try:
     from routes.system_decide import router as system_decide_router
     app.include_router(system_decide_router)
     print("[OK] system_decide router enabled")
-from ops.semantic.routes import router as semantic_router
-app.include_router(semantic_router)
-print("[OK] semantic debug router enabled")
 except Exception as e:
     print(f"[SKIP] system_decide router: {e}")
+
+# ================================================================
+# 6.2) SEMANTIC DEBUG ROUTER (PASIVO)
+# ================================================================
+
+try:
+    from ops.semantic.routes import router as semantic_router
+    app.include_router(semantic_router)
+    print("[OK] semantic debug router enabled")
+except Exception as e:
+    print(f"[SKIP] semantic router: {e}")
+
+# ================================================================
+# 6.3) TASKS
+# ================================================================
 
 try:
     from routes.tasks_routes import router as tasks_router
@@ -262,35 +214,29 @@ except Exception as e:
     print(f"[SKIP] tasks router: {e}")
 
 # ================================================================
-# 7) MÓDULOS OPCIONALES (DIFERIDOS)
+# 7) OPTIONAL MODULES (FAST BOOT SAFE)
 # ================================================================
+
+def safe_include(module_name: str):
+    try:
+        module = __import__(module_name, fromlist=["router"])
+        router = getattr(module, "router", None)
+        if router:
+            app.include_router(router)
+            print(f"[OK] Included: {module_name}")
+    except Exception as e:
+        print(f"[SKIP] {module_name} – {e}")
 
 if os.getenv("NATACHA_FAST_BOOT") != "1":
     safe_include("ops.extensions.core_bridge_ext")
     safe_include("ops.affective_train")
     safe_include("ops.cognitive_evolution")
-
     safe_include("ops.introspection.code_scan")
     safe_include("ops.introspection.history_reader")
     safe_include("ops.introspection.self_reflect")
     safe_include("ops.introspection.meta_reflect")
-
     safe_include("ops.self_diagnostics")
     safe_include("ops.firestore_adapter")
-
-    safe_include("routes.benchmark")
-    safe_include("routes.system_state")
-    safe_include("routes.system_decide")
-    safe_include("routes.system_diagnose")
-    safe_include("routes.warmup")
-    safe_include("routes.memory_rollback")
-    safe_include("routes.memory_snapshot")
-    safe_include("routes.memory_snapshots")
-
-    safe_include("ops.memory.post_rollback")
-    safe_include("ops.agent.interact")
-else:
-    print("[BOOT] FAST BOOT active — optional modules deferred")
 
 print("[INFO] Legacy memory routes DISABLED (A2 clean)")
 
@@ -307,29 +253,7 @@ def root():
     }
 
 # ================================================================
-# 9) OPENAPI PUBLIC
-# ================================================================
-
-@app.get("/openapi_public.json", include_in_schema=False)
-def openapi_public():
-    path = Path(__file__).parent / "public_openapi.json"
-
-    if not path.exists():
-        return {
-            "openapi": "3.1.0",
-            "info": {
-                "title": "Natacha Public API (MISSING FILE)",
-                "version": "1.0.0",
-                "description": "public_openapi.json no encontrado."
-            },
-            "paths": {}
-        }
-
-    with path.open() as f:
-        return json.load(f)
-
-# ================================================================
-# 10) OPENAPI INTERNO
+# 9) OPENAPI
 # ================================================================
 
 def custom_openapi():
@@ -338,7 +262,7 @@ def custom_openapi():
 
     schema = get_openapi(
         title="Natacha Internal API",
-        version="20.5",
+        version="CEREBRO-v1-FROZEN",
         description="Natacha internal API (fast boot)",
         routes=app.routes,
     )
