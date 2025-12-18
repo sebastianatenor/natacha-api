@@ -1,5 +1,5 @@
 """
-Semantic Core – Cloud Run Safe (HF explicit auth)
+Semantic Core – Cloud Run SAFE (HF env-based auth)
 """
 
 import os
@@ -22,17 +22,20 @@ class SemanticCore:
         if not hf_token:
             raise RuntimeError("HF_TOKEN missing")
 
-        # 🔧 FIX CRÍTICO: limpiar whitespace / newline del secret
+        # 🔑 NORMALIZAR TOKEN (CRÍTICO EN CLOUD RUN)
         hf_token = hf_token.strip()
 
-        # Cloud Run writable cache
+        # 👉 HuggingFace HUB espera ESTE nombre
+        os.environ["HUGGINGFACE_HUB_TOKEN"] = hf_token
+
+        # Cache writable (Cloud Run safe)
         os.environ.setdefault("HF_HOME", "/tmp/huggingface")
         os.environ.setdefault("TRANSFORMERS_CACHE", "/tmp/huggingface")
         os.environ.setdefault("SENTENCE_TRANSFORMERS_HOME", "/tmp/huggingface")
 
+        # 🚫 NO pasar token como argumento
         self._model = SentenceTransformer(
-            "sentence-transformers/all-MiniLM-L6-v2",
-            use_auth_token=hf_token
+            "sentence-transformers/all-MiniLM-L6-v2"
         )
 
         self._loaded = True
@@ -42,10 +45,6 @@ class SemanticCore:
         return self._loaded
 
     def embed(self, text: str) -> List[float]:
-        """
-        Devuelve embedding vectorial del texto.
-        Safe para lazy-load y Cloud Run.
-        """
         self.ensure_loaded()
 
         if self._model is None:
