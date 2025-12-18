@@ -161,6 +161,9 @@ try:
 except Exception as e:
     print(f"[SKIP] system_state router: {e}")
 
+from routes.system_full_status import router as system_full_status_router
+app.include_router(system_full_status_router)
+
 # --- System diagnose
 try:
     from routes.system_diagnose import router as system_diagnose_router
