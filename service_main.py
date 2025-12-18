@@ -157,6 +157,7 @@ from ops.agent.interact import router as agent_router
 from ops.system.manifests import router as manifests_router
 from routes.debug_openai import router as debug_openai_router
 from routes.debug_fs import router as debug_fs_router
+from routes.ops_self import router as ops_self_router
 
 app.include_router(health_route.router)
 app.include_router(memory_unified_router)
@@ -165,10 +166,21 @@ app.include_router(agent_router)
 app.include_router(manifests_router)
 app.include_router(debug_openai_router)
 app.include_router(debug_fs_router)
+app.include_router(ops_self_router)
 
 # ================================================================
 # 6) OS ROUTERS (EXPLÍCITOS)
 # ================================================================
+
+# -------------------------------------------------
+# User live cognitive state (READ ONLY)
+# -------------------------------------------------
+try:
+    from routes.ops_self import router as ops_self_router
+    app.include_router(ops_self_router)
+    print("[OK] ops_self router enabled")
+except Exception as e:
+    print(f"[SKIP] ops_self router: {e}")
 
 try:
     from routes.system_state import router as system_state_router
