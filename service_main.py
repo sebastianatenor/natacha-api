@@ -200,6 +200,9 @@ try:
     from routes.system_decide import router as system_decide_router
     app.include_router(system_decide_router)
     print("[OK] system_decide router enabled")
+    from routes.system_self import router as system_self_router
+    app.include_router(system_self_router)
+    print("[OK] system_self router enabled")
 except Exception as e:
     print(f"[SKIP] system_decide router: {e}")
 
