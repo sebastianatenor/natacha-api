@@ -1,5 +1,6 @@
 from typing import Dict, Any
 
+from ops.memory.manager import user_context_manager
 from ops.cognitive.cognitive_guardrail import CognitiveGuardrail, CognitiveInput
 from ops.semantic.engine import semantic_engine
 from ops.semantic.state import SEMANTIC_STATE
@@ -20,6 +21,14 @@ def respond(
     - NO ejecuta acciones
     - LLM es opcional y externo
     """
+
+    # -------------------------------------------------
+    # 0) Estado cognitivo vivo (RAM)
+    # -------------------------------------------------
+    user_state = user_context_manager.touch(
+        user_id=user_id,
+        channel=channel,
+    )
 
     # -------------------------------------------------
     # 1) Guardrail cognitivo (autoridad máxima)
