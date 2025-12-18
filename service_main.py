@@ -188,6 +188,13 @@ try:
 except Exception as e:
     print(f"[SKIP] system_self router: {e}")
 
+try:
+    from routes.system_last_checkpoint import router as system_last_checkpoint_router
+    app.include_router(system_last_checkpoint_router)
+    print("[OK] system_last_checkpoint router enabled")
+except Exception as e:
+    print(f"[SKIP] system_last_checkpoint router: {e}")
+
 # ================================================================
 # 5) SEMANTIC DEBUG (PASIVO)
 # ================================================================
