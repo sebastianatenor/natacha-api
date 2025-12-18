@@ -22,6 +22,9 @@ class SemanticCore:
         if not hf_token:
             raise RuntimeError("HF_TOKEN missing")
 
+        # 🔧 FIX CRÍTICO: limpiar whitespace / newline del secret
+        hf_token = hf_token.strip()
+
         # Cloud Run writable cache
         os.environ.setdefault("HF_HOME", "/tmp/huggingface")
         os.environ.setdefault("TRANSFORMERS_CACHE", "/tmp/huggingface")
