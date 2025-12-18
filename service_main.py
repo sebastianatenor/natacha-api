@@ -248,6 +248,9 @@ try:
     from routes.system_decide import router as system_decide_router
     app.include_router(system_decide_router)
     print("[OK] system_decide router enabled")
+from ops.semantic.routes import router as semantic_router
+app.include_router(semantic_router)
+print("[OK] semantic debug router enabled")
 except Exception as e:
     print(f"[SKIP] system_decide router: {e}")
 
