@@ -27,6 +27,28 @@ def post_startup_init():
     except Exception as e:
         print(f"[POST-STARTUP][WARMUP][ERROR] {e}")
 
+    # --------------------------------------------------
+    # Symbolic reasoning (Mode F) – gated
+    # --------------------------------------------------
+    try:
+        if os.getenv("NATACHA_SYMBOLIC_STARTUP") == "1":
+            from ops.cognitive.symbolic_rules import run_symbolic_rules
+            from pathlib import Path
+            import json
+
+            MEMORY_PATH = Path("memory_store.jsonl")
+            inferences = run_symbolic_rules()
+
+            if inferences:
+                with MEMORY_PATH.open("a", encoding="utf-8") as f:
+                    for inf in inferences:
+                        f.write(json.dumps(inf, ensure_ascii=False) + "\n")
+
+                print(f"[POST-STARTUP] Symbolic inferences persisted: {len(inferences)}")
+            else:
+                print("[POST-STARTUP] No symbolic inferences (stable state)")
+    except Exception as e:
+        print(f"[POST-STARTUP][SYMBOLIC][ERROR] {e}")
 
 def launch_post_startup():
     t = threading.Thread(
