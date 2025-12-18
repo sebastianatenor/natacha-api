@@ -2,6 +2,7 @@
 
 from typing import List
 import re
+import unicodedata
 
 from sentence_transformers import SentenceTransformer
 
@@ -9,23 +10,39 @@ from ops.semantic.schema import SemanticAnalysis, SemanticSignal
 from ops.semantic.state import SEMANTIC_STATE
 
 
-IMPLICIT_ACTION_VERBS = [
-    "comprar",
-    "pagar",
-    "crear",
-    "eliminar",
-    "borrar",
-    "ejecutar",
-    "mandar",
-    "enviar",
-    "activar",
-    "desactivar",
-    "automatizar",
-    "hacer",
+# -------------------------------------------------
+# Helpers
+# -------------------------------------------------
+
+def normalize(text: str) -> str:
+    """
+    - lowercase
+    - remove accents
+    """
+    text = text.lower()
+    return "".join(
+        c for c in unicodedata.normalize("NFD", text)
+        if unicodedata.category(c) != "Mn"
+    )
+
+
+# Raíces verbales (NO infinitivos)
+IMPLICIT_ACTION_ROOTS = [
+    "compr",
+    "pag",
+    "mand",
+    "envi",
+    "cre",
+    "borr",
+    "elimin",
+    "ejecut",
+    "activ",
+    "desactiv",
+    "automat",
 ]
 
 AUTOMATION_MARKERS = [
-    "automáticamente",
+    "automaticamente",
     "solo",
     "sin preguntar",
     "directamente",
@@ -36,7 +53,7 @@ AUTOMATION_MARKERS = [
 class SemanticEngine:
     """
     Motor semántico PASIVO.
-    - Detecta intención implícita
+    - Detecta intención implícita de acción
     - NO decide
     - NO ejecuta
     """
@@ -55,15 +72,14 @@ class SemanticEngine:
         SEMANTIC_STATE.embedding_dim = self.model.get_sentence_embedding_dimension()
 
     def _detect_implicit_action(self, text: str) -> bool:
-        t = text.lower()
+        t = normalize(text)
 
-        verb_hit = any(re.search(rf"\b{v}\b", t) for v in IMPLICIT_ACTION_VERBS)
+        verb_hit = any(root in t for root in IMPLICIT_ACTION_ROOTS)
         auto_hit = any(m in t for m in AUTOMATION_MARKERS)
 
         return verb_hit and auto_hit
 
     def analyze(self, text: str) -> SemanticAnalysis:
-        # Si no hay token HF, igual hacemos heurística
         implicit_action = self._detect_implicit_action(text)
 
         if implicit_action:
@@ -71,16 +87,16 @@ class SemanticEngine:
                 intent="implicit_action",
                 risk_level="high",
                 domains=["automation"],
-                confidence=0.85,
+                confidence=0.9,
             )
 
             return SemanticAnalysis(
                 text=text,
                 signals=signals,
-                model_used="heuristic-v1",
+                model_used="heuristic-v2",
             )
 
-        # Si no hay acción implícita, seguimos flujo normal
+        # Fallback normal
         intent = "question" if "?" in text else "statement"
 
         signals = SemanticSignal(
@@ -93,9 +109,8 @@ class SemanticEngine:
         return SemanticAnalysis(
             text=text,
             signals=signals,
-            model_used="heuristic-v1",
+            model_used="heuristic-v2",
         )
 
 
 semantic_engine = SemanticEngine()
-
