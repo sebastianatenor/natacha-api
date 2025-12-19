@@ -121,3 +121,21 @@ def custom_openapi():
     return schema
 
 app.openapi = custom_openapi
+
+# --- Semantic (lazy, canonical)
+try:
+    from ops.semantic.routes import router as semantic_router
+    app.include_router(semantic_router)
+    print("[OK] semantic router enabled")
+except Exception as e:
+    print(f"[SKIP] semantic router: {e}")
+
+
+# --- Natacha chat
+try:
+    from routes.natacha_routes import router as natacha_router
+    app.include_router(natacha_router)
+    print("[OK] natacha chat router enabled")
+except Exception as e:
+    print(f"[SKIP] natacha router: {e}")
+
