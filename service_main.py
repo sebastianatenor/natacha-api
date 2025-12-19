@@ -72,10 +72,16 @@ def root():
 from routes.system_state import router as system_state_router
 from routes.system_full_status import router as system_full_status_router
 from routes.system_last_checkpoint import router as system_last_checkpoint_router
+from routes.system_force_checkpoint import router as system_force_checkpoint_router
+app.include_router(system_force_checkpoint_router)
+print("[OK] system_force_checkpoint router enabled")
 
 app.include_router(system_state_router)
 app.include_router(system_full_status_router)
 app.include_router(system_last_checkpoint_router)
+from routes.system_force_checkpoint import router as system_force_checkpoint_router
+app.include_router(system_force_checkpoint_router)
+print("[OK] system_force_checkpoint router enabled")
 
 # ================================================================
 # Startup
