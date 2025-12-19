@@ -1,5 +1,5 @@
 """
-Semantic Core – Cloud Run SAFE (HF env-based auth)
+Semantic Core — Lazy, Cloud Run safe, deterministic
 """
 
 import os
@@ -11,44 +11,50 @@ class SemanticCore:
     def __init__(self):
         self._model: Optional[SentenceTransformer] = None
         self._loaded: bool = False
+        self._loading: bool = False
 
     def ensure_loaded(self):
         if self._loaded:
             return
 
-        print("[SEMANTIC] Loading SentenceTransformer model…")
+        if self._loading:
+            raise RuntimeError("Semantic model is currently loading")
 
-        hf_token = os.getenv("HF_TOKEN")
-        if not hf_token:
-            raise RuntimeError("HF_TOKEN missing")
+        self._loading = True
+        try:
+            hf_token = os.getenv("HF_TOKEN")
+            if not hf_token:
+                raise RuntimeError("HF_TOKEN missing")
 
-        # 🔑 NORMALIZAR TOKEN (CRÍTICO EN CLOUD RUN)
-        hf_token = hf_token.strip()
+            # Cloud Run writable cache
+            os.environ.setdefault("HF_HOME", "/tmp/huggingface")
+            os.environ.setdefault("TRANSFORMERS_CACHE", "/tmp/huggingface")
+            os.environ.setdefault("SENTENCE_TRANSFORMERS_HOME", "/tmp/huggingface")
 
-        # 👉 HuggingFace HUB espera ESTE nombre
-        os.environ["HUGGINGFACE_HUB_TOKEN"] = hf_token
+            print("[SEMANTIC] Lazy loading SentenceTransformer model…")
 
-        # Cache writable (Cloud Run safe)
-        os.environ.setdefault("HF_HOME", "/tmp/huggingface")
-        os.environ.setdefault("TRANSFORMERS_CACHE", "/tmp/huggingface")
-        os.environ.setdefault("SENTENCE_TRANSFORMERS_HOME", "/tmp/huggingface")
+            self._model = SentenceTransformer(
+                "sentence-transformers/all-MiniLM-L6-v2",
+                use_auth_token=hf_token.strip()
+            )
 
-        # 🚫 NO pasar token como argumento
-        self._model = SentenceTransformer(
-            "sentence-transformers/all-MiniLM-L6-v2"
-        )
+            self._loaded = True
+            print("[SEMANTIC] Model loaded successfully")
 
-        self._loaded = True
-        print("[SEMANTIC] Model loaded successfully")
+        finally:
+            self._loading = False
 
     def is_loaded(self) -> bool:
         return self._loaded
 
     def embed(self, text: str) -> List[float]:
+        if not text:
+            raise ValueError("Text is empty")
+
         self.ensure_loaded()
 
-        if self._model is None:
-            raise RuntimeError("Semantic model not loaded")
+        if not self._model:
+            raise RuntimeError("Semantic model unavailable")
 
         vec = self._model.encode(text)
         return vec.tolist()
