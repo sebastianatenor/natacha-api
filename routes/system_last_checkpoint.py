@@ -1,4 +1,3 @@
-# routes/system_last_checkpoint.py
 from fastapi import APIRouter
 import json
 from unified_core.memory_paths import get_canonical_memory_path
@@ -7,11 +6,12 @@ router = APIRouter(prefix="/ops/system", tags=["System"])
 
 MEMORY_PATH = get_canonical_memory_path()
 
+
 @router.get("/last_checkpoint")
 def last_checkpoint():
     """
     Devuelve el último self_checkpoint registrado.
-    Read-only. Observacional. Cloud Run safe.
+    Read-only. Observacional. Cloud Runun safe.
     """
 
     if not MEMORY_PATH.exists():

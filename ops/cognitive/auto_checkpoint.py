@@ -1,29 +1,15 @@
-# ops/cognitive/auto_checkpoint.py
-import os
-import json
 from datetime import datetime
-from pathlib import Path
+import json
+import os
 
+from unified_core.memory_paths import get_canonical_memory_path
 from ops.cognitive.state_registry import read_last_cognitive_state
-
-
-def _get_memory_path() -> Path:
-    """
-    Devuelve el path canónico de memoria según el entorno.
-    - Cloud Run: /tmp/memory_store.jsonl (o env override)
-    - Local: memory_store.jsonl
-    """
-    if os.getenv("K_SERVICE"):
-        return Path(os.getenv("NATACHA_MEMORY_LOCAL", "/tmp/memory_store.jsonl"))
-    return Path("memory_store.jsonl")
 
 
 def write_revision_checkpoint():
     revision = os.getenv("K_REVISION")
     if not revision:
         return
-
-    memory_path = _get_memory_path()
 
     semantic = read_last_cognitive_state("semantic")
 
@@ -39,17 +25,12 @@ def write_revision_checkpoint():
             "memory": "loaded",
             "context": "loaded",
             "semantic": semantic["state"] if semantic else "unknown",
-            "notes": "Checkpoint automático por revisión."
+            "notes": "Checkpoint automático por revisión (canonical)."
         },
         "confidence": "high"
     }
 
-    try:
-        memory_path.parent.mkdir(parents=True, exist_ok=True)
-        with memory_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(checkpoint, ensure_ascii=False) + "\n")
+    path = get_canonical_memory_path()
 
-        print(f"[CHECKPOINT] Revision checkpoint written → {memory_path}")
-
-    except Exception as e:
-        print(f"[CHECKPOINT][ERROR] Could not write checkpoint: {e}")
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(checkpoint, ensure_ascii=False) + "\n")
