@@ -2,6 +2,7 @@
 import os
 import threading
 import time
+from datetime import datetime
 
 from ops.cognitive.state_registry import write_cognitive_state
 
@@ -11,7 +12,7 @@ def post_startup_init():
     time.sleep(1)
 
     # -----------------------------
-    # MEMORY
+    # MEMORY (CANÓNICO – BLOQUEANTE)
     # -----------------------------
     try:
         from unified_core.memory_lazy import get_memory_engine
@@ -20,9 +21,10 @@ def post_startup_init():
         print("[POST-STARTUP] Memory ensured")
     except Exception as e:
         print(f"[POST-STARTUP][MEMORY][ERROR] {e}")
+        return  # ⛔ sin memoria, no seguimos
 
     # -----------------------------
-    # SEMANTIC CORE
+    # SEMANTIC CORE (OPCIONAL)
     # -----------------------------
     if os.getenv("NATACHA_SEMANTIC_STARTUP") == "1":
         revision = os.getenv("K_REVISION")
@@ -72,29 +74,24 @@ def post_startup_init():
     except Exception as e:
         print(f"[POST-STARTUP][WARMUP][ERROR] {e}")
 
-# -----------------------------
-# REVISION CHECKPOINT (AUTOMÁTICO)
-# -----------------------------
-try:
-    from ops.cognitive.state_registry import write_cognitive_state
-    from datetime import datetime
-    import os
+    # -----------------------------
+    # 🔐 REVISION CHECKPOINT (DETERMINÍSTICO)
+    # -----------------------------
+    try:
+        write_cognitive_state(
+            subsystem="revision_checkpoint",
+            state="written",
+            revision=os.getenv("K_REVISION"),
+            confidence="high",
+            details={
+                "timestamp": datetime.utcnow().isoformat(),
+                "note": "Automatic revision checkpoint (post memory load)"
+            }
+        )
+        print("[POST-STARTUP][CHECKPOINT] Revision checkpoint written")
+    except Exception as e:
+        print(f"[POST-STARTUP][CHECKPOINT][ERROR] {e}")
 
-    write_cognitive_state(
-        subsystem="revision_checkpoint",
-        state="written",
-        revision=os.getenv("K_REVISION"),
-        confidence="high",
-        details={
-            "timestamp": datetime.utcnow().isoformat(),
-            "note": "Automatic revision checkpoint"
-        }
-    )
-
-    print("[POST-STARTUP][CHECKPOINT] Revision checkpoint written")
-
-except Exception as e:
-    print(f"[POST-STARTUP][CHECKPOINT][ERROR] {e}")
 
 def launch_post_startup():
     threading.Thread(
