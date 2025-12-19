@@ -8,16 +8,11 @@ from ops.cognitive.state_registry import write_cognitive_state
 
 
 def _post_startup_worker():
-    """
-    Worker REAL de post-startup.
-    NUNCA se ejecuta en el hilo de FastAPI.
-    """
     print("🔥 POST_STARTUP WORKER STARTED")
-
-    time.sleep(2)  # dejar respirar a Uvicorn
+    time.sleep(2)
 
     # -----------------------------
-    # MEMORY (CANÓNICO)
+    # MEMORY
     # -----------------------------
     try:
         from unified_core.memory_lazy import get_memory_engine
@@ -70,7 +65,7 @@ def _post_startup_worker():
             print(f"[POST-STARTUP][SEMANTIC][ERROR] {e}")
 
     # -----------------------------
-    # REVISION CHECKPOINT (FINAL)
+    # REVISION CHECKPOINT
     # -----------------------------
     try:
         write_cognitive_state(
@@ -89,12 +84,7 @@ def _post_startup_worker():
 
 
 def launch_post_startup():
-    """
-    ÚNICA función llamada desde FastAPI startup.
-    No bloquea nunca.
-    """
-    t = threading.Thread(
+    threading.Thread(
         target=_post_startup_worker,
         daemon=True
-    )
-    t.start()
+    ).start()
