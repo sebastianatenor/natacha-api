@@ -7,12 +7,17 @@ from datetime import datetime
 from ops.cognitive.state_registry import write_cognitive_state
 
 
-def post_startup_init():
-    print("🔥 POST_STARTUP INIT")
-    time.sleep(1)
+def _post_startup_worker():
+    """
+    Worker REAL de post-startup.
+    NUNCA se ejecuta en el hilo de FastAPI.
+    """
+    print("🔥 POST_STARTUP WORKER STARTED")
+
+    time.sleep(2)  # dejar respirar a Uvicorn
 
     # -----------------------------
-    # MEMORY (CANÓNICO – BLOQUEANTE)
+    # MEMORY (CANÓNICO)
     # -----------------------------
     try:
         from unified_core.memory_lazy import get_memory_engine
@@ -21,10 +26,10 @@ def post_startup_init():
         print("[POST-STARTUP] Memory ensured")
     except Exception as e:
         print(f"[POST-STARTUP][MEMORY][ERROR] {e}")
-        return  # ⛔ sin memoria, no seguimos
+        return
 
     # -----------------------------
-    # SEMANTIC CORE (OPCIONAL)
+    # SEMANTIC CORE
     # -----------------------------
     if os.getenv("NATACHA_SEMANTIC_STARTUP") == "1":
         revision = os.getenv("K_REVISION")
@@ -52,7 +57,7 @@ def post_startup_init():
                 }
             )
 
-            print("[POST-STARTUP][SEMANTIC] Loaded & state committed")
+            print("[POST-STARTUP][SEMANTIC] Loaded")
 
         except Exception as e:
             write_cognitive_state(
@@ -65,17 +70,7 @@ def post_startup_init():
             print(f"[POST-STARTUP][SEMANTIC][ERROR] {e}")
 
     # -----------------------------
-    # AUTO WARMUP
-    # -----------------------------
-    try:
-        from ops.startup.auto_warmup import maybe_auto_warmup
-        maybe_auto_warmup()
-        print("[POST-STARTUP] Auto-warmup done")
-    except Exception as e:
-        print(f"[POST-STARTUP][WARMUP][ERROR] {e}")
-
-    # -----------------------------
-    # 🔐 REVISION CHECKPOINT (DETERMINÍSTICO)
+    # REVISION CHECKPOINT (FINAL)
     # -----------------------------
     try:
         write_cognitive_state(
@@ -85,7 +80,7 @@ def post_startup_init():
             confidence="high",
             details={
                 "timestamp": datetime.utcnow().isoformat(),
-                "note": "Automatic revision checkpoint (post memory load)"
+                "note": "Post-startup canonical checkpoint"
             }
         )
         print("[POST-STARTUP][CHECKPOINT] Revision checkpoint written")
@@ -94,7 +89,12 @@ def post_startup_init():
 
 
 def launch_post_startup():
-    threading.Thread(
-        target=post_startup_init,
+    """
+    ÚNICA función llamada desde FastAPI startup.
+    No bloquea nunca.
+    """
+    t = threading.Thread(
+        target=_post_startup_worker,
         daemon=True
-    ).start()
+    )
+    t.start()
