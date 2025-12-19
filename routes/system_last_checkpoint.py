@@ -1,12 +1,11 @@
 # routes/system_last_checkpoint.py
 from fastapi import APIRouter
-from pathlib import Path
 import json
+from unified_core.memory_paths import get_canonical_memory_path
 
 router = APIRouter(prefix="/ops/system", tags=["System"])
 
-MEMORY_PATH = Path("/tmp/memory_store.jsonl")
-
+MEMORY_PATH = get_canonical_memory_path()
 
 @router.get("/last_checkpoint")
 def last_checkpoint():
