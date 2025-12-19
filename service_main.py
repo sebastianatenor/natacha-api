@@ -137,6 +137,9 @@ from ops.system.manifests import router as manifests_router
 from routes.debug_openai import router as debug_openai_router
 from routes.debug_fs import router as debug_fs_router
 
+from routes.system_force_checkpoint import router as force_checkpoint_router
+app.include_router(force_checkpoint_router)
+
 app.include_router(manifests_router)
 app.include_router(debug_openai_router)
 app.include_router(debug_fs_router)
@@ -296,5 +299,15 @@ def on_startup():
         print("[STARTUP] post_startup launched in background")
     except Exception as e:
         print(f"[STARTUP][SKIP] post_startup unavailable: {e}")
+
+    # --------------------------------------------------
+    # 🔐 CANONICAL REVISION CHECKPOINT (DETERMINÍSTICO)
+    # --------------------------------------------------
+    try:
+        from ops.cognitive.auto_checkpoint import write_revision_checkpoint
+        write_revision_checkpoint()
+        print("[STARTUP][CHECKPOINT] Revision checkpoint written (canonical)")
+    except Exception as e:
+        print(f"[STARTUP][CHECKPOINT][ERROR] {e}")
 
     print("[STARTUP] Fast boot startup completed")
