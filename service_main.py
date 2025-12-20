@@ -103,6 +103,10 @@ from routes.system_diagnose import router as system_diagnose_router
 app.include_router(system_diagnose_router)
 print("[OK] system_diagnose router enabled")
 
+from routes.system_narrative import router as system_narrative_router
+app.include_router(system_narrative_router)
+print("[OK] system_narrative router enabled")
+
 # ================================================================
 # Startup
 # ================================================================
