@@ -99,6 +99,10 @@ from ops.symbolic.router import router as symbolic_router
 app.include_router(symbolic_router)
 print("[OK] symbolic router enabled")
 
+from routes.system_diagnose import router as system_diagnose_router
+app.include_router(system_diagnose_router)
+print("[OK] system_diagnose router enabled")
+
 # ================================================================
 # Startup
 # ================================================================

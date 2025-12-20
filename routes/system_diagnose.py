@@ -1,57 +1,25 @@
 from fastapi import APIRouter
-from typing import Dict, Any
 
-from routes.system_state import system_state
-from ops.system_interpreter import interpret_system_state
+from ops.symbolic.rules_v2 import evaluate_symbolic_health
+from ops.symbolic.narrative import build_narrative
+from ops.timeline.reader import get_derived_state
 
-router = APIRouter(
-    prefix="/ops/system",
-    tags=["system-state"]
-)
+router = APIRouter(prefix="/ops/system", tags=["system"])
 
 
 @router.get("/diagnose")
-def system_diagnose() -> Dict[str, Any]:
+def system_diagnose():
     """
-    Diagnóstico interpretado del sistema.
-    Cloud Run aware:
-    - Si semantic/memory están disponibles pero no cargados,
-      intenta verificación lazy NO bloqueante.
+    Diagnóstico cognitivo narrativo del sistema.
+    Explica el estado actual y recomienda acciones.
     """
 
-    raw_state = system_state()
-
-    # --------------------------------------------------
-    # 🔹 Lazy materialization (SAFE)
-    # --------------------------------------------------
-
-    try:
-        # Semantic core: solo tocamos si hay token y no está cargado
-        semantic = raw_state.get("semantic", {})
-        if semantic.get("hf_token_present") and not semantic.get("loaded"):
-            from unified_core.semantic_core import get_semantic_core
-            core = get_semantic_core()
-            core.ensure_loaded()
-            semantic["loaded"] = True
-    except Exception:
-        pass  # Nunca romper diagnóstico
-
-    try:
-        # Memory: solo verificamos si el archivo ya está sincronizado
-        memory = raw_state.get("memory", {})
-        if not memory.get("store_loaded"):
-            from unified_core.memory_lazy import memory_engine
-            if memory_engine.store_available():
-                memory_engine.ensure_loaded()
-                memory["store_loaded"] = True
-                memory["store_path"] = memory_engine.store_path
-                memory["items_count"] = memory_engine.items_count
-    except Exception:
-        pass  # Diagnóstico siempre responde
-
-    diagnosis = interpret_system_state(raw_state)
+    derived_state = get_derived_state()
+    rules = evaluate_symbolic_health(derived_state)
+    narrative = build_narrative(derived_state, rules)
 
     return {
-        "state": raw_state,
-        "diagnosis": diagnosis
+        "status": "ok",
+        "diagnosis": narrative,
+        "derived_state": derived_state,
     }
