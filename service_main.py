@@ -129,6 +129,16 @@ def on_startup():
     print("[STARTUP] completed")
 
 # ================================================================
+# AUTO CHECKPOINT (post-startup, non-blocking)
+# ================================================================
+    try:
+        from ops.cognitive.auto_checkpoint import write_revision_checkpoint
+        write_revision_checkpoint()
+        print("[BOOT] auto cognitive checkpoint scheduled")
+    except Exception as e:
+        print(f"[BOOT][WARN] auto checkpoint skipped: {e}")
+
+# ================================================================
 # OpenAPI
 # ================================================================
 def custom_openapi():
