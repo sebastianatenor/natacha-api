@@ -54,3 +54,27 @@ def read_last_cognitive_state(subsystem: str) -> Optional[Dict]:
                 last = obj
 
     return last
+
+def write_cognitive_event(
+    *,
+    subsystem: str,
+    state: str,
+    revision: str | None = None,
+    confidence: str = "medium",
+    details: dict | None = None,
+):
+    """
+    Registra un evento cognitivo histórico (timeline).
+    """
+    event = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "kind": "cognitive_state",
+        "subsystem": subsystem,
+        "state": state,
+        "revision": revision,
+        "confidence": confidence,
+        "details": details or {},
+    }
+
+    _append_event(event)
+    return event

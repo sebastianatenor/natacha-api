@@ -4,7 +4,7 @@ import json
 import os
 
 from unified_core.memory_paths import get_canonical_memory_path
-from ops.cognitive.state_registry import write_cognitive_state, read_last_cognitive_state
+from ops.cognitive.state_registry import write_cognitive_event
 
 BUCKET = "natacha-memory-store"
 SNAPSHOT_PREFIX = "snapshots"
@@ -73,7 +73,7 @@ def write_daily_snapshot():
         # --------------------------------------------------
         # 🧠 INDEXAR COMO COGNITIVE_STATE (CANÓNICO)
         # --------------------------------------------------
-        write_cognitive_state(
+        write_cognitive_event(
             subsystem="memory",
             state="snapshot",
             revision=os.getenv("K_REVISION"),
