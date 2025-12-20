@@ -82,7 +82,7 @@ def persist_faiss_index(index):
             VECTOR_INDEX_BLOB,
         )
 
-        # Save locally
+        # Save locally (Cloud Run safe)
         faiss.write_index(index, str(VECTOR_INDEX_LOCAL))
 
         # Upload to GCS
