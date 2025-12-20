@@ -139,6 +139,18 @@ def on_startup():
         print(f"[BOOT][WARN] auto checkpoint skipped: {e}")
 
 # ================================================================
+# SEMANTIC PRELOAD (lazy, non-blocking, Cloud Run safe)
+# ================================================================
+try:
+    from unified_core.semantic_core import get_semantic_core
+    core = get_semantic_core()
+    if not core.is_loaded():
+        core.ensure_loaded()
+        print("[BOOT] semantic core preloaded")
+except Exception as e:
+    print(f"[BOOT][WARN] semantic preload skipped: {e}")
+
+# ================================================================
 # OpenAPI
 # ================================================================
 def custom_openapi():
