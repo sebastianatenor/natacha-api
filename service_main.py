@@ -72,6 +72,9 @@ def root():
 from routes.system_state import router as system_state_router
 from routes.system_full_status import router as system_full_status_router
 from routes.system_last_checkpoint import router as system_last_checkpoint_router
+from routes.system_daily_snapshot import router as system_daily_snapshot_router
+app.include_router(system_daily_snapshot_router)
+print("[OK] system_daily_snapshot router enabled")
 from routes.system_force_checkpoint import router as system_force_checkpoint_router
 app.include_router(system_force_checkpoint_router)
 print("[OK] system_force_checkpoint router enabled")
@@ -79,9 +82,22 @@ print("[OK] system_force_checkpoint router enabled")
 app.include_router(system_state_router)
 app.include_router(system_full_status_router)
 app.include_router(system_last_checkpoint_router)
+from routes.system_daily_snapshot import router as system_daily_snapshot_router
+app.include_router(system_daily_snapshot_router)
+print("[OK] system_daily_snapshot router enabled")
 from routes.system_force_checkpoint import router as system_force_checkpoint_router
 app.include_router(system_force_checkpoint_router)
 print("[OK] system_force_checkpoint router enabled")
+
+# --- Timeline cognitivo
+from ops.timeline.router import router as timeline_router
+app.include_router(timeline_router)
+print("[OK] timeline router enabled")
+
+# --- Razonamiento simbólico
+from ops.symbolic.router import router as symbolic_router
+app.include_router(symbolic_router)
+print("[OK] symbolic router enabled")
 
 # ================================================================
 # Startup
