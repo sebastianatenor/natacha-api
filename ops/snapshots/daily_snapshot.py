@@ -40,8 +40,10 @@ def write_daily_snapshot(retries: int = 5, wait: float = 1.0):
         return
 
     # --- Snapshot cognitivo
-    semantic = read_last_cognitive_state("semantic")
-
+    semantic = read_last_cognitive_state("semantic") or {
+        "state": "not_loaded",
+        "confidence": "low"
+    }
     snapshot_event = {
         "timestamp": datetime.utcnow().isoformat(),
         "kind": "daily_snapshot",
