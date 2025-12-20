@@ -89,6 +89,8 @@ print("[OK] system_force_checkpoint router enabled")
 @app.on_event("startup")
 def on_startup():
     start_background(load_memory_from_gcs)
+    start_background(run_daily_snapshot)
+    start_background(load_vector_index_background)
 
     try:
         from ops.startup.post_startup import launch_post_startup
@@ -139,3 +141,25 @@ try:
 except Exception as e:
     print(f"[SKIP] natacha router: {e}")
 
+
+# =====================================================
+# VECTOR INDEX LOAD (NON-BLOCKING)
+# =====================================================
+def load_vector_index_background():
+    try:
+        from ops.vector.load_vector_index import load_vector_index_if_exists
+        idx = load_vector_index_if_exists()
+        if idx:
+            print("[STARTUP] Vector index ready")
+    except Exception as e:
+        print(f"[STARTUP][VECTOR][WARN] {e}")
+
+# =====================================================
+# DAILY SNAPSHOT (NON-BLOCKING)
+# =====================================================
+def run_daily_snapshot():
+    try:
+        from ops.snapshots.daily_snapshot import write_daily_snapshot
+        write_daily_snapshot()
+    except Exception as e:
+        print(f"[STARTUP][SNAPSHOT][WARN] {e}")
