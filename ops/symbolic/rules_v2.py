@@ -1,4 +1,4 @@
-from typing import Dict, List
+yfrom typing import Dict, List
 
 
 def evaluate_system_health(derived_state: Dict) -> List[Dict]:
@@ -50,3 +50,40 @@ def evaluate_system_health(derived_state: Dict) -> List[Dict]:
         })
 
     return rules
+
+def evaluate_symbolic_health(derived_state: dict) -> dict:
+    """
+    Canonical symbolic health evaluation entrypoint.
+    Used by system_diagnose router.
+    """
+    findings = []
+
+    semantic_loaded = derived_state.get("semantic_loaded", False)
+    snapshot_count = derived_state.get("snapshot_count", 0)
+    checkpoint_count = derived_state.get("checkpoint_count", 0)
+
+    if not semantic_loaded:
+        findings.append({
+            "rule": "SEMANTIC_NOT_LOADED",
+            "confidence": "medium",
+            "message": "Semantic core is not loaded"
+        })
+
+    if snapshot_count == 0:
+        findings.append({
+            "rule": "NO_SNAPSHOTS",
+            "confidence": "medium",
+            "message": "No daily snapshots recorded"
+        })
+
+    if checkpoint_count == 0:
+        findings.append({
+            "rule": "NO_CHECKPOINTS",
+            "confidence": "low",
+            "message": "No self checkpoints recorded"
+        })
+
+    return {
+        "derived_state": derived_state,
+        "symbolic_evaluation": findings
+    }
