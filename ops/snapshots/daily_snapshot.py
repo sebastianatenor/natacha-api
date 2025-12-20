@@ -4,6 +4,7 @@ import json
 import os
 
 from unified_core.memory_paths import get_canonical_memory_path
+from ops.cognitive.state_registry import write_cognitive_event
 
 BUCKET = "natacha-memory-store"
 SNAPSHOT_PREFIX = "snapshots"
@@ -23,24 +24,6 @@ def snapshot_exists_today(client):
     return blob.exists()
 
 
-def _write_timeline_event():
-    """
-    Indexa el snapshot diario en el timeline cognitivo.
-    """
-    path = get_canonical_memory_path()
-
-    event = {
-        "timestamp": datetime.utcnow().isoformat(),
-        "kind": "cognitive_snapshot",
-        "date": _today_key(),
-        "revision": os.getenv("K_REVISION"),
-        "confidence": "high",
-    }
-
-    with path.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(event, ensure_ascii=False) + "\n")
-
-
 def write_daily_snapshot():
     try:
         client = storage.Client()
@@ -49,12 +32,13 @@ def write_daily_snapshot():
             print("[SNAPSHOT] Daily snapshot already exists — skipping")
             return
 
+        # ============================
+        # Construir snapshot
+        # ============================
         snapshot = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "kind": "daily_snapshot",
             "revision": os.getenv("K_REVISION"),
-            "semantic": None,
-            "memory": None,
             "confidence": "high",
         }
 
@@ -75,16 +59,31 @@ def write_daily_snapshot():
         except Exception:
             snapshot["memory"] = {"state": "unknown"}
 
+        # ============================
+        # Persistir en GCS
+        # ============================
         data = json.dumps(snapshot, ensure_ascii=False) + "\n"
-
         bucket = client.bucket(BUCKET)
         blob = bucket.blob(_snapshot_blob_name())
         blob.upload_from_string(data, content_type="application/json")
 
-        # 🔑 INDEXAR EN TIMELINE
-        _write_timeline_event()
+        print("[SNAPSHOT] Daily snapshot written")
 
-        print("[SNAPSHOT] Daily snapshot written + indexed")
+        # ============================
+        # 🔥 INDEXAR EN TIMELINE 🔥
+        # ============================
+        write_cognitive_event(
+            kind="daily_snapshot",
+            subsystem="snapshot",
+            state="written",
+            confidence="high",
+            details={
+                "date": _today_key(),
+                "gcs_path": _snapshot_blob_name(),
+            },
+        )
+
+        print("[SNAPSHOT] Daily snapshot indexed into cognitive timeline")
 
     except Exception as e:
         print(f"[SNAPSHOT][WARN] {e}")
