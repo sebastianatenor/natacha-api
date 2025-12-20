@@ -68,3 +68,30 @@ def get_semantic_core() -> SemanticCore:
     if _semantic_core_instance is None:
         _semantic_core_instance = SemanticCore()
     return _semantic_core_instance
+
+# =====================================================
+# FAISS PERSISTENCE (CANONICAL)
+# =====================================================
+def persist_faiss_index(index):
+    try:
+        import faiss
+        from google.cloud import storage
+        from unified_core.vector_paths import (
+            VECTOR_INDEX_LOCAL,
+            GCS_BUCKET,
+            VECTOR_INDEX_BLOB,
+        )
+
+        # Save locally
+        faiss.write_index(index, str(VECTOR_INDEX_LOCAL))
+
+        # Upload to GCS
+        client = storage.Client()
+        bucket = client.bucket(GCS_BUCKET)
+        blob = bucket.blob(VECTOR_INDEX_BLOB)
+        blob.upload_from_filename(str(VECTOR_INDEX_LOCAL))
+
+        print("[VECTOR] FAISS index persisted to GCS")
+
+    except Exception as e:
+        print(f"[VECTOR][WARN] FAISS persist failed: {e}")
