@@ -1,89 +1,39 @@
-yfrom typing import Dict, List
+from typing import Dict, List
 
-
-def evaluate_system_health(derived_state: Dict) -> List[Dict]:
+def evaluate_symbolic_health(derived_state: Dict) -> List[Dict]:
     """
-    Evalúa el estado cognitivo del sistema y devuelve reglas simbólicas
-    interpretables por humanos.
+    Evalúa el estado cognitivo del sistema y devuelve
+    reglas simbólicas legibles para humanos.
     """
 
-    rules = []
-
-    semantic_loaded = derived_state.get("semantic_loaded", False)
-    snapshot_count = derived_state.get("snapshot_count", 0)
-    maturity = derived_state.get("maturity", "unknown")
-
-    # 🟢 Sistema estable
-    if semantic_loaded and snapshot_count >= 1:
-        rules.append({
-            "rule": "SYSTEM_STABLE",
-            "severity": "info",
-            "message": "El sistema se encuentra estable con cognición semántica activa y snapshots diarios.",
-            "confidence": "high"
-        })
-
-    # 🟡 Falta de snapshots
-    if snapshot_count == 0:
-        rules.append({
-            "rule": "NO_DAILY_SNAPSHOTS",
-            "severity": "warning",
-            "message": "No existen snapshots diarios. Riesgo de pérdida de trazabilidad histórica.",
-            "confidence": "medium"
-        })
-
-    # 🟡 Semantic no cargado
-    if not semantic_loaded:
-        rules.append({
-            "rule": "SEMANTIC_NOT_LOADED",
-            "severity": "warning",
-            "message": "La cognición semántica no está cargada. Se recomienda precargar el motor.",
-            "confidence": "medium"
-        })
-
-    # 🔵 Sistema inmaduro
-    if maturity in ("developing", "unknown"):
-        rules.append({
-            "rule": "SYSTEM_IN_DEVELOPMENT",
-            "severity": "info",
-            "message": "El sistema se encuentra en etapa de desarrollo cognitivo.",
-            "confidence": "medium"
-        })
-
-    return rules
-
-def evaluate_symbolic_health(derived_state: dict) -> dict:
-    """
-    Canonical symbolic health evaluation entrypoint.
-    Used by system_diagnose router.
-    """
-    findings = []
+    rules: List[Dict] = []
 
     semantic_loaded = derived_state.get("semantic_loaded", False)
     snapshot_count = derived_state.get("snapshot_count", 0)
     checkpoint_count = derived_state.get("checkpoint_count", 0)
 
+    # --- Regla: semántica no cargada
     if not semantic_loaded:
-        findings.append({
+        rules.append({
             "rule": "SEMANTIC_NOT_LOADED",
             "confidence": "medium",
-            "message": "Semantic core is not loaded"
+            "message": "El motor semántico aún no está cargado."
         })
 
+    # --- Regla: no hay snapshots
     if snapshot_count == 0:
-        findings.append({
+        rules.append({
             "rule": "NO_SNAPSHOTS",
             "confidence": "medium",
-            "message": "No daily snapshots recorded"
+            "message": "No hay snapshots diarios registrados."
         })
 
+    # --- Regla: no hay checkpoints
     if checkpoint_count == 0:
-        findings.append({
+        rules.append({
             "rule": "NO_CHECKPOINTS",
             "confidence": "low",
-            "message": "No self checkpoints recorded"
+            "message": "No hay checkpoints cognitivos registrados."
         })
 
-    return {
-        "derived_state": derived_state,
-        "symbolic_evaluation": findings
-    }
+    return rules
