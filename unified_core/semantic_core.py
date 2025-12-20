@@ -57,8 +57,11 @@ class SemanticCore:
             raise RuntimeError("Semantic model unavailable")
 
         vec = self._model.encode(text)
-        return vec.tolist()
 
+        # 🔒 marker for future FAISS persistence
+        # persist_faiss_index(index) will be called by memory indexer
+
+        return vec.tolist()
 
 _semantic_core_instance: Optional[SemanticCore] = None
 
