@@ -1,57 +1,49 @@
-from typing import Dict, List
+from typing import List, Dict
 
+def derive_state_from_events(events: List[Dict]) -> Dict:
+    semantic_loaded = False
+    snapshot_count = 0
+    checkpoint_count = 0
 
-def build_narrative(derived_state: Dict, rules: List[Dict]) -> Dict:
-    """
-    Construye un diagnóstico narrativo humano a partir del estado cognitivo
-    y las reglas simbólicas evaluadas.
-    """
+    for e in events:
+        if e.get("kind") == "cognitive_state" and e.get("subsystem") == "semantic":
+            if e.get("state") == "loaded":
+                semantic_loaded = True
+        if e.get("kind") == "daily_snapshot":
+            snapshot_count += 1
+        if e.get("kind") == "self_checkpoint":
+            checkpoint_count += 1
 
-    semantic_loaded = derived_state.get("semantic_loaded", False)
-    snapshot_count = derived_state.get("snapshot_count", 0)
-    maturity = derived_state.get("maturity", "unknown")
-
-    summary_parts = []
-    recommendations = []
-
-    # --- Estado general
-    if semantic_loaded:
-        summary_parts.append("La cognición semántica se encuentra activa.")
-    else:
-        summary_parts.append("La cognición semántica no está cargada actualmente.")
-        recommendations.append(
-            "Ejecutar una carga temprana del motor semántico para asegurar comprensión profunda."
-        )
-
-    if snapshot_count > 0:
-        summary_parts.append(f"Existen {snapshot_count} snapshots diarios registrados.")
-    else:
-        summary_parts.append("No hay snapshots diarios registrados.")
-        recommendations.append(
-            "Asegurar la ejecución automática del snapshot diario para preservar memoria histórica."
-        )
-
-    if maturity == "high":
-        summary_parts.append("El sistema presenta un nivel de madurez cognitiva alto.")
-    elif maturity == "developing":
-        summary_parts.append("El sistema se encuentra en una etapa de desarrollo cognitivo.")
-        recommendations.append(
-            "Continuar reforzando reglas simbólicas y persistencia histórica."
-        )
-    else:
-        summary_parts.append("El nivel de madurez cognitiva es desconocido.")
-
-    # --- Severidad global
-    severity = "stable"
-    for rule in rules:
-        if rule.get("severity") == "warning":
-            severity = "attention_required"
-            break
+    maturity = "developing"
+    if semantic_loaded and snapshot_count > 0:
+        maturity = "high"
 
     return {
-        "severity": severity,
-        "summary": " ".join(summary_parts),
+        "semantic_loaded": semantic_loaded,
+        "snapshot_count": snapshot_count,
+        "checkpoint_count": checkpoint_count,
+        "maturity": maturity,
+    }
+
+
+def build_cognitive_narrative(
+    *,
+    derived_state: Dict,
+    rules: List[Dict],
+) -> Dict:
+    summary = "El sistema se encuentra en una etapa de desarrollo cognitivo."
+    if derived_state.get("maturity") == "high":
+        summary = "El sistema presenta un nivel de madurez cognitiva alto."
+
+    recommendations = []
+    for r in rules:
+        if r["rule"] == "SEMANTIC_NOT_LOADED":
+            recommendations.append(
+                "Ejecutar una carga temprana del motor semántico."
+            )
+
+    return {
+        "summary": summary,
         "recommendations": recommendations,
-        "rules_evaluated": rules,
-        "confidence": "high" if severity == "stable" else "medium"
+        "confidence": "high",
     }
