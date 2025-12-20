@@ -1,10 +1,13 @@
 from datetime import datetime, timezone
-from google.cloud import storage
 import json
 import os
+import time
+
+from google.cloud import storage
 
 from unified_core.memory_paths import get_canonical_memory_path
-from ops.cognitive.state_registry import write_cognitive_event
+from ops.cognitive.state_registry import read_last_cognitive_state
+
 
 BUCKET = "natacha-memory-store"
 SNAPSHOT_PREFIX = "snapshots"
@@ -18,77 +21,52 @@ def _snapshot_blob_name():
     return f"{SNAPSHOT_PREFIX}/{_today_key()}.jsonl"
 
 
-def snapshot_exists_today(client):
-    bucket = client.bucket(BUCKET)
-    blob = bucket.blob(_snapshot_blob_name())
-    return blob.exists()
+def write_daily_snapshot(retries: int = 5, wait: float = 1.0):
+    revision = os.getenv("K_REVISION")
 
+    if not revision:
+        print("[SNAPSHOT][WARN] K_REVISION not set")
+        return
 
-def write_daily_snapshot():
+    path = get_canonical_memory_path()
+
+    # Esperar a que la memoria canónica exista (igual que checkpoint)
+    for _ in range(retries):
+        if path.exists() and path.stat().st_size > 0:
+            break
+        time.sleep(wait)
+    else:
+        print("[SNAPSHOT][WARN] canonical memory not ready")
+        return
+
+    # --- Snapshot cognitivo
+    semantic = read_last_cognitive_state("semantic")
+
+    snapshot_event = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "kind": "daily_snapshot",
+        "revision": revision,
+        "observed_state": {
+            "semantic": semantic,
+        },
+        "confidence": "high",
+    }
+
+    # --- Append al memory_store (CANÓNICO)
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(snapshot_event, ensure_ascii=False) + "\n")
+
+    print("[SNAPSHOT] daily_snapshot appended to canonical memory")
+
+    # --- Persistir copia en GCS (histórico)
     try:
         client = storage.Client()
-
-        if snapshot_exists_today(client):
-            print("[SNAPSHOT] Daily snapshot already exists — skipping")
-            return {"status": "ok", "detail": "snapshot already exists"}
-
-        # --------------------------------------------------
-        # Construir snapshot
-        # --------------------------------------------------
-        snapshot = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "kind": "daily_snapshot",
-            "revision": os.getenv("K_REVISION"),
-            "semantic": None,
-            "memory": None,
-            "confidence": "high",
-        }
-
-        # Semantic state
-        try:
-            snapshot["semantic"] = read_last_cognitive_state("semantic")
-        except Exception:
-            snapshot["semantic"] = {"state": "unknown"}
-
-        # Memory summary
-        try:
-            path = get_canonical_memory_path()
-            snapshot["memory"] = {
-                "items_count": sum(1 for _ in path.open("r", encoding="utf-8")),
-                "path": str(path),
-            }
-        except Exception:
-            snapshot["memory"] = {"state": "unknown"}
-
-        # --------------------------------------------------
-        # Persistir snapshot en GCS
-        # --------------------------------------------------
         bucket = client.bucket(BUCKET)
         blob = bucket.blob(_snapshot_blob_name())
         blob.upload_from_string(
-            json.dumps(snapshot, ensure_ascii=False) + "\n",
+            json.dumps(snapshot_event, ensure_ascii=False) + "\n",
             content_type="application/json",
         )
-
-        # --------------------------------------------------
-        # 🧠 INDEXAR COMO COGNITIVE_STATE (CANÓNICO)
-        # --------------------------------------------------
-        write_cognitive_event(
-            subsystem="memory",
-            state="snapshot",
-            revision=os.getenv("K_REVISION"),
-            confidence="high",
-            details={
-                "date": _today_key(),
-                "bucket": BUCKET,
-                "blob": _snapshot_blob_name(),
-                "items": snapshot.get("memory", {}).get("items_count"),
-            },
-        )
-
-        print("[SNAPSHOT] Daily snapshot written & indexed (memory)")
-        return {"status": "ok", "detail": "daily snapshot written"}
-
+        print("[SNAPSHOT] daily snapshot stored in GCS")
     except Exception as e:
-        print(f"[SNAPSHOT][ERROR] {e}")
-        return {"status": "error", "detail": str(e)}
+        print(f"[SNAPSHOT][WARN] GCS upload failed: {e}")
