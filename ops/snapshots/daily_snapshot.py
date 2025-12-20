@@ -71,21 +71,22 @@ def write_daily_snapshot():
         )
 
         # --------------------------------------------------
-        # 🔐 Indexar en Cognitive Timeline (CANÓNICO)
+        # 🧠 INDEXAR COMO COGNITIVE_STATE (CANÓNICO)
         # --------------------------------------------------
         write_cognitive_state(
-            subsystem="snapshot",
-            state="written",
+            subsystem="memory",
+            state="snapshot",
             revision=os.getenv("K_REVISION"),
             confidence="high",
             details={
                 "date": _today_key(),
                 "bucket": BUCKET,
                 "blob": _snapshot_blob_name(),
+                "items": snapshot.get("memory", {}).get("items_count"),
             },
         )
 
-        print("[SNAPSHOT] Daily snapshot written & indexed")
+        print("[SNAPSHOT] Daily snapshot written & indexed (memory)")
         return {"status": "ok", "detail": "daily snapshot written"}
 
     except Exception as e:
