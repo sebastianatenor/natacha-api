@@ -4,6 +4,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from routes.health import router as health_router
+from routes.get_system_state import router as get_system_state_router
 
 print("[BOOT] service_main starting")
 
@@ -89,6 +90,7 @@ app.include_router(symbolic_router)
 app.include_router(semantic_router)
 app.include_router(natacha_router)
 app.include_router(health_router)
+app.include_router(get_system_state_router)
 
 print("[OK] routers loaded")
 
