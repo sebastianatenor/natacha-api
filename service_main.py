@@ -12,6 +12,10 @@ app = FastAPI(
     version="CEREBRO-STABLE",
 )
 
+from routes.system_health import router as system_health_router
+app.include_router(system_health_router)
+print("[OK] system health router enabled")
+
 @app.get("/")
 def root():
     return {"status": "ok", "engine": "natacha"}
