@@ -1,7 +1,7 @@
 import os
 import threading
-import time
 from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
@@ -13,12 +13,15 @@ print("[BOOT] service_main starting")
 os.environ.setdefault("NATACHA_FAST_BOOT", "1")
 
 # ================================================================
-# Helpers
+# Thread helper (Cloud Run safe)
 # ================================================================
 def start_background(fn):
     t = threading.Thread(target=fn, daemon=True)
     t.start()
 
+# ================================================================
+# Memory helpers
+# ================================================================
 def _safe_reset_memory_index(reason: str = ""):
     try:
         from unified_core.memory_lazy import reset_memory_index
@@ -28,14 +31,17 @@ def _safe_reset_memory_index(reason: str = ""):
         print(f"[MEMORY][WARN] reset skipped: {e}")
 
 # ================================================================
-# Memory sync (Cloud Run safe)
+# Memory sync from GCS (Cloud Run only)
 # ================================================================
 def load_memory_from_gcs():
     try:
         if os.getenv("K_SERVICE") is None:
             return
 
-        local_path = os.getenv("NATACHA_MEMORY_LOCAL", "/tmp/memory_store.jsonl")
+        local_path = os.getenv(
+            "NATACHA_MEMORY_LOCAL",
+            "/tmp/memory_store.jsonl"
+        )
         p = Path(local_path)
 
         if p.exists():
@@ -67,27 +73,25 @@ def root():
     return {"status": "ok", "engine": "natacha"}
 
 # ================================================================
-# Routers
+# Routers (ordenados, sin duplicados)
 # ================================================================
 from routes.system_state import router as system_state_router
 from routes.system_full_status import router as system_full_status_router
 from routes.system_last_checkpoint import router as system_last_checkpoint_router
 from routes.system_daily_snapshot import router as system_daily_snapshot_router
+from routes.system_force_checkpoint import router as system_force_checkpoint_router
+from routes.system_diagnose import router as system_diagnose_router
+from routes.system_narrative import router as system_narrative_router
+
 app.include_router(system_daily_snapshot_router)
 print("[OK] system_daily_snapshot router enabled")
-from routes.system_force_checkpoint import router as system_force_checkpoint_router
+
 app.include_router(system_force_checkpoint_router)
 print("[OK] system_force_checkpoint router enabled")
 
 app.include_router(system_state_router)
 app.include_router(system_full_status_router)
 app.include_router(system_last_checkpoint_router)
-from routes.system_daily_snapshot import router as system_daily_snapshot_router
-app.include_router(system_daily_snapshot_router)
-print("[OK] system_daily_snapshot router enabled")
-from routes.system_force_checkpoint import router as system_force_checkpoint_router
-app.include_router(system_force_checkpoint_router)
-print("[OK] system_force_checkpoint router enabled")
 
 # --- Timeline cognitivo
 from ops.timeline.router import router as timeline_router
@@ -99,23 +103,44 @@ from ops.symbolic.router import router as symbolic_router
 app.include_router(symbolic_router)
 print("[OK] symbolic router enabled")
 
-from routes.system_diagnose import router as system_diagnose_router
+# --- Diagnóstico + narrativa
 app.include_router(system_diagnose_router)
 print("[OK] system_diagnose router enabled")
 
-from routes.system_narrative import router as system_narrative_router
 app.include_router(system_narrative_router)
 print("[OK] system_narrative router enabled")
 
+# --- Semantic API
+try:
+    from ops.semantic.routes import router as semantic_router
+    app.include_router(semantic_router)
+    print("[OK] semantic router enabled")
+except Exception as e:
+    print(f"[SKIP] semantic router: {e}")
+
+# --- Natacha chat
+try:
+    from routes.natacha_routes import router as natacha_router
+    app.include_router(natacha_router)
+    print("[OK] natacha chat router enabled")
+except Exception as e:
+    print(f"[SKIP] natacha router: {e}")
+
 # ================================================================
-# Startup
+# Startup (UNICO punto de arranque)
 # ================================================================
 @app.on_event("startup")
 def on_startup():
+    # --- Memory
     start_background(load_memory_from_gcs)
+
+    # --- Daily snapshot
     start_background(run_daily_snapshot)
+
+    # --- Vector index (non-blocking)
     start_background(load_vector_index_background)
 
+    # --- Post-startup logic
     try:
         from ops.startup.post_startup import launch_post_startup
         start_background(launch_post_startup)
@@ -123,6 +148,7 @@ def on_startup():
     except Exception as e:
         print(f"[STARTUP][WARN] post_startup skipped: {e}")
 
+    # --- Initial cognitive checkpoint
     try:
         from ops.cognitive.auto_checkpoint import write_revision_checkpoint
         write_revision_checkpoint()
@@ -130,29 +156,36 @@ def on_startup():
     except Exception as e:
         print(f"[STARTUP][WARN] checkpoint skipped: {e}")
 
+    # --- Semantic warmup (🔥 CLAVE)
+    try:
+        from ops.cognitive.semantic_warmup import launch_semantic_warmup
+        launch_semantic_warmup()
+    except Exception as e:
+        print(f"[STARTUP][WARN] semantic warmup skipped: {e}")
+
     print("[STARTUP] completed")
 
 # ================================================================
-# AUTO CHECKPOINT (post-startup, non-blocking)
+# VECTOR INDEX LOAD (NON-BLOCKING)
 # ================================================================
+def load_vector_index_background():
     try:
-        from ops.cognitive.auto_checkpoint import write_revision_checkpoint
-        write_revision_checkpoint()
-        print("[BOOT] auto cognitive checkpoint scheduled")
+        from ops.vector.load_vector_index import load_vector_index_if_exists
+        idx = load_vector_index_if_exists()
+        if idx:
+            print("[STARTUP] Vector index ready")
     except Exception as e:
-        print(f"[BOOT][WARN] auto checkpoint skipped: {e}")
+        print(f"[STARTUP][VECTOR][WARN] {e}")
 
 # ================================================================
-# SEMANTIC PRELOAD (lazy, non-blocking, Cloud Run safe)
+# DAILY SNAPSHOT (NON-BLOCKING)
 # ================================================================
-try:
-    from unified_core.semantic_core import get_semantic_core
-    core = get_semantic_core()
-    if not core.is_loaded():
-        core.ensure_loaded()
-        print("[BOOT] semantic core preloaded")
-except Exception as e:
-    print(f"[BOOT][WARN] semantic preload skipped: {e}")
+def run_daily_snapshot():
+    try:
+        from ops.snapshots.daily_snapshot import write_daily_snapshot
+        write_daily_snapshot()
+    except Exception as e:
+        print(f"[STARTUP][SNAPSHOT][WARN] {e}")
 
 # ================================================================
 # OpenAPI
@@ -170,42 +203,7 @@ def custom_openapi():
 
 app.openapi = custom_openapi
 
-# --- Semantic (lazy, canonical)
-try:
-    from ops.semantic.routes import router as semantic_router
-    app.include_router(semantic_router)
-    print("[OK] semantic router enabled")
-except Exception as e:
-    print(f"[SKIP] semantic router: {e}")
-
-
-# --- Natacha chat
-try:
-    from routes.natacha_routes import router as natacha_router
-    app.include_router(natacha_router)
-    print("[OK] natacha chat router enabled")
-except Exception as e:
-    print(f"[SKIP] natacha router: {e}")
-
-
-# =====================================================
-# VECTOR INDEX LOAD (NON-BLOCKING)
-# =====================================================
-def load_vector_index_background():
-    try:
-        from ops.vector.load_vector_index import load_vector_index_if_exists
-        idx = load_vector_index_if_exists()
-        if idx:
-            print("[STARTUP] Vector index ready")
-    except Exception as e:
-        print(f"[STARTUP][VECTOR][WARN] {e}")
-
-# =====================================================
-# DAILY SNAPSHOT (NON-BLOCKING)
-# =====================================================
-def run_daily_snapshot():
-    try:
-        from ops.snapshots.daily_snapshot import write_daily_snapshot
-        write_daily_snapshot()
-    except Exception as e:
-        print(f"[STARTUP][SNAPSHOT][WARN] {e}")
+# --- System Ops (manual control)
+from routes.system_ops import router as system_ops_router
+app.include_router(system_ops_router)
+print("[OK] system_ops router enabled")
