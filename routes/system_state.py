@@ -1,79 +1,39 @@
 import os
 import time
 from fastapi import APIRouter
+
 from ops.memory.canonical_state import memory_state
+from ops.cognitive.state_registry import read_last_cognitive_state
 
-router = APIRouter(tags=["system"])
+router = APIRouter(prefix="/ops/system", tags=["System"])
 
-
-@router.get("/ops/system/state")
+@router.get("/state")
 def system_state():
-    """
-    Estado real del sistema (Cloud Run safe).
-    SOLO observabilidad. No instancia memoria ni ejecuta lógica pesada.
-    """
-
     now = time.time()
 
-    # =========================
-    # Runtime
-    # =========================
-    in_cloud_run = os.getenv("K_SERVICE") is not None
-
     runtime = {
-        "cloud_run": in_cloud_run,
+        "cloud_run": os.getenv("K_SERVICE") is not None,
         "service": os.getenv("K_SERVICE"),
         "revision": os.getenv("K_REVISION"),
         "python": os.getenv("PYTHON_VERSION", "3.10.x"),
     }
 
-    # =========================
-    # Semantic Core
-    # =========================
-    semantic_loaded = False
-    try:
-        from unified_core.semantic_core import get_semantic_core
-        core = get_semantic_core()
-        semantic_loaded = core.is_loaded()
-    except Exception:
-        semantic_loaded = False
+    semantic_state = read_last_cognitive_state("semantic")
 
     semantic = {
-        "loaded": semantic_loaded,
+        "state": semantic_state["state"] if semantic_state else "not_attempted",
+        "loaded": semantic_state is not None and semantic_state["state"] == "loaded",
+        "confidence": semantic_state["confidence"] if semantic_state else "unknown",
+        "last_update": semantic_state["timestamp"] if semantic_state else None,
         "hf_token_present": bool(os.getenv("HF_TOKEN")),
-    }
-
-    # =========================
-    # Memory (OBSERVATIONAL)
-    # =========================
-
-    memory = memory_state()
-
-    # =========================
-    # Context / Introspection
-    # =========================
-    context = {
-        "unified": "loaded"
-    }
-
-    introspection = {
-        "history": "loaded",
-        "meta": "loaded",
-    }
-
-    # =========================
-    # Infra
-    # =========================
-    infra = {
-        "health_routes": "loaded"
     }
 
     return {
         "timestamp": now,
         "runtime": runtime,
-        "infra": infra,
         "semantic": semantic,
-        "memory": memory,
-        "context": context,
-        "introspection": introspection,
+        "memory": memory_state(),
+        "context": {"unified": "loaded"},
+        "introspection": {"history": "loaded", "meta": "loaded"},
+        "infra": {"health_routes": "loaded"},
     }
