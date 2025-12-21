@@ -115,6 +115,9 @@ try:
     from ops.semantic.routes import router as semantic_router
     app.include_router(semantic_router)
     print("[OK] semantic router enabled")
+from ops.semantic.register_state import router as semantic_register_router
+app.include_router(semantic_register_router)
+print("[OK] semantic register router enabled")
 except Exception as e:
     print(f"[SKIP] semantic router: {e}")
 
