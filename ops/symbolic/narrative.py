@@ -1,10 +1,7 @@
-from typing import List, Dict, Any
+from typing import Dict, List
 
 
-# =====================================================
-# DERIVED STATE
-# =====================================================
-def derive_state_from_events(events: List[Dict]) -> Dict[str, Any]:
+def derive_state_from_events(events: List[Dict]) -> Dict:
     semantic_loaded = False
     snapshot_count = 0
     checkpoint_count = 0
@@ -32,19 +29,22 @@ def derive_state_from_events(events: List[Dict]) -> Dict[str, Any]:
     }
 
 
-# =====================================================
-# LOW-LEVEL NARRATIVE (internal)
-# =====================================================
-def build_cognitive_narrative(
+def build_narrative(
     *,
-    derived_state: Dict[str, Any],
-    rules: List[Dict[str, Any]],
-) -> Dict[str, Any]:
+    derived_state: Dict,
+    rules: List[Dict],
+) -> Dict:
+    """
+    Construye una narrativa cognitiva humana a partir del estado derivado
+    y las reglas simbólicas evaluadas.
+    """
+
+    severity = "stable"
     summary = "El sistema se encuentra en una etapa de desarrollo cognitivo."
+    recommendations: List[str] = []
+
     if derived_state.get("maturity") == "high":
         summary = "El sistema presenta un nivel de madurez cognitiva alto."
-
-    recommendations: List[str] = []
 
     for r in rules:
         if r.get("rule") == "SEMANTIC_NOT_LOADED":
@@ -53,35 +53,9 @@ def build_cognitive_narrative(
             )
 
     return {
+        "severity": severity,
         "summary": summary,
         "recommendations": recommendations,
+        "rules_evaluated": rules,
         "confidence": "high",
-    }
-
-
-# =====================================================
-# PUBLIC API (⚠️ ESTE ES EL QUE FALTABA)
-# =====================================================
-def build_narrative(
-    *,
-    derived_state: Dict[str, Any],
-    symbolic_rules: List[Dict[str, Any]],
-) -> Dict[str, Any]:
-    """
-    API pública consumida por routes.system_diagnose
-
-    Mantiene compatibilidad futura y encapsula la narrativa cognitiva.
-    """
-
-    narrative = build_cognitive_narrative(
-        derived_state=derived_state,
-        rules=symbolic_rules,
-    )
-
-    return {
-        "severity": "stable",
-        "summary": narrative["summary"],
-        "recommendations": narrative["recommendations"],
-        "rules_evaluated": symbolic_rules,
-        "confidence": narrative.get("confidence", "high"),
     }
