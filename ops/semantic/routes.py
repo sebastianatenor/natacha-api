@@ -27,16 +27,17 @@ def analyze(payload: dict):
     )
 
     try:
-        from ops.cognitive.write_state import write_cognitive_state
+        from ops.timeline.events import append_event
 
-        write_cognitive_state(
+        append_event(
+            kind="cognitive_state",
             subsystem="semantic",
             state="loaded",
             confidence="high",
             details={"source": "semantic_analyze"}
         )
     except Exception as e:
-        print(f"[SEMANTIC][WARN] cognitive state not registered: {e}")
+        print(f"[SEMANTIC][WARN] timeline write skipped: {e}")
 
     vec = core.embed(text)
     return {
