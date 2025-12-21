@@ -94,6 +94,10 @@ app.include_router(get_system_state_router)
 
 print("[OK] routers loaded")
 
+from routes.system_memory_diagnostic_v2 import router as memory_diag_router
+app.include_router(memory_diag_router)
+print("[OK] memory_diagnostic v2 enabled")
+
 # ================================================================
 # STARTUP (FROZEN)
 # ================================================================
