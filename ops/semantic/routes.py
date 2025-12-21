@@ -26,6 +26,18 @@ def analyze(payload: dict):
         }
     )
 
+    try:
+        from ops.cognitive.write_state import write_cognitive_state
+
+        write_cognitive_state(
+            subsystem="semantic",
+            state="loaded",
+            confidence="high",
+            details={"source": "semantic_analyze"}
+        )
+    except Exception as e:
+        print(f"[SEMANTIC][WARN] cognitive state not registered: {e}")
+
     vec = core.embed(text)
     return {
         "status": "ok",
