@@ -1,22 +1,31 @@
 from fastapi import APIRouter
 
+from ops.timeline.reader import read_events
 from ops.symbolic.rules_v2 import evaluate_symbolic_health
-from ops.symbolic.narrative import build_narrative
-from ops.timeline.reader import get_derived_state
+from ops.symbolic.narrative import (
+    derive_state_from_events,
+    build_narrative,
+)
 
 router = APIRouter(prefix="/ops/system", tags=["system"])
 
 
 @router.get("/diagnose")
 def system_diagnose():
-    """
-    Diagnóstico cognitivo narrativo del sistema.
-    Explica el estado actual y recomienda acciones.
-    """
+    # 1. Leer eventos cognitivos
+    events = read_events()
 
-    derived_state = get_derived_state()
+    # 2. Derivar estado
+    derived_state = derive_state_from_events(events)
+
+    # 3. Evaluar reglas simbólicas
     rules = evaluate_symbolic_health(derived_state)
-    narrative = build_narrative(derived_state, rules)
+
+    # 4. Construir narrativa (🔥 FIRMA CORRECTA 🔥)
+    narrative = build_narrative(
+        derived_state=derived_state,
+        rules=rules,
+    )
 
     return {
         "status": "ok",
