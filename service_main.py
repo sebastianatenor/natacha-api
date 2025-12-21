@@ -83,8 +83,8 @@ def on_startup():
 
     # Revision checkpoint
     try:
-        from ops.cognitive.auto_checkpoint import write_revision_checkpoint
-        write_revision_checkpoint()
+#        from ops.cognitive.auto_checkpoint import write_revision_checkpoint
+#        write_revision_checkpoint()
     except Exception as e:
         print(f"[STARTUP][CHECKPOINT][WARN] {e}")
 
