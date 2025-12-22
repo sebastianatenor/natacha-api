@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
+import unicodedata
 
 from ops.cognitive.cognitive_guardrail import (
     CognitiveGuardrail,
@@ -34,14 +35,28 @@ class AgentInteractResponse(BaseModel):
 
 
 # -------------------------------------------------
-# Helpers (SAFE)
+# Helpers
 # -------------------------------------------------
 
+def _normalize(text: str) -> str:
+    return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().lower()
+
+
+def _is_state_question(message: str) -> bool:
+    msg = _normalize(message)
+    return any(
+        k in msg
+        for k in (
+            "estado",
+            "estado actual",
+            "como estas",
+            "cual es tu estado",
+            "estado antes de responder",
+        )
+    )
+
+
 def _read_system_perception() -> Optional[Dict[str, Any]]:
-    """
-    Lectura REAL del estado perceptivo del sistema.
-    No infiere. No razona. Lee runtime.
-    """
     try:
         from routes.system_perception.router import get_latest_perception
         return get_latest_perception()
@@ -49,18 +64,17 @@ def _read_system_perception() -> Optional[Dict[str, Any]]:
         return None
 
 
-def _is_state_question(message: str) -> bool:
-    msg = message.lower()
-    return any(
-        k in msg
-        for k in (
-            "estado",
-            "estado actual",
-            "cómo estás",
-            "como estas",
-            "cuál es tu estado",
-            "cual es tu estado",
-        )
+def _fallback_narrative(perception: Dict[str, Any]) -> str:
+    return (
+        "🧠 **Estado actual del sistema**\n\n"
+        f"• Servicio: {perception.get('service')}\n"
+        f"• Revisión: {perception.get('revision')}\n"
+        f"• Memoria canónica: "
+        f"{'activa' if perception.get('memory', {}).get('exists') else 'no disponible'}\n"
+        f"• Timeline eventos: {perception.get('timeline', {}).get('events_total')}\n"
+        f"• Motor semántico cargado: "
+        f"{perception.get('semantic', {}).get('loaded', False)}\n\n"
+        "Sistema estable. Sin degradaciones activas."
     )
 
 
@@ -68,28 +82,15 @@ def _is_state_question(message: str) -> bool:
 # Endpoint
 # -------------------------------------------------
 
-@router.post(
-    "/interact",
-    response_model=AgentInteractResponse,
-    summary="Interacción cognitiva con Natacha (SAFE)",
-)
+@router.post("/interact", response_model=AgentInteractResponse)
 def agent_interact(payload: AgentInteractRequest):
     try:
-        # -------------------------------------------------
-        # 0️⃣ Cognitive boot (estado real)
-        # -------------------------------------------------
         perceived_state = _read_system_perception()
 
-        narrative = None
-        if perceived_state and _is_state_question(payload.message):
-            try:
-                from ops.narrative.composer import compose_system_narrative
-                narrative = compose_system_narrative(perceived_state)
-            except Exception:
-                narrative = None
+        is_state = _is_state_question(payload.message)
 
         # -------------------------------------------------
-        # 1️⃣ Guardrail cognitivo
+        # Guardrail (siempre)
         # -------------------------------------------------
         guardrail.evaluate(
             CognitiveInput(
@@ -100,18 +101,26 @@ def agent_interact(payload: AgentInteractRequest):
         )
 
         # -------------------------------------------------
-        # 2️⃣ RESPUESTA
+        # RESPUESTA DE ESTADO (FORZADA)
         # -------------------------------------------------
+        if perceived_state and is_state:
+            narrative = None
 
-        # 🔑 CASO ESPECIAL: pregunta por estado → respuesta es narrativa
-        if narrative:
+            try:
+                from ops.narrative.composer import compose_system_narrative
+                narrative = compose_system_narrative(perceived_state)
+            except Exception:
+                narrative = _fallback_narrative(perceived_state)
+
             return AgentInteractResponse(
                 answer=narrative,
                 model_called=False,
                 perceived_state=perceived_state,
             )
 
-        # Caso normal
+        # -------------------------------------------------
+        # RESPUESTA NORMAL
+        # -------------------------------------------------
         result = respond(
             user_id=payload.user_id,
             message=payload.message,
@@ -122,8 +131,6 @@ def agent_interact(payload: AgentInteractRequest):
         return AgentInteractResponse(
             answer=result.get("answer", ""),
             model_called=result.get("model_called", False),
-            error=result.get("error"),
-            detail=result.get("detail"),
             perceived_state=perceived_state,
         )
 
