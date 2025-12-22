@@ -70,5 +70,10 @@ def write_daily_snapshot(retries: int = 5, wait: float = 1.0):
             content_type="application/json",
         )
         print("[SNAPSHOT] daily snapshot stored in GCS")
+
+    from ops.memory.persist import persist_memory
+    persist_memory()
+
     except Exception as e:
         print(f"[SNAPSHOT][WARN] GCS upload failed: {e}")
+
