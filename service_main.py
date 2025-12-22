@@ -147,6 +147,12 @@ def load_optional_routers():
         "memory_note",
     )
 
+    safe_include(
+        app,
+        lambda: __import__("routes.system_state.router", fromlist=["router"]).router,
+        "system_state",
+    )
+
     # ⚠️ ESTE ES EL QUE ESTABA ROMPIENDO TODO
     # Se carga SOLO si las dependencias existen
     safe_include(
