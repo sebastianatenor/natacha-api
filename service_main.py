@@ -169,6 +169,12 @@ def load_optional_routers():
 
     safe_include(
         app,
+        lambda: __import__("ops.agent.interact", fromlist=["router"]).router,
+        "agent_interact",
+    )
+
+    safe_include(
+        app,
         lambda: __import__("routes.natacha_routes", fromlist=["router"]).router,
         "natacha_routes",
     )
