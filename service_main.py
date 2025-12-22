@@ -90,6 +90,7 @@ from routes.natacha_routes import router as natacha_router
 from routes.memory_recent import router as memory_recent_router
 from routes.memory_recall import router as memory_recall_router
 from routes.memory_note import router as memory_note_router
+from routes.memory_index import router as memory_index_router
 
 from ops.timeline.router import router as timeline_router
 from ops.symbolic.router import router as symbolic_router
@@ -101,6 +102,7 @@ app.include_router(system_diagnose_router)
 app.include_router(system_narrative_router)
 app.include_router(memory_diag_router)
 app.include_router(memory_recent_router)
+app.include_router(memory_index_router)
 
 app.include_router(timeline_router)
 app.include_router(symbolic_router)
