@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from ops.cognitive.cognitive_guardrail import (
     CognitiveGuardrail,
@@ -30,6 +30,23 @@ class AgentInteractResponse(BaseModel):
     model_called: bool = False
     error: Optional[str] = None
     detail: Optional[str] = None
+    perceived_state: Optional[Dict[str, Any]] = None
+
+
+# -------------------------------------------------
+# Helpers (SAFE)
+# -------------------------------------------------
+
+def _read_system_perception() -> Optional[Dict[str, Any]]:
+    """
+    Lectura REAL del estado perceptivo del sistema.
+    No infiere. No razona. Lee runtime.
+    """
+    try:
+        from routes.system_perception.router import get_latest_perception
+        return get_latest_perception()
+    except Exception:
+        return None
 
 
 # -------------------------------------------------
@@ -42,12 +59,19 @@ class AgentInteractResponse(BaseModel):
     summary="Interacción cognitiva con Natacha (SAFE)",
     description=(
         "Canal cognitivo seguro. Evalúa intención y riesgo. "
-        "Solo responde si está permitido."
+        "Lee estado perceptivo real antes de responder."
     ),
 )
 def agent_interact(payload: AgentInteractRequest):
     try:
-        # 1. Guardrail cognitivo
+        # -------------------------------------------------
+        # 0️⃣ Cognitive Boot (estado real)
+        # -------------------------------------------------
+        perceived_state = _read_system_perception()
+
+        # -------------------------------------------------
+        # 1️⃣ Guardrail cognitivo
+        # -------------------------------------------------
         decision = guardrail.evaluate(
             CognitiveInput(
                 user_id=payload.user_id,
@@ -56,11 +80,14 @@ def agent_interact(payload: AgentInteractRequest):
             )
         )
 
-        # 2. Respuesta centralizada (núcleo)
+        # -------------------------------------------------
+        # 2️⃣ Respuesta centralizada
+        # -------------------------------------------------
         result = respond(
             user_id=payload.user_id,
             message=payload.message,
             channel="agent",
+            perceived_state=perceived_state,  # 👈 NUEVO
         )
 
         return AgentInteractResponse(
@@ -68,6 +95,7 @@ def agent_interact(payload: AgentInteractRequest):
             model_called=result.get("model_called", False),
             error=result.get("error"),
             detail=result.get("detail"),
+            perceived_state=perceived_state,
         )
 
     except Exception as e:
