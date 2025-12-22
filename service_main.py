@@ -88,6 +88,7 @@ from routes.system_narrative import router as system_narrative_router
 from routes.system_memory_diagnostic_v2 import router as memory_diag_router
 from routes.natacha_routes import router as natacha_router
 from routes.memory_recent import router as memory_recent_router
+from routes.memory_recall import router as memory_recall_router
 
 from ops.timeline.router import router as timeline_router
 from ops.symbolic.router import router as symbolic_router
@@ -106,7 +107,7 @@ app.include_router(semantic_router)
 app.include_router(natacha_router)
 app.include_router(health_router)
 app.include_router(get_system_state_router)
-
+app.include_router(memory_recall_router
 
 print("[OK] routers loaded")
 
