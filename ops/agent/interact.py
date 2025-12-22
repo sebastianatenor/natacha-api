@@ -69,6 +69,14 @@ def agent_interact(payload: AgentInteractRequest):
         # -------------------------------------------------
         perceived_state = _read_system_perception()
 
+        narrative = None
+        try:
+            from ops.narrative.composer import compose_system_narrative
+            if payload.message.lower().startswith(("estado", "cómo estás", "cual es tu estado", "cuál es tu estado")):
+                narrative = compose_system_narrative(perceived_state)
+        except Exception:
+            narrative = None
+
         # -------------------------------------------------
         # 1️⃣ Guardrail cognitivo
         # -------------------------------------------------
@@ -95,7 +103,10 @@ def agent_interact(payload: AgentInteractRequest):
             model_called=result.get("model_called", False),
             error=result.get("error"),
             detail=result.get("detail"),
-            perceived_state=perceived_state,
+            perceived_state={
+                "perception": perceived_state,
+                "narrative": narrative,
+            } if narrative else perceived_state,
         )
 
     except Exception as e:
