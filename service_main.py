@@ -5,9 +5,6 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
-from routes.health import router as health_router
-from routes.get_system_state import router as get_system_state_router
-
 print("[BOOT] service_main starting")
 
 # ================================================================
@@ -25,6 +22,19 @@ def start_background(fn):
     t.start()
 
 
+def safe_include(app, import_fn, name: str):
+    """
+    Importa e incluye routers de forma segura.
+    Si falla, el sistema sigue vivo.
+    """
+    try:
+        router = import_fn()
+        app.include_router(router)
+        print(f"[ROUTER] loaded: {name}")
+    except Exception as e:
+        print(f"[ROUTER][SKIPPED] {name}: {e}")
+
+
 def _safe_reset_memory_index(reason: str = ""):
     try:
         from unified_core.memory_lazy import reset_memory_index
@@ -37,17 +47,12 @@ def _safe_reset_memory_index(reason: str = ""):
 # CANONICAL MEMORY BOOTSTRAP (GCS → /tmp)
 # ================================================================
 def bootstrap_memory():
-    """
-    Canonical memory bootstrap.
-    Restores memory_store.jsonl from GCS into /tmp on startup.
-    """
     try:
-        # Solo en Cloud Run
         if os.getenv("K_SERVICE") is None:
             print("[MEMORY] Local run detected, bootstrap skipped")
             return
 
-        local_path = Path(os.getenv("NATACHA_MEMORY_LOCAL", "/tmp/memory_store.jsonl"))
+        local_path = Path(os.getenv("NATACHA_MEMORY_LOCAL"))
 
         from google.cloud import storage
         client = storage.Client()
@@ -59,7 +64,7 @@ def bootstrap_memory():
             print("[MEMORY] Canonical memory restored from GCS")
         else:
             local_path.touch(exist_ok=True)
-            print("[MEMORY] No remote memory found, initialized empty store")
+            print("[MEMORY] Empty memory initialized")
 
         _safe_reset_memory_index("after bootstrap")
 
@@ -79,43 +84,104 @@ def root():
     return {"status": "ok", "engine": "natacha"}
 
 # ================================================================
-# ROUTERS
+# CORE ROUTERS (DEBEN EXISTIR)
 # ================================================================
-from routes.system_daily_snapshot import router as system_daily_snapshot_router
-from routes.system_force_checkpoint import router as system_force_checkpoint_router
-from routes.system_diagnose import router as system_diagnose_router
-from routes.system_narrative import router as system_narrative_router
-from routes.system_memory_diagnostic_v2 import router as memory_diag_router
-from routes.natacha_routes import router as natacha_router
-from routes.memory_recent import router as memory_recent_router
-from routes.memory_recall import router as memory_recall_router
-from routes.memory_note import router as memory_note_router
-from routes.memory_index import router as memory_index_router
+from routes.health import router as health_router
+from routes.get_system_state import router as get_system_state_router
 
-from ops.timeline.router import router as timeline_router
-from ops.symbolic.router import router as symbolic_router
-from ops.semantic.routes import router as semantic_router
-
-app.include_router(system_daily_snapshot_router)
-app.include_router(system_force_checkpoint_router)
-app.include_router(system_diagnose_router)
-app.include_router(system_narrative_router)
-app.include_router(memory_diag_router)
-app.include_router(memory_recent_router)
-app.include_router(memory_index_router)
-
-app.include_router(timeline_router)
-app.include_router(symbolic_router)
-app.include_router(semantic_router)
-app.include_router(natacha_router)
 app.include_router(health_router)
 app.include_router(get_system_state_router)
-app.include_router(memory_recall_router)
-app.include_router(memory_note_router)
 
-print("[OK] routers loaded")
+print("[ROUTER] core loaded")
 
+# ================================================================
+# OPTIONAL / EVOLUTIVE ROUTERS (AISLADOS)
+# ================================================================
+def load_optional_routers():
 
+    safe_include(
+        app,
+        lambda: __import__("routes.system_daily_snapshot", fromlist=["router"]).router,
+        "system_daily_snapshot",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_force_checkpoint", fromlist=["router"]).router,
+        "system_force_checkpoint",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_diagnose", fromlist=["router"]).router,
+        "system_diagnose",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_narrative", fromlist=["router"]).router,
+        "system_narrative",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_memory_diagnostic_v2", fromlist=["router"]).router,
+        "memory_diagnostic_v2",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.memory_recent", fromlist=["router"]).router,
+        "memory_recent",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.memory_recall", fromlist=["router"]).router,
+        "memory_recall",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.memory_note", fromlist=["router"]).router,
+        "memory_note",
+    )
+
+    # ⚠️ ESTE ES EL QUE ESTABA ROMPIENDO TODO
+    # Se carga SOLO si las dependencias existen
+    safe_include(
+        app,
+        lambda: __import__("routes.memory_index", fromlist=["router"]).router,
+        "memory_index",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.natacha_routes", fromlist=["router"]).router,
+        "natacha_routes",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("ops.timeline.router", fromlist=["router"]).router,
+        "timeline",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("ops.symbolic.router", fromlist=["router"]).router,
+        "symbolic",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("ops.semantic.routes", fromlist=["router"]).router,
+        "semantic",
+    )
+
+# ================================================================
+# DEBUG (NO CRÍTICO)
+# ================================================================
 @app.get("/__debug/memory_recent")
 def debug_memory_recent(limit: int = 20):
     from ops.timeline.reader import read_events
@@ -131,10 +197,9 @@ def debug_memory_recent(limit: int = 20):
 # ================================================================
 @app.on_event("startup")
 def on_startup():
-    # 1️⃣ Bootstrap memoria canónica (GCS → /tmp)
     bootstrap_memory()
+    load_optional_routers()
 
-    # 2️⃣ Post-startup async (si existe)
     try:
         from ops.startup.post_startup import launch_post_startup
         start_background(launch_post_startup)
@@ -142,7 +207,7 @@ def on_startup():
     except Exception as e:
         print(f"[STARTUP][WARN] post_startup skipped: {e}")
 
-    print("[STARTUP] baseline v1.0 ready")
+    print("[STARTUP] baseline ready")
 
 # ================================================================
 # OPENAPI
