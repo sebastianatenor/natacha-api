@@ -1,39 +1,50 @@
-from unified_core.semantic_store import upsert_embedding
-from unified_core.memory_paths import get_canonical_memory_path
-import json
+"""
+Semantic indexer for memory notes.
 
-def index_memory_notes():
+Este módulo es OPTIONAL.
+Nunca debe romper el arranque del sistema si el backend semántico no está disponible.
+"""
+
+from typing import Dict, Any
+
+SEMANTIC_AVAILABLE = False
+
+try:
+    from unified_core.semantic_store import upsert_embedding
+    SEMANTIC_AVAILABLE = True
+except Exception as e:
+    # ⚠️ Importante: NO lanzar excepción
+    print(f"[SEMANTIC][DISABLED] semantic_store not available: {e}")
+
+
+def index_memory_note(event: Dict[str, Any]) -> bool:
     """
-    Indexa memory_note.content en el store semántico
+    Indexa un memory_note de forma semántica si el backend está disponible.
+
+    Retorna:
+      - True  → indexado
+      - False → skip seguro
     """
-    path = get_canonical_memory_path()
-    if not path.exists():
-        return 0
 
-    indexed = 0
+    if not SEMANTIC_AVAILABLE:
+        return False
 
-    with path.open("r", encoding="utf-8") as f:
-        for line in f:
-            try:
-                event = json.loads(line)
-            except Exception:
-                continue
+    try:
+        text = event.get("content", "")
+        if not text:
+            return False
 
-            if event.get("kind") != "memory_note":
-                continue
+        upsert_embedding(
+            text=text,
+            metadata={
+                "kind": event.get("kind"),
+                "timestamp": event.get("timestamp"),
+                "tags": event.get("tags", []),
+            }
+        )
 
-            content = event.get("content")
-            if not content:
-                continue
+        return True
 
-            upsert_embedding(
-                text=content,
-                metadata={
-                    "kind": "memory_note",
-                    "timestamp": event.get("timestamp"),
-                    "tags": event.get("tags", []),
-                }
-            )
-            indexed += 1
-
-    return indexed
+    except Exception as e:
+        print(f"[SEMANTIC][WARN] indexing failed: {e}")
+        return False

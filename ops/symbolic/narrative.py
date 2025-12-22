@@ -10,11 +10,9 @@ def derive_state_from_events(events: List[Dict]) -> Dict:
         if e.get("kind") == "cognitive_state" and e.get("subsystem") == "semantic":
             if e.get("state") == "loaded":
                 semantic_loaded = True
-
-        if e.get("kind") == "daily_snapshot":
+        elif e.get("kind") == "daily_snapshot":
             snapshot_count += 1
-
-        if e.get("kind") == "self_checkpoint":
+        elif e.get("kind") == "self_checkpoint":
             checkpoint_count += 1
 
     maturity = "developing"
@@ -29,31 +27,23 @@ def derive_state_from_events(events: List[Dict]) -> Dict:
     }
 
 
-def build_narrative(
-    *,
-    derived_state: Dict,
-    rules: List[Dict],
-) -> Dict:
-    """
-    Construye una narrativa cognitiva humana a partir del estado derivado
-    y las reglas simbólicas evaluadas.
-    """
+def build_narrative(*, derived_state: Dict, rules: List[Dict]) -> Dict:
+    maturity = derived_state.get("maturity", "developing")
 
-    severity = "stable"
-    summary = "El sistema se encuentra en una etapa de desarrollo cognitivo."
-    recommendations: List[str] = []
-
-    if derived_state.get("maturity") == "high":
+    if maturity == "high":
         summary = "El sistema presenta un nivel de madurez cognitiva alto."
+    else:
+        summary = "El sistema se encuentra en una etapa de desarrollo cognitivo."
 
+    recommendations = []
     for r in rules:
         if r.get("rule") == "SEMANTIC_NOT_LOADED":
             recommendations.append(
-                "Ejecutar una carga temprana del motor semántico para asegurar comprensión profunda."
+                "Ejecutar una carga temprana del motor semántico."
             )
 
     return {
-        "severity": severity,
+        "severity": "stable",
         "summary": summary,
         "recommendations": recommendations,
         "rules_evaluated": rules,
