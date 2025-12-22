@@ -49,23 +49,19 @@ def _read_system_perception() -> Optional[Dict[str, Any]]:
         return None
 
 
-def _should_attach_narrative(message: str) -> bool:
-    """
-    Detección explícita de intención de estado.
-    No usa LLM. No infiere.
-    """
-    message_lc = message.lower()
-
-    state_keywords = [
-        "estado",
-        "estado actual",
-        "cómo estás",
-        "como estas",
-        "cuál es tu estado",
-        "cual es tu estado",
-    ]
-
-    return any(k in message_lc for k in state_keywords)
+def _is_state_question(message: str) -> bool:
+    msg = message.lower()
+    return any(
+        k in msg
+        for k in (
+            "estado",
+            "estado actual",
+            "cómo estás",
+            "como estas",
+            "cuál es tu estado",
+            "cual es tu estado",
+        )
+    )
 
 
 # -------------------------------------------------
@@ -76,20 +72,16 @@ def _should_attach_narrative(message: str) -> bool:
     "/interact",
     response_model=AgentInteractResponse,
     summary="Interacción cognitiva con Natacha (SAFE)",
-    description=(
-        "Canal cognitivo seguro. Evalúa intención y riesgo. "
-        "Lee estado perceptivo real antes de responder."
-    ),
 )
 def agent_interact(payload: AgentInteractRequest):
     try:
         # -------------------------------------------------
-        # 0️⃣ Cognitive Boot (estado real)
+        # 0️⃣ Cognitive boot (estado real)
         # -------------------------------------------------
         perceived_state = _read_system_perception()
 
         narrative = None
-        if perceived_state and _should_attach_narrative(payload.message):
+        if perceived_state and _is_state_question(payload.message):
             try:
                 from ops.narrative.composer import compose_system_narrative
                 narrative = compose_system_narrative(perceived_state)
@@ -99,7 +91,7 @@ def agent_interact(payload: AgentInteractRequest):
         # -------------------------------------------------
         # 1️⃣ Guardrail cognitivo
         # -------------------------------------------------
-        decision = guardrail.evaluate(
+        guardrail.evaluate(
             CognitiveInput(
                 user_id=payload.user_id,
                 project=payload.project,
@@ -108,8 +100,18 @@ def agent_interact(payload: AgentInteractRequest):
         )
 
         # -------------------------------------------------
-        # 2️⃣ Respuesta centralizada
+        # 2️⃣ RESPUESTA
         # -------------------------------------------------
+
+        # 🔑 CASO ESPECIAL: pregunta por estado → respuesta es narrativa
+        if narrative:
+            return AgentInteractResponse(
+                answer=narrative,
+                model_called=False,
+                perceived_state=perceived_state,
+            )
+
+        # Caso normal
         result = respond(
             user_id=payload.user_id,
             message=payload.message,
@@ -117,25 +119,12 @@ def agent_interact(payload: AgentInteractRequest):
             perceived_state=perceived_state,
         )
 
-        # -------------------------------------------------
-        # 3️⃣ Payload final
-        # -------------------------------------------------
-        perceived_payload: Optional[Dict[str, Any]] = None
-
-        if narrative:
-            perceived_payload = {
-                "perception": perceived_state,
-                "narrative": narrative,
-            }
-        else:
-            perceived_payload = perceived_state
-
         return AgentInteractResponse(
             answer=result.get("answer", ""),
             model_called=result.get("model_called", False),
             error=result.get("error"),
             detail=result.get("detail"),
-            perceived_state=perceived_payload,
+            perceived_state=perceived_state,
         )
 
     except Exception as e:
