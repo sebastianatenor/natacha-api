@@ -153,6 +153,12 @@ def load_optional_routers():
         "system_state",
     )
 
+    safe_include(
+        app,
+        lambda: __import__("routes.system_perception.router", fromlist=["router"]).router,
+        "system_perception",
+    )
+
     # ⚠️ ESTE ES EL QUE ESTABA ROMPIENDO TODO
     # Se carga SOLO si las dependencias existen
     safe_include(
