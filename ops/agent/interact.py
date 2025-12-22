@@ -49,6 +49,25 @@ def _read_system_perception() -> Optional[Dict[str, Any]]:
         return None
 
 
+def _should_attach_narrative(message: str) -> bool:
+    """
+    Detección explícita de intención de estado.
+    No usa LLM. No infiere.
+    """
+    message_lc = message.lower()
+
+    state_keywords = [
+        "estado",
+        "estado actual",
+        "cómo estás",
+        "como estas",
+        "cuál es tu estado",
+        "cual es tu estado",
+    ]
+
+    return any(k in message_lc for k in state_keywords)
+
+
 # -------------------------------------------------
 # Endpoint
 # -------------------------------------------------
@@ -70,12 +89,12 @@ def agent_interact(payload: AgentInteractRequest):
         perceived_state = _read_system_perception()
 
         narrative = None
-        try:
-            from ops.narrative.composer import compose_system_narrative
-            if payload.message.lower().startswith(("estado", "cómo estás", "cual es tu estado", "cuál es tu estado")):
+        if perceived_state and _should_attach_narrative(payload.message):
+            try:
+                from ops.narrative.composer import compose_system_narrative
                 narrative = compose_system_narrative(perceived_state)
-        except Exception:
-            narrative = None
+            except Exception:
+                narrative = None
 
         # -------------------------------------------------
         # 1️⃣ Guardrail cognitivo
@@ -95,18 +114,28 @@ def agent_interact(payload: AgentInteractRequest):
             user_id=payload.user_id,
             message=payload.message,
             channel="agent",
-            perceived_state=perceived_state,  # 👈 NUEVO
+            perceived_state=perceived_state,
         )
+
+        # -------------------------------------------------
+        # 3️⃣ Payload final
+        # -------------------------------------------------
+        perceived_payload: Optional[Dict[str, Any]] = None
+
+        if narrative:
+            perceived_payload = {
+                "perception": perceived_state,
+                "narrative": narrative,
+            }
+        else:
+            perceived_payload = perceived_state
 
         return AgentInteractResponse(
             answer=result.get("answer", ""),
             model_called=result.get("model_called", False),
             error=result.get("error"),
             detail=result.get("detail"),
-            perceived_state={
-                "perception": perceived_state,
-                "narrative": narrative,
-            } if narrative else perceived_state,
+            perceived_state=perceived_payload,
         )
 
     except Exception as e:
