@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from ops.memory.manager import user_context_manager
 from ops.cognitive.cognitive_guardrail import CognitiveGuardrail, CognitiveInput
@@ -13,11 +13,14 @@ def respond(
     user_id: str,
     message: str,
     channel: str = "unknown",
+    perceived_state: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Respuesta cognitiva central (SAFE):
+
     - Evalúa guardrails
     - Analiza semántica (si está disponible)
+    - Integra estado perceptivo (si existe)
     - NO ejecuta acciones
     - LLM es opcional y externo
     """
@@ -29,6 +32,14 @@ def respond(
         user_id=user_id,
         channel=channel,
     )
+
+    # -------------------------------------------------
+    # 0.1) Integración perceptiva (NO decisoria)
+    # -------------------------------------------------
+    # Esto fija el "punto de partida cognitivo"
+    # antes de cualquier respuesta.
+    if perceived_state:
+        user_state["perceived_state"] = perceived_state
 
     # -------------------------------------------------
     # 1) Guardrail cognitivo (autoridad máxima)
@@ -58,6 +69,21 @@ def respond(
         "🧠 Canal cognitivo activo.\n\n"
         "Tu mensaje fue evaluado correctamente."
     )
+
+    # -------------------------------------------------
+    # 3.1) Transparencia perceptiva (si existe)
+    # -------------------------------------------------
+    if perceived_state:
+        answer += (
+            "\n\n—\n"
+            "📍 **Estado perceptivo actual**:\n"
+            f"- Servicio: {perceived_state.get('service')}\n"
+            f"- Revisión: {perceived_state.get('revision')}\n"
+            f"- Memoria canónica: "
+            f"{'activa' if perceived_state.get('memory', {}).get('exists') else 'no disponible'}\n"
+            f"- Motor semántico cargado: "
+            f"{perceived_state.get('semantic', {}).get('loaded', False)}"
+        )
 
     # -------------------------------------------------
     # 4) Anotación semántica (NO decisoria)
@@ -91,4 +117,5 @@ def respond(
         "model_called": False,
         "semantic": semantic_note,
         "channel": channel,
+        "perception_attached": bool(perceived_state),
     }
