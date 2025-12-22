@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query
-
+from ops.memory.search import search_memory
 from ops.memory.recall import (
     recall_recent,
     recall_decisions,
