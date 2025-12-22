@@ -88,3 +88,13 @@ def launch_post_startup():
         target=_post_startup_worker,
         daemon=True
     ).start()
+
+    # -----------------------------
+    # DAILY SNAPSHOT (REAL STATE)
+    # -----------------------------
+    try:
+        from ops.snapshots.daily_snapshot import write_daily_snapshot
+        write_daily_snapshot()
+        print("[POST-STARTUP][SNAPSHOT] Daily snapshot written")
+    except Exception as e:
+        print(f"[POST-STARTUP][SNAPSHOT][WARN] {e}")
