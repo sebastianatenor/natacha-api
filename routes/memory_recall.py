@@ -31,18 +31,8 @@ def recall_decisions_api(limit: int = 10):
     }
 
 
-@router.get("/memory/recall/{subsystem}")
-def recall_subsystem_api(subsystem: str, limit: int = 10):
-    return {
-        "status": "ok",
-        "mode": "subsystem",
-        "subsystem": subsystem,
-        "events": recall_by_subsystem(subsystem, limit),
-    }
-
-
 # =========================================================
-# NUEVO (ADITIVO, SEGURO)
+# 🔍 SEARCH (DEBE IR ANTES DEL {subsystem})
 # =========================================================
 
 @router.get("/memory/recall/search")
@@ -52,8 +42,8 @@ def recall_search_api(
 ):
     """
     Search seguro:
-    1) Si existe búsqueda semántica → la usa
-    2) Fallback a texto plano (timeline)
+    1) Intenta semántico si existe
+    2) Fallback a texto plano
     """
 
     # --- Intento semántico (si está disponible)
@@ -70,7 +60,7 @@ def recall_search_api(
         }
 
     except Exception:
-        # --- Fallback: timeline textual
+        # --- Fallback textual
         from ops.timeline.reader import read_events
 
         events = read_events()
@@ -86,3 +76,17 @@ def recall_search_api(
             "count": min(len(hits), limit),
             "events": hits[-limit:],
         }
+
+
+# =========================================================
+# SUBSYSTEM (SIEMPRE AL FINAL)
+# =========================================================
+
+@router.get("/memory/recall/{subsystem}")
+def recall_subsystem_api(subsystem: str, limit: int = 10):
+    return {
+        "status": "ok",
+        "mode": "subsystem",
+        "subsystem": subsystem,
+        "events": recall_by_subsystem(subsystem, limit),
+    }
