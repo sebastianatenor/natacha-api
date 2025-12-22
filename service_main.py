@@ -107,7 +107,7 @@ app.include_router(semantic_router)
 app.include_router(natacha_router)
 app.include_router(health_router)
 app.include_router(get_system_state_router)
-app.include_router(memory_recall_router
+app.include_router(memory_recall_router)
 
 print("[OK] routers loaded")
 
