@@ -1,31 +1,45 @@
-from fastapi import APIRouter, HTTPException
-
-from ops.system.perception_provider import read_system_perception
-from routes.system_baseline.provider import read_system_baseline
-from ops.cognitive.drift_detector import detect_drift
-from ops.cognitive.repair_executor import execute_repair
+from fastapi import APIRouter
 
 router = APIRouter(prefix="/ops/system", tags=["system"])
 
 
 @router.post("/self-repair/execute")
 def execute_self_repair():
-    baseline = read_system_baseline()
-    perception = read_system_perception()
+    try:
+        from routes.system_baseline.provider import read_system_baseline
+        from ops.system.perception_provider import read_system_perception
+        from ops.cognitive.drift_detector import detect_drift
+        from ops.cognitive.repair_policy import repair_allowed
 
-    if not baseline or not perception:
-        raise HTTPException(
-            status_code=503,
-            detail="Baseline or perception unavailable",
-        )
+        baseline = read_system_baseline()
+        perception = read_system_perception()
+        drift = detect_drift(baseline, perception)
 
-    drift = detect_drift(baseline, perception)
+        decision = repair_allowed(drift)
 
-    if not drift.get("drift_detected"):
+        if not drift.get("drift_detected"):
+            return {
+                "status": "noop",
+                "detail": "No drift detected",
+            }
+
+        if not decision["allowed"]:
+            return {
+                "status": "blocked",
+                "detail": decision["reason"],
+                "mode": decision["mode"],
+            }
+
+        # ⛔ Todavía NO ejecutamos nada
         return {
-            "status": "noop",
-            "detail": "No drift detected",
+            "status": "allowed",
+            "severity": drift.get("severity"),
+            "action": drift.get("recommended_action"),
+            "mode": decision["mode"],
         }
 
-    result = execute_repair(drift, baseline)
-    return result
+    except Exception as e:
+        return {
+            "status": "error",
+            "detail": f"self-repair execute failed: {str(e)}",
+        }
