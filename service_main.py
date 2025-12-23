@@ -197,6 +197,12 @@ def load_optional_routers():
         "semantic",
     )
 
+    safe_include(
+        app,
+        lambda: __import__("routes.system_baseline.router", fromlist=["router"]).router,
+        "system_baseline",
+    )
+
 # ================================================================
 # DEBUG (NO CRÍTICO)
 # ================================================================
