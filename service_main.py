@@ -242,6 +242,13 @@ def on_startup():
     except Exception as e:
         print(f"[STARTUP][WARN] post_startup skipped: {e}")
 
+    try:
+        from ops.cognitive.startup_self_repair import attempt_startup_self_repair
+        attempt_startup_self_repair()
+        print("[STARTUP] startup self-repair evaluated")
+    except Exception as e:
+        print(f"[STARTUP][WARN] self-repair skipped: {e}")
+
     # 🧠 B5 — Cognitive Supervisor (auto-repair proposal loop)
     try:
         from ops.cognitive.supervisor import supervisor_loop
