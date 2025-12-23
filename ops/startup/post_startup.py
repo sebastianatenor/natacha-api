@@ -82,6 +82,21 @@ def _post_startup_worker():
     except Exception as e:
         print(f"[POST-STARTUP][CHECKPOINT][ERROR] {e}")
 
+    # -----------------------------
+    # COGNITIVE BOOT (B3)
+    # -----------------------------
+    try:
+        from ops.system.perception_provider import get_system_perception
+        from ops.cognitive.boot_writer import write_cognitive_boot
+
+        perception = get_system_perception()
+        write_cognitive_boot(perception)
+
+        print("[POST-STARTUP][BOOT] Cognitive boot persisted")
+
+    except Exception as e:
+        print(f"[POST-STARTUP][BOOT][WARN] {e}")
+
 
 def launch_post_startup():
     threading.Thread(

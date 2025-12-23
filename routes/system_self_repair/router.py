@@ -1,4 +1,6 @@
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
+import os
 
 router = APIRouter(prefix="/ops/system", tags=["system"])
 
@@ -40,3 +42,56 @@ def self_repair_status():
             "detail": f"self-repair internal error: {str(e)}",
             "repair_mode": "proposal_only",
         }
+
+
+@router.post("/self-repair/execute")
+def self_repair_execute():
+    """
+    Ejecuta autoreparación SOLO si:
+    - Hay drift
+    - SELF_REPAIR_ARMED=1
+    """
+    try:
+        if os.getenv("SELF_REPAIR_ARMED") != "1":
+            return {
+                "status": "blocked",
+                "detail": "Self-repair not armed",
+                "mode": "proposal_only",
+            }
+
+        from routes.system_baseline.provider import read_system_baseline
+        from ops.system.perception_provider import read_system_perception
+        from ops.cognitive.drift_detector import detect_drift
+        from ops.cognitive.repair_executor import execute_repair
+
+        baseline = read_system_baseline()
+        perception = read_system_perception()
+
+        if not baseline or not perception:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "status": "error",
+                    "detail": "Baseline or perception unavailable",
+                },
+            )
+
+        drift = detect_drift(baseline, perception)
+
+        if not drift.get("drift_detected"):
+            return {
+                "status": "noop",
+                "detail": "No drift detected",
+            }
+
+        result = execute_repair(drift)
+        return result
+
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "detail": f"self-repair execute error: {str(e)}",
+            },
+        )
