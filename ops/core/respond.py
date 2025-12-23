@@ -16,17 +16,16 @@ def respond(
     perceived_state: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
-    Respuesta cognitiva central (SAFE):
+    Respuesta cognitiva central (SAFE)
 
     - Evalúa guardrails
     - Analiza semántica (si está disponible)
-    - Integra estado perceptivo (si existe)
+    - Integra estado perceptivo (NO decisorio)
     - NO ejecuta acciones
-    - LLM es opcional y externo
     """
 
     # -------------------------------------------------
-    # 0) Estado cognitivo vivo (RAM)
+    # 0) Estado cognitivo vivo (objeto, NO dict)
     # -------------------------------------------------
     user_state = user_context_manager.touch(
         user_id=user_id,
@@ -34,15 +33,17 @@ def respond(
     )
 
     # -------------------------------------------------
-    # 0.1) Integración perceptiva (NO decisoria)
+    # 0.1) Integración perceptiva (SAFE)
     # -------------------------------------------------
-    # Esto fija el "punto de partida cognitivo"
-    # antes de cualquier respuesta.
     if perceived_state:
-        user_state["perceived_state"] = perceived_state
+        # Guardamos como atributo, no como dict
+        try:
+            setattr(user_state, "perceived_state", perceived_state)
+        except Exception:
+            pass  # Nunca rompemos respuesta por esto
 
     # -------------------------------------------------
-    # 1) Guardrail cognitivo (autoridad máxima)
+    # 1) Guardrail cognitivo
     # -------------------------------------------------
     decision = guardrail.evaluate(
         CognitiveInput(
@@ -53,7 +54,7 @@ def respond(
     )
 
     # -------------------------------------------------
-    # 2) Análisis semántico (PASIVO)
+    # 2) Análisis semántico (pasivo)
     # -------------------------------------------------
     semantic = None
     if SEMANTIC_STATE.hf_token_present:
@@ -63,7 +64,7 @@ def respond(
             semantic = None
 
     # -------------------------------------------------
-    # 3) Respuesta base estable
+    # 3) Respuesta base
     # -------------------------------------------------
     answer = (
         "🧠 Canal cognitivo activo.\n\n"
@@ -71,22 +72,7 @@ def respond(
     )
 
     # -------------------------------------------------
-    # 3.1) Transparencia perceptiva (si existe)
-    # -------------------------------------------------
-    if perceived_state:
-        answer += (
-            "\n\n—\n"
-            "📍 **Estado perceptivo actual**:\n"
-            f"- Servicio: {perceived_state.get('service')}\n"
-            f"- Revisión: {perceived_state.get('revision')}\n"
-            f"- Memoria canónica: "
-            f"{'activa' if perceived_state.get('memory', {}).get('exists') else 'no disponible'}\n"
-            f"- Motor semántico cargado: "
-            f"{perceived_state.get('semantic', {}).get('loaded', False)}"
-        )
-
-    # -------------------------------------------------
-    # 4) Anotación semántica (NO decisoria)
+    # 4) Nota semántica (informativa)
     # -------------------------------------------------
     semantic_note = None
     if semantic and semantic.model_used:
@@ -104,12 +90,11 @@ def respond(
     if proposed_action:
         answer += (
             "\n\n—\n"
-            "⚠️ **Nota cognitiva**:\n"
+            "⚠️ Nota cognitiva:\n"
             "Detecté una posible acción implícita, "
-            "pero **no ejecuté nada**.\n\n"
-            f"- Tipo: **{proposed_action.action_type.value}**\n"
-            f"- Descripción: {proposed_action.description}\n\n"
-            "Confirmá explícitamente si querés avanzar."
+            "pero no ejecuté nada.\n\n"
+            f"- Tipo: {proposed_action.action_type.value}\n"
+            f"- Descripción: {proposed_action.description}\n"
         )
 
     return {
