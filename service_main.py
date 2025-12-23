@@ -205,7 +205,7 @@ def load_optional_routers():
 
     safe_include(
         app,
-        lambda: __import__("routes.system_self_repair", fromlist=["router"]).router,
+        lambda: __import__("routes.system_self_repair.router", fromlist=["router"]).router,
         "system_self_repair",
     )
 
