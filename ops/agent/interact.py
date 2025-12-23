@@ -12,6 +12,7 @@ from ops.cognitive.cognitive_guardrail import (
 
 from ops.core.respond import respond
 from ops.system.perception_provider import read_system_perception
+from ops.system.baseline_provider import read_baseline
 from ops.cognitive.boot_reader import read_last_cognitive_boot
 
 router = APIRouter(prefix="/agent", tags=["agent"])
@@ -41,7 +42,12 @@ class AgentInteractResponse(BaseModel):
 # -------------------------------------------------
 
 def _normalize(text: str) -> str:
-    return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().lower()
+    return (
+        unicodedata.normalize("NFKD", text)
+        .encode("ascii", "ignore")
+        .decode()
+        .lower()
+    )
 
 
 def _is_state_question(message: str) -> bool:
@@ -81,17 +87,18 @@ def _fallback_narrative(perception: Dict[str, Any]) -> str:
 def agent_interact(payload: AgentInteractRequest):
     try:
         # -------------------------------------------------
-        # 0️⃣ Percepción REAL con fallback cognitivo
+        # 0️⃣ Estado REAL del sistema (orden jerárquico)
         # -------------------------------------------------
-        perceived_state = read_system_perception()
+        perception = read_system_perception()
+        baseline = read_baseline()
 
-        if perceived_state is None:
-            perceived_state = read_last_cognitive_boot()
+        if perception is None:
+            perception = read_last_cognitive_boot()
 
         is_state = _is_state_question(payload.message)
 
         # -------------------------------------------------
-        # 1️⃣ Guardrail (siempre)
+        # 1️⃣ Guardrail cognitivo (siempre)
         # -------------------------------------------------
         guardrail.evaluate(
             CognitiveInput(
@@ -102,40 +109,60 @@ def agent_interact(payload: AgentInteractRequest):
         )
 
         # -------------------------------------------------
-        # 2️⃣ RESPUESTA DE ESTADO (explícita)
+        # 2️⃣ RESPUESTA DE ESTADO (baseline-aware)
         # -------------------------------------------------
-        if perceived_state and is_state:
+        if perception and is_state:
+            # Drift explícito (conciencia operacional)
+            drift = {
+                "revision_changed": (
+                    baseline.get("revision") != perception.get("revision")
+                    if baseline else None
+                ),
+                "semantic_expected": (
+                    baseline.get("semantic", {}).get("expected_loaded")
+                    if baseline else None
+                ),
+                "semantic_loaded": perception.get("semantic", {}).get("loaded"),
+            }
+
             try:
                 from ops.narrative.composer import compose_system_narrative
-                narrative = compose_system_narrative(perceived_state)
+                narrative = compose_system_narrative(perception)
 
-                # ⛔ Garantía de tipo
+                # ⛔ Garantía fuerte de tipo
                 if not isinstance(narrative, str):
-                    narrative = _fallback_narrative(perceived_state)
+                    narrative = _fallback_narrative(perception)
 
             except Exception:
-                narrative = _fallback_narrative(perceived_state)
+                narrative = _fallback_narrative(perception)
 
             return AgentInteractResponse(
                 answer=narrative,
                 model_called=False,
-                perceived_state=perceived_state,
+                perceived_state={
+                    "baseline": baseline,
+                    "perception": perception,
+                    "drift": drift,
+                },
             )
 
         # -------------------------------------------------
-        # 3️⃣ RESPUESTA NORMAL
+        # 3️⃣ RESPUESTA NORMAL (con estado adjunto)
         # -------------------------------------------------
         result = respond(
             user_id=payload.user_id,
             message=payload.message,
             channel="agent",
-            perceived_state=perceived_state,
+            perceived_state=perception,
         )
 
         return AgentInteractResponse(
             answer=result.get("answer", ""),
             model_called=result.get("model_called", False),
-            perceived_state=perceived_state,
+            perceived_state={
+                "baseline": baseline,
+                "perception": perception,
+            },
         )
 
     except Exception as e:
