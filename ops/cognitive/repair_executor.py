@@ -1,49 +1,53 @@
+# ops/cognitive/repair_executor.py
 import os
-from typing import Dict, Any
+from pathlib import Path
+from google.cloud import storage
 
-from ops.cognitive.repair_log import log_repair_proposal
 
-
-def execute_repair(drift: Dict[str, Any], baseline: Dict[str, Any]) -> Dict[str, Any]:
+def execute_repair(drift: dict) -> dict:
     """
-    Ejecuta reparación SOLO si el sistema está armado.
+    Ejecuta reparaciones SOLO si el sistema está armado.
+    B6.2: solo soporta reparación de memoria.
     """
-    mode = os.getenv("SELF_REPAIR_MODE", "proposal_only")
 
-    if mode != "armed":
+    if os.getenv("SELF_REPAIR_ARMED") != "1":
         return {
             "status": "blocked",
             "detail": "Self-repair not armed",
-            "mode": mode,
         }
 
-    # --- Ejemplo de reparaciones permitidas ---
-    actions = []
-
+    # ----------------------------------
+    # MEMORY REPAIR
+    # ----------------------------------
     if drift.get("memory_expected") and not drift.get("memory_exists"):
-        actions.append("restore_memory")
+        try:
+            local_path = Path(os.getenv("NATACHA_MEMORY_LOCAL", "/tmp/memory_store.jsonl"))
 
-    if drift.get("semantic_expected") and not drift.get("semantic_loaded"):
-        actions.append("reload_semantic")
+            client = storage.Client()
+            bucket = client.bucket("natacha-memory-store")
+            blob = bucket.blob("memory_store.jsonl")
 
-    if not actions:
-        return {
-            "status": "noop",
-            "detail": "No repairable drift found",
-        }
+            if not blob.exists():
+                return {
+                    "status": "failed",
+                    "detail": "Canonical memory not found in GCS",
+                }
 
-    # ⚠️ TODAVÍA NO EJECUTAMOS NADA REAL
-    log_repair_proposal(
-        drift={
-            **drift,
-            "executed_actions": actions,
-        },
-        baseline=baseline,
-        level="EXECUTION_SIMULATION",
-    )
+            blob.download_to_filename(local_path)
+
+            return {
+                "status": "executed",
+                "action": "restore_memory",
+                "path": str(local_path),
+            }
+
+        except Exception as e:
+            return {
+                "status": "failed",
+                "detail": str(e),
+            }
 
     return {
-        "status": "simulated",
-        "actions": actions,
-        "confidence": "high",
+        "status": "noop",
+        "detail": "No executable repair for this drift",
     }
