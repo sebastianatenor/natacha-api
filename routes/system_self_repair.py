@@ -1,11 +1,10 @@
 # routes/system_self_repair.py
+
 from fastapi import APIRouter
 
 from ops.system.perception_provider import read_system_perception
 from ops.cognitive.drift_detector import detect_drift
 from ops.cognitive.repair_log import log_repair_proposal
-
-# IMPORTANTE: baseline canónico
 from routes.system_baseline.provider import read_system_baseline
 
 router = APIRouter(prefix="/ops/system", tags=["system"])
