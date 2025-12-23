@@ -1,3 +1,4 @@
+# routes/system_self_repair/execute.py
 from fastapi import APIRouter
 
 router = APIRouter(prefix="/ops/system", tags=["system"])
@@ -15,13 +16,15 @@ def execute_self_repair():
         perception = read_system_perception()
         drift = detect_drift(baseline, perception)
 
-        decision = repair_allowed(drift)
-
+        # 1. No drift → noop
         if not drift.get("drift_detected"):
             return {
                 "status": "noop",
                 "detail": "No drift detected",
             }
+
+        # 2. Evaluar política
+        decision = repair_allowed(drift)
 
         if not decision["allowed"]:
             return {
@@ -30,16 +33,17 @@ def execute_self_repair():
                 "mode": decision["mode"],
             }
 
-        # ⛔ Todavía NO ejecutamos nada
+        # 3. Permitido, pero todavía no ejecutamos nada (B8.2)
         return {
             "status": "allowed",
             "severity": drift.get("severity"),
-            "action": drift.get("recommended_action"),
+            "recommended_action": drift.get("recommended_action"),
             "mode": decision["mode"],
+            "note": "Execution deferred (B8.2 decision-only)",
         }
 
     except Exception as e:
         return {
             "status": "error",
-            "detail": f"self-repair execute failed: {str(e)}",
+            "detail": f"self-repair execute error: {str(e)}",
         }
