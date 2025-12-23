@@ -1,15 +1,18 @@
 from fastapi import APIRouter
 
-from ops.system.perception_provider import read_system_perception
-from routes.system_baseline.provider import read_system_baseline
-from ops.cognitive.drift_detector import detect_drift
-from ops.cognitive.repair_log import log_repair_proposal
-
-router = APIRouter(prefix="/ops/system", tags=["system"])
-
+router = APIRouter(
+    prefix="/ops/system",
+    tags=["system"]
+)
 
 @router.get("/self-repair")
 def self_repair_status():
+    # Imports diferidos (CRÍTICO)
+    from ops.system.perception_provider import read_system_perception
+    from routes.system_baseline.provider import read_system_baseline
+    from ops.cognitive.drift_detector import detect_drift
+    from ops.cognitive.repair_log import log_repair_proposal
+
     baseline = read_system_baseline()
     perception = read_system_perception()
 
@@ -26,8 +29,6 @@ def self_repair_status():
 
     return {
         "status": "ok",
-        "baseline": baseline,
-        "perception": perception,
         "drift": drift,
         "repair_mode": "proposal_only",
     }
