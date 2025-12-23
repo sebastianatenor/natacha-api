@@ -1,23 +1,81 @@
 # ops/system/perception_provider.py
+import os
+from datetime import datetime
+from typing import Dict, Any, Optional
 
-from typing import Dict, Any
-from datetime import datetime, timezone
+from ops.timeline.reader import read_events
 
-def read_system_perception() -> Dict[str, Any]:
+
+def read_system_perception() -> Optional[Dict[str, Any]]:
     """
-    Fuente ÚNICA de percepción del sistema.
-    Puede ser usada por:
-    - routers HTTP
-    - agent_interact
-    - boot cognitivo
+    Fuente única de percepción del sistema.
+    B6.1: permite simular drift vía ENV VAR.
     """
 
-    from routes.system_state.router import system_state
+    try:
+        # -----------------------------
+        # FLAGS
+        # -----------------------------
+        simulate_memory_missing = os.getenv("SIMULATE_MEMORY_MISSING") == "1"
 
-    # Reutilizamos estado real
-    state_response = system_state()
+        # -----------------------------
+        # MEMORY
+        # -----------------------------
+        memory_path = os.getenv("NATACHA_MEMORY_LOCAL", "/tmp/memory_store.jsonl")
 
-    return {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        **state_response["state"],
-    }
+        memory_exists = os.path.exists(memory_path)
+
+        if simulate_memory_missing:
+            memory_exists = False  # 👈 DRIFT ARTIFICIAL
+
+        memory_info = {
+            "canonical_path": memory_path,
+            "exists": memory_exists,
+            "size_bytes": os.path.getsize(memory_path) if memory_exists else 0,
+        }
+
+        # -----------------------------
+        # SEMANTIC
+        # -----------------------------
+        semantic_loaded = False
+        try:
+            from ops.semantic.state import SEMANTIC_STATE
+            semantic_loaded = bool(SEMANTIC_STATE.loaded)
+        except Exception:
+            semantic_loaded = False
+
+        # -----------------------------
+        # TIMELINE
+        # -----------------------------
+        events = read_events()
+        last_event = events[-1] if events else None
+
+        # -----------------------------
+        # PERCEPTION OBJECT
+        # -----------------------------
+        return {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "service": os.getenv("K_SERVICE", "natacha-api"),
+            "revision": os.getenv("K_REVISION"),
+            "project": None,
+            "environment": "cloud_run" if os.getenv("K_SERVICE") else "local",
+            "flags": {
+                "COGNITIVE_FREEZE": os.getenv("COGNITIVE_FREEZE"),
+                "NATACHA_FAST_BOOT": os.getenv("NATACHA_FAST_BOOT"),
+                "SIMULATE_MEMORY_MISSING": simulate_memory_missing,
+            },
+            "memory": memory_info,
+            "semantic": {
+                "loaded": semantic_loaded,
+            },
+            "timeline": {
+                "events_total": len(events),
+                "last_event": last_event,
+            },
+        }
+
+    except Exception as e:
+        return {
+            "error": "perception_failed",
+            "detail": str(e),
+        }
