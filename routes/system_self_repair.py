@@ -1,28 +1,19 @@
 # routes/system_self_repair.py
 from fastapi import APIRouter
 
+from ops.system.perception_provider import read_system_perception
+from ops.cognitive.drift_detector import detect_drift
+from ops.cognitive.repair_log import log_repair_proposal
+
+# IMPORTANTE: baseline canónico
+from routes.system_baseline.provider import read_system_baseline
+
 router = APIRouter(prefix="/ops/system", tags=["system"])
 
 
 @router.get("/self-repair")
 def self_repair_status():
-    """
-    Estado de auto-reparación cognitiva (modo proposal-only).
-    NO ejecuta cambios.
-    """
-
-    try:
-        from ops.system.perception_provider import read_system_perception
-        from ops.cognitive.boot_reader import read_last_cognitive_boot
-        from ops.cognitive.drift_detector import detect_drift
-        from ops.cognitive.repair_log import log_repair_proposal
-    except Exception as e:
-        return {
-            "status": "error",
-            "detail": f"Import error: {e}",
-        }
-
-    baseline = read_last_cognitive_boot()
+    baseline = read_system_baseline()
     perception = read_system_perception()
 
     if not baseline or not perception:
