@@ -203,6 +203,12 @@ def load_optional_routers():
         "system_baseline",
     )
 
+    safe_include(
+        app,
+        lambda: __import__("routes.system_self_repair", fromlist=["router"]).router,
+        "system_self_repair",
+    )
+
 # ================================================================
 # DEBUG (NO CRÍTICO)
 # ================================================================
