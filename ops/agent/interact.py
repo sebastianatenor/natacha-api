@@ -12,6 +12,7 @@ from ops.cognitive.cognitive_guardrail import (
 
 from ops.core.respond import respond
 from ops.system.perception_provider import read_system_perception
+from ops.cognitive.boot_reader import read_last_cognitive_boot
 
 router = APIRouter(prefix="/agent", tags=["agent"])
 guardrail = CognitiveGuardrail()
@@ -79,12 +80,19 @@ def _fallback_narrative(perception: Dict[str, Any]) -> str:
 @router.post("/interact", response_model=AgentInteractResponse)
 def agent_interact(payload: AgentInteractRequest):
     try:
-        # 0️⃣ Percepción REAL (fuente única)
+        # -------------------------------------------------
+        # 0️⃣ Percepción REAL con fallback cognitivo
+        # -------------------------------------------------
         perceived_state = read_system_perception()
+
+        if perceived_state is None:
+            perceived_state = read_last_cognitive_boot()
 
         is_state = _is_state_question(payload.message)
 
+        # -------------------------------------------------
         # 1️⃣ Guardrail (siempre)
+        # -------------------------------------------------
         guardrail.evaluate(
             CognitiveInput(
                 user_id=payload.user_id,
@@ -93,13 +101,15 @@ def agent_interact(payload: AgentInteractRequest):
             )
         )
 
+        # -------------------------------------------------
         # 2️⃣ RESPUESTA DE ESTADO (explícita)
+        # -------------------------------------------------
         if perceived_state and is_state:
             try:
                 from ops.narrative.composer import compose_system_narrative
                 narrative = compose_system_narrative(perceived_state)
 
-                # ⛔ Aseguramos string
+                # ⛔ Garantía de tipo
                 if not isinstance(narrative, str):
                     narrative = _fallback_narrative(perceived_state)
 
@@ -112,7 +122,9 @@ def agent_interact(payload: AgentInteractRequest):
                 perceived_state=perceived_state,
             )
 
+        # -------------------------------------------------
         # 3️⃣ RESPUESTA NORMAL
+        # -------------------------------------------------
         result = respond(
             user_id=payload.user_id,
             message=payload.message,
