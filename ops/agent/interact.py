@@ -11,6 +11,7 @@ from ops.cognitive.cognitive_guardrail import (
 )
 
 from ops.core.respond import respond
+from ops.system.perception_provider import read_system_perception
 
 router = APIRouter(prefix="/agent", tags=["agent"])
 guardrail = CognitiveGuardrail()
@@ -39,35 +40,21 @@ class AgentInteractResponse(BaseModel):
 # -------------------------------------------------
 
 def _normalize(text: str) -> str:
-    return (
-        unicodedata
-        .normalize("NFKD", text)
-        .encode("ascii", "ignore")
-        .decode()
-        .lower()
-    )
+    return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().lower()
 
 
 def _is_state_question(message: str) -> bool:
-    """
-    Detección robusta de consulta de estado.
-    Si el mensaje contiene la palabra 'estado',
-    se considera introspección del sistema.
-    """
     msg = _normalize(message)
-    return "estado" in msg
-
-
-def _read_system_perception() -> Optional[Dict[str, Any]]:
-    """
-    Lectura REAL del estado perceptivo del sistema.
-    No infiere. No razona. Lee runtime.
-    """
-    try:
-        from routes.system_perception.router import get_latest_perception
-        return get_latest_perception()
-    except Exception:
-        return None
+    return any(
+        k in msg
+        for k in (
+            "estado",
+            "estado actual",
+            "como estas",
+            "cual es tu estado",
+            "estado antes de responder",
+        )
+    )
 
 
 def _fallback_narrative(perception: Dict[str, Any]) -> str:
@@ -91,15 +78,12 @@ def _fallback_narrative(perception: Dict[str, Any]) -> str:
 @router.post("/interact", response_model=AgentInteractResponse)
 def agent_interact(payload: AgentInteractRequest):
     try:
-        # -------------------------------------------------
-        # 0) Percepción real
-        # -------------------------------------------------
-        perceived_state = _read_system_perception()
+        # 0️⃣ Percepción REAL (siempre)
+        perceived_state = read_system_perception()
+
         is_state = _is_state_question(payload.message)
 
-        # -------------------------------------------------
-        # 1) Guardrail (siempre primero)
-        # -------------------------------------------------
+        # 1️⃣ Guardrail
         guardrail.evaluate(
             CognitiveInput(
                 user_id=payload.user_id,
@@ -108,9 +92,7 @@ def agent_interact(payload: AgentInteractRequest):
             )
         )
 
-        # -------------------------------------------------
-        # 2) RESPUESTA DE ESTADO (FORZADA)
-        # -------------------------------------------------
+        # 2️⃣ Respuesta de ESTADO forzada
         if perceived_state and is_state:
             try:
                 from ops.narrative.composer import compose_system_narrative
@@ -124,9 +106,7 @@ def agent_interact(payload: AgentInteractRequest):
                 perceived_state=perceived_state,
             )
 
-        # -------------------------------------------------
-        # 3) RESPUESTA NORMAL
-        # -------------------------------------------------
+        # 3️⃣ Respuesta normal
         result = respond(
             user_id=payload.user_id,
             message=payload.message,
