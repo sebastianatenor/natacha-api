@@ -5,13 +5,7 @@ from typing import Dict, Any
 def detect_drift(baseline: Dict[str, Any], perception: Dict[str, Any]) -> Dict[str, Any]:
     """
     Compara baseline vs percepción REAL.
-    Devuelve hechos observables + severidad cognitiva.
-
-    severity:
-      - none   → sistema alineado
-      - soft   → desviación tolerable
-      - hard   → requiere reparación automática
-      - fatal  → sistema inconsistente (bloqueo)
+    Devuelve hechos observables + interpretación semántica.
     """
 
     drift = {
@@ -23,62 +17,47 @@ def detect_drift(baseline: Dict[str, Any], perception: Dict[str, Any]) -> Dict[s
         "drift_detected": False,
         "severity": "none",
         "reason": None,
+        "recommended_action": None,
     }
 
-    # -------------------------------------------------
+    # -------------------------
     # REVISION
-    # -------------------------------------------------
+    # -------------------------
     if baseline.get("revision") != perception.get("revision"):
         drift["revision_changed"] = True
+        drift["drift_detected"] = True
+        drift["severity"] = "high"
+        drift["reason"] = "Revision mismatch"
+        drift["recommended_action"] = "restart_service"
+        return drift  # máximo nivel, corto acá
 
-    # -------------------------------------------------
+    # -------------------------
     # SEMANTIC
-    # -------------------------------------------------
+    # -------------------------
     drift["semantic_expected"] = baseline.get("semantic", {}).get("expected_loaded", False)
     drift["semantic_loaded"] = perception.get("semantic", {}).get("loaded", False)
 
-    # -------------------------------------------------
+    if drift["semantic_expected"] and not drift["semantic_loaded"]:
+        drift["drift_detected"] = True
+        drift["severity"] = "medium"
+        drift["reason"] = "Semantic core not loaded"
+        drift["recommended_action"] = "reload_semantic"
+        return drift
+
+    # -------------------------
     # MEMORY
-    # -------------------------------------------------
+    # -------------------------
     drift["memory_expected"] = baseline.get("memory", {}).get("expected", False)
     drift["memory_exists"] = perception.get("memory", {}).get("exists", False)
 
-    # -------------------------------------------------
-    # DRIFT DETECTION
-    # -------------------------------------------------
-    drift["drift_detected"] = any([
-        drift["revision_changed"],
-        drift["semantic_expected"] and not drift["semantic_loaded"],
-        drift["memory_expected"] and not drift["memory_exists"],
-    ])
-
-    # -------------------------------------------------
-    # SEVERITY CLASSIFICATION (B8)
-    # -------------------------------------------------
-    if not drift["drift_detected"]:
-        drift["severity"] = "none"
-        drift["reason"] = None
-        return drift
-
-    # Fatal: revision mismatch (estado no confiable)
-    if drift["revision_changed"]:
-        drift["severity"] = "fatal"
-        drift["reason"] = "revision_mismatch"
-        return drift
-
-    # Hard: memoria esperada pero ausente (recuperable)
     if drift["memory_expected"] and not drift["memory_exists"]:
-        drift["severity"] = "hard"
-        drift["reason"] = "memory_missing"
+        drift["drift_detected"] = True
+        drift["severity"] = "high"
+        drift["reason"] = "Memory expected but missing"
+        drift["recommended_action"] = "restore_memory"
         return drift
 
-    # Soft: semántica no cargada pero no requerida
-    if drift["semantic_expected"] and not drift["semantic_loaded"]:
-        drift["severity"] = "soft"
-        drift["reason"] = "semantic_not_loaded"
-        return drift
-
-    # Fallback (no debería ocurrir)
-    drift["severity"] = "soft"
-    drift["reason"] = "unspecified_drift"
+    # -------------------------
+    # NO DRIFT
+    # -------------------------
     return drift
