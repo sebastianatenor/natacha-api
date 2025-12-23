@@ -160,7 +160,6 @@ def load_optional_routers():
     )
 
     # ⚠️ ESTE ES EL QUE ESTABA ROMPIENDO TODO
-    # Se carga SOLO si las dependencias existen
     safe_include(
         app,
         lambda: __import__("routes.memory_index", fromlist=["router"]).router,
@@ -236,6 +235,14 @@ def on_startup():
         print("[STARTUP] post_startup launched")
     except Exception as e:
         print(f"[STARTUP][WARN] post_startup skipped: {e}")
+
+    # 🧠 B5 — Cognitive Supervisor (auto-repair proposal loop)
+    try:
+        from ops.cognitive.supervisor import supervisor_loop
+        start_background(supervisor_loop)
+        print("[SUPERVISOR] cognitive supervisor running")
+    except Exception as e:
+        print(f"[SUPERVISOR][WARN] not started: {e}")
 
     print("[STARTUP] baseline ready")
 
