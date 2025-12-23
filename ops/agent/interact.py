@@ -59,15 +59,16 @@ def _is_state_question(message: str) -> bool:
 
 def _fallback_narrative(perception: Dict[str, Any]) -> str:
     return (
-        "🧠 **Estado actual del sistema**\n\n"
+        "🧠 Estado actual del sistema\n\n"
         f"• Servicio: {perception.get('service')}\n"
         f"• Revisión: {perception.get('revision')}\n"
+        f"• Entorno: {perception.get('environment')}\n"
         f"• Memoria canónica: "
         f"{'activa' if perception.get('memory', {}).get('exists') else 'no disponible'}\n"
-        f"• Timeline eventos: {perception.get('timeline', {}).get('events_total')}\n"
+        f"• Eventos en timeline: {perception.get('timeline', {}).get('events_total')}\n"
         f"• Motor semántico cargado: "
         f"{perception.get('semantic', {}).get('loaded', False)}\n\n"
-        "Sistema estable. Sin degradaciones activas."
+        "Sistema operativo y estable."
     )
 
 
@@ -78,12 +79,12 @@ def _fallback_narrative(perception: Dict[str, Any]) -> str:
 @router.post("/interact", response_model=AgentInteractResponse)
 def agent_interact(payload: AgentInteractRequest):
     try:
-        # 0️⃣ Percepción REAL (siempre)
+        # 0️⃣ Percepción REAL (fuente única)
         perceived_state = read_system_perception()
 
         is_state = _is_state_question(payload.message)
 
-        # 1️⃣ Guardrail
+        # 1️⃣ Guardrail (siempre)
         guardrail.evaluate(
             CognitiveInput(
                 user_id=payload.user_id,
@@ -92,11 +93,16 @@ def agent_interact(payload: AgentInteractRequest):
             )
         )
 
-        # 2️⃣ Respuesta de ESTADO forzada
+        # 2️⃣ RESPUESTA DE ESTADO (explícita)
         if perceived_state and is_state:
             try:
                 from ops.narrative.composer import compose_system_narrative
                 narrative = compose_system_narrative(perceived_state)
+
+                # ⛔ Aseguramos string
+                if not isinstance(narrative, str):
+                    narrative = _fallback_narrative(perceived_state)
+
             except Exception:
                 narrative = _fallback_narrative(perceived_state)
 
@@ -106,7 +112,7 @@ def agent_interact(payload: AgentInteractRequest):
                 perceived_state=perceived_state,
             )
 
-        # 3️⃣ Respuesta normal
+        # 3️⃣ RESPUESTA NORMAL
         result = respond(
             user_id=payload.user_id,
             message=payload.message,
