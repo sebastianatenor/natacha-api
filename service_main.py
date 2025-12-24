@@ -83,6 +83,18 @@ app = FastAPI(
 def root():
     return {"status": "ok", "engine": "natacha"}
 
+# =========================
+# SEMANTIC ENGINE BOOTSTRAP
+# =========================
+try:
+    from ops.semantic.runtime_loader import load_semantic_engine
+
+    semantic_loaded = load_semantic_engine()
+    print(f"[BOOT] Semantic engine loaded: {semantic_loaded}")
+
+except Exception as e:
+    print(f"[BOOT][SEMANTIC][ERROR] {e}")
+
 # ================================================================
 # CORE ROUTERS (DEBEN EXISTIR)
 # ================================================================
