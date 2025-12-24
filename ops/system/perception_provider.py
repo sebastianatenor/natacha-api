@@ -35,16 +35,24 @@ def read_system_perception() -> Optional[Dict[str, Any]]:
         }
 
         # -----------------------------
-        # SEMANTIC (CANONICAL – state registry)
+        # SEMANTIC (CANONICAL STATE)
         # -----------------------------
         semantic_loaded = False
-        try:
-            from ops.cognitive.state_registry import read_last_cognitive_state
+        semantic_source = "unknown"
 
-            semantic_state = read_last_cognitive_state("semantic")
-            semantic_loaded = semantic_state.get("state") == "loaded"
+        try:
+            from ops.timeline.reader import read_events
+            events = read_events()
+
+            for ev in reversed(events):
+                if ev.get("subsystem") == "semantic":
+                    semantic_loaded = ev.get("state") == "loaded"
+                    semantic_source = "timeline"
+                    break
+
         except Exception:
             semantic_loaded = False
+            semantic_source = "error"
 
         # -----------------------------
         # TIMELINE
@@ -69,6 +77,7 @@ def read_system_perception() -> Optional[Dict[str, Any]]:
             "memory": memory_info,
             "semantic": {
                 "loaded": semantic_loaded,
+                "source": semantic_source,         
             },
             "timeline": {
                 "events_total": len(events),
