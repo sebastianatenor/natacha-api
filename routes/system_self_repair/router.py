@@ -1,3 +1,4 @@
+k# routes/system_self_repair/router.py
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 import os
@@ -47,9 +48,7 @@ def self_repair_status():
 @router.post("/self-repair/execute")
 def self_repair_execute():
     """
-    Ejecuta autoreparación SOLO si:
-    - Hay drift
-    - SELF_REPAIR_ARMED=1
+    B8.2: solo DECIDE, no ejecuta.
     """
     try:
         if os.getenv("SELF_REPAIR_ARMED") != "1":
@@ -62,7 +61,7 @@ def self_repair_execute():
         from routes.system_baseline.provider import read_system_baseline
         from ops.system.perception_provider import read_system_perception
         from ops.cognitive.drift_detector import detect_drift
-        from ops.cognitive.repair_executor import execute_repair
+        from ops.cognitive.repair_policy import repair_allowed
 
         baseline = read_system_baseline()
         perception = read_system_perception()
@@ -84,8 +83,22 @@ def self_repair_execute():
                 "detail": "No drift detected",
             }
 
-        result = execute_repair(drift)
-        return result
+        decision = repair_allowed(drift)
+
+        if not decision["allowed"]:
+            return {
+                "status": "blocked",
+                "detail": decision["reason"],
+                "mode": decision["mode"],
+            }
+
+        return {
+            "status": "allowed",
+            "severity": drift.get("severity"),
+            "recommended_action": drift.get("recommended_action"),
+            "mode": decision["mode"],
+            "note": "Execution deferred (B8.2 decision-only)",
+        }
 
     except Exception as e:
         return JSONResponse(
