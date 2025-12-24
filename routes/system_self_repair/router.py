@@ -1,4 +1,4 @@
-k# routes/system_self_repair/router.py
+# routes/system_self_repair/router.py
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 import os
@@ -48,7 +48,9 @@ def self_repair_status():
 @router.post("/self-repair/execute")
 def self_repair_execute():
     """
-    B8.2: solo DECIDE, no ejecuta.
+    Ejecuta autoreparación SOLO si:
+    - Hay drift
+    - SELF_REPAIR_ARMED=1
     """
     try:
         if os.getenv("SELF_REPAIR_ARMED") != "1":
@@ -65,16 +67,6 @@ def self_repair_execute():
 
         baseline = read_system_baseline()
         perception = read_system_perception()
-
-        if not baseline or not perception:
-            return JSONResponse(
-                status_code=400,
-                content={
-                    "status": "error",
-                    "detail": "Baseline or perception unavailable",
-                },
-            )
-
         drift = detect_drift(baseline, perception)
 
         if not drift.get("drift_detected"):
