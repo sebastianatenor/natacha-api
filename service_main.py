@@ -257,6 +257,13 @@ def on_startup():
     except Exception as e:
         print(f"[SUPERVISOR][WARN] not started: {e}")
 
+    try:
+        from ops.semantic.runtime_loader import load_semantic_engine
+        loaded = load_semantic_engine()
+        print(f"[SEMANTIC] runtime load = {loaded}")
+    except Exception as e:
+        print(f"[SEMANTIC][WARN] not loaded: {e}")
+
     print("[STARTUP] baseline ready")
 
 # ================================================================

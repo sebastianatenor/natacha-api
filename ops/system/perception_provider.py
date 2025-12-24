@@ -35,12 +35,12 @@ def read_system_perception() -> Optional[Dict[str, Any]]:
         }
 
         # -----------------------------
-        # SEMANTIC
+        # SEMANTIC (B12 – runtime governed)
         # -----------------------------
         semantic_loaded = False
         try:
-            from ops.semantic.state import SEMANTIC_STATE
-            semantic_loaded = bool(SEMANTIC_STATE.loaded)
+            from ops.semantic.runtime_loader import semantic_is_loaded
+            semantic_loaded = semantic_is_loaded()
         except Exception:
             semantic_loaded = False
 
