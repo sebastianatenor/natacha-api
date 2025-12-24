@@ -23,9 +23,10 @@ def _post_startup_worker():
         print(f"[POST-STARTUP][MEMORY][ERROR] {e}")
         return
 
-    # -----------------------------
-    # SEMANTIC CORE (UNIFIED)
-    # -----------------------------
+# -----------------------------
+# SEMANTIC CORE (CANONICAL)
+# -----------------------------
+if os.getenv("SEMANTIC_ENGINE_ENABLED") == "1":
     revision = os.getenv("K_REVISION")
 
     write_cognitive_state(
@@ -37,24 +38,20 @@ def _post_startup_worker():
 
     try:
         from ops.semantic.runtime_loader import load_semantic_engine
-
         loaded = load_semantic_engine()
-
-        if not loaded:
-            raise RuntimeError("Semantic engine not enabled or failed to load")
 
         write_cognitive_state(
             subsystem="semantic",
-            state="loaded",
+            state="loaded" if loaded else "error",
             revision=revision,
-            confidence="high",
+            confidence="high" if loaded else "medium",
             details={
-                "engine": "ops.semantic.engine",
-                "source": "runtime_loader"
+                "source": "post_startup",
+                "enabled": loaded
             }
         )
 
-        print("[POST-STARTUP][SEMANTIC] Loaded")
+        print(f"[POST-STARTUP][SEMANTIC] Loaded = {loaded}")
 
     except Exception as e:
         write_cognitive_state(
