@@ -35,12 +35,14 @@ def read_system_perception() -> Optional[Dict[str, Any]]:
         }
 
         # -----------------------------
-        # SEMANTIC (B12 – runtime governed)
+        # SEMANTIC (CANONICAL – state registry)
         # -----------------------------
         semantic_loaded = False
         try:
-            from ops.semantic.runtime_loader import semantic_is_loaded
-            semantic_loaded = semantic_is_loaded()
+            from ops.cognitive.state_registry import read_last_cognitive_state
+
+            semantic_state = read_last_cognitive_state("semantic")
+            semantic_loaded = semantic_state.get("state") == "loaded"
         except Exception:
             semantic_loaded = False
 
