@@ -1,12 +1,13 @@
+# routes/system_force_checkpoint.py
 from fastapi import APIRouter
 
-router = APIRouter(prefix="/ops/system", tags=["System"])
+router = APIRouter(prefix="/ops/system", tags=["system"])
+
 
 @router.post("/force_checkpoint")
-def force_checkpoint():
-    try:
-        from ops.cognitive.auto_checkpoint import write_revision_checkpoint
-        write_revision_checkpoint()
-        return {"status": "ok", "detail": "checkpoint written"}
-    except Exception as e:
-        return {"status": "error", "detail": str(e)}
+def force_checkpoint(payload: dict):
+    label = payload.get("label", "manual-checkpoint")
+
+    from ops.system.checkpoint_writer import write_checkpoint
+
+    return write_checkpoint(label)
