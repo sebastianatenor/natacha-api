@@ -220,6 +220,12 @@ def load_optional_routers():
         "system_proposals",
     )
 
+    safe_include(
+        app,
+        lambda: __import__("routes.system_generate_proposal", fromlist=["router"]).router,
+        "system_generate_proposal",
+    )
+
 # ================================================================
 # DEBUG (NO CRÍTICO)
 # ================================================================
