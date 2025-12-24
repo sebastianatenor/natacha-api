@@ -214,6 +214,12 @@ def load_optional_routers():
         "system_full_status",
     )
 
+    safe_include(
+        app,
+        lambda: __import__("routes.system_proposals", fromlist=["router"]).router,
+        "system_proposals",
+    )
+
 # ================================================================
 # DEBUG (NO CRÍTICO)
 # ================================================================
