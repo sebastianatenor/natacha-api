@@ -20,7 +20,8 @@ def get_baseline_internal():
             "expected": True,
         },
         "semantic": {
-            "expected_loaded": False,
+            # B12.1bis — semantic engine is now a REQUIRED capability
+            "expected_loaded": True,
         },
         "confidence": "high",
     }
