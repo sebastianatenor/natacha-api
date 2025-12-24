@@ -1,0 +1,30 @@
+{
+  "infrastructure": {
+    "cloud_run": "active",
+    "firestore": "active",
+    "openapi": "active"
+  },
+  "self_repair": {
+    "baseline": "implemented",
+    "perception": "implemented",
+    "drift_detection": "implemented",
+    "execution_policy": "implemented",
+    "auto_execution": "disabled"
+  },
+  "memory": {
+    "episodic": "active",
+    "procedural": "active",
+    "persistent_firestore": "active",
+    "semantic_embeddings": "implemented_inactive",
+    "vector_index": "implemented_inactive"
+  },
+  "cognition": {
+    "reasoning_core": "active",
+    "semantic_engine": "implemented_inactive",
+    "autonomy": "partial"
+  },
+  "snapshots": {
+    "daily_snapshot": "implemented_inactive",
+    "checkpoints": "implemented_inactive"
+  }
+}
