@@ -24,45 +24,47 @@ def _post_startup_worker():
         return
 
     # -----------------------------
-    # SEMANTIC CORE
+    # SEMANTIC CORE (UNIFIED)
     # -----------------------------
-    if os.getenv("NATACHA_SEMANTIC_STARTUP") == "1":
-        revision = os.getenv("K_REVISION")
+    revision = os.getenv("K_REVISION")
+
+    write_cognitive_state(
+        subsystem="semantic",
+        state="loading",
+        revision=revision,
+        confidence="medium"
+    )
+
+    try:
+        from ops.semantic.runtime_loader import load_semantic_engine
+
+        loaded = load_semantic_engine()
+
+        if not loaded:
+            raise RuntimeError("Semantic engine not enabled or failed to load")
 
         write_cognitive_state(
             subsystem="semantic",
-            state="loading",
+            state="loaded",
             revision=revision,
-            confidence="medium"
+            confidence="high",
+            details={
+                "engine": "ops.semantic.engine",
+                "source": "runtime_loader"
+            }
         )
 
-        try:
-            from unified_core.semantic_core import get_semantic_core
-            core = get_semantic_core()
-            core.ensure_loaded()
+        print("[POST-STARTUP][SEMANTIC] Loaded")
 
-            write_cognitive_state(
-                subsystem="semantic",
-                state="loaded",
-                revision=revision,
-                confidence="high",
-                details={
-                    "model": "sentence-transformers/all-MiniLM-L6-v2",
-                    "cache": "/tmp/huggingface"
-                }
-            )
-
-            print("[POST-STARTUP][SEMANTIC] Loaded")
-
-        except Exception as e:
-            write_cognitive_state(
-                subsystem="semantic",
-                state="error",
-                revision=revision,
-                confidence="medium",
-                details={"error": str(e)}
-            )
-            print(f"[POST-STARTUP][SEMANTIC][ERROR] {e}")
+    except Exception as e:
+        write_cognitive_state(
+            subsystem="semantic",
+            state="error",
+            revision=revision,
+            confidence="medium",
+            details={"error": str(e)}
+        )
+        print(f"[POST-STARTUP][SEMANTIC][ERROR] {e}")
 
     # -----------------------------
     # REVISION CHECKPOINT
@@ -71,7 +73,7 @@ def _post_startup_worker():
         write_cognitive_state(
             subsystem="revision_checkpoint",
             state="written",
-            revision=os.getenv("K_REVISION"),
+            revision=revision,
             confidence="high",
             details={
                 "timestamp": datetime.utcnow().isoformat(),
@@ -83,7 +85,7 @@ def _post_startup_worker():
         print(f"[POST-STARTUP][CHECKPOINT][ERROR] {e}")
 
     # -----------------------------
-    # COGNITIVE BOOT (B3)
+    # COGNITIVE BOOT
     # -----------------------------
     try:
         from ops.system.perception_provider import get_system_perception
@@ -105,7 +107,7 @@ def launch_post_startup():
     ).start()
 
     # -----------------------------
-    # DAILY SNAPSHOT (REAL STATE)
+    # DAILY SNAPSHOT
     # -----------------------------
     try:
         from ops.snapshots.daily_snapshot import write_daily_snapshot
