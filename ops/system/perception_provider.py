@@ -34,9 +34,14 @@ def read_system_perception() -> Optional[Dict[str, Any]]:
             "size_bytes": os.path.getsize(memory_path) if memory_exists else 0,
         }
 
+
         # -----------------------------
         # SEMANTIC (CANONICAL STATE)
         # -----------------------------
+        # NOTE (B12):
+        # Semantic cognitive state is CANONICAL and derived from timeline.
+        # Runtime loaders are observational only and must not downgrade cognition.
+
         semantic_loaded = False
         semantic_source = "unknown"
 
