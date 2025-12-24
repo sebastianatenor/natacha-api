@@ -1,4 +1,10 @@
 {
+  "meta": {
+    "project": "natacha-api",
+    "baseline_version": "B9",
+    "date": "2025-12-23",
+    "intent": "seal implemented capabilities"
+  },
   "infrastructure": {
     "cloud_run": "active",
     "firestore": "active",
