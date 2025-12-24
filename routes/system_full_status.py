@@ -50,21 +50,30 @@ def system_full_status(
     }
 
     # =========================
-    # Semantic (OBSERVATIONAL – NO DECLARATIVO)
+    # Semantic (CANONICAL — timeline)
     # =========================
-    semantic = {
-        "loaded": False,
-        "hf_token_present": bool(os.getenv("HF_TOKEN")),
-        "mode": "observational",
-    }
+    semantic_loaded = False
+    semantic_source = "unknown"
 
-    if include_semantic:
-        try:
-            from unified_core.semantic_core import get_semantic_core
-            core = get_semantic_core()
-            semantic["loaded"] = core.is_loaded()
-        except Exception:
-            semantic["loaded"] = False
+    try:
+        from ops.timeline.reader import read_events
+        events = read_events()
+
+        for ev in reversed(events):
+            if ev.get("subsystem") == "semantic":
+                semantic_loaded = ev.get("state") == "loaded"
+                semantic_source = "timeline"
+                break
+    except Exception:
+        semantic_loaded = False
+        semantic_source = "error"
+
+    semantic = {
+        "loaded": semantic_loaded,
+        "hf_token_present": bool(os.getenv("HF_TOKEN")),
+        "mode": "canonical",
+        "source": semantic_source,
+    }
 
     # =========================
     # Memory (CANONICAL)
