@@ -3,73 +3,47 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from ops.semantic import get_engine, semantic_status
+from ops.semantic.engine import get_engine
 from ops.semantic.gate import semantic_gate
 
-from ops.cognitive.approval_cache import (
-    proposal_fingerprint,
-    find_recent_decision,
-)
-
-router = APIRouter(prefix="/ops/semantic", tags=["semantic"])
+router = APIRouter()
 
 
-class SemanticRequest(BaseModel):
+class SemanticAnalyzePayload(BaseModel):
     text: str
 
 
-@router.post("/analyze")
-def semantic_analyze(payload: SemanticRequest):
-    engine = get_engine()
+@router.post("/ops/semantic/analyze")
+def semantic_analyze(payload: SemanticAnalyzePayload):
+    """
+    Semantic analyze endpoint — B16 SAFE
 
+    - Ejecuta análisis semántico
+    - Aplica semantic_gate
+    - NO pasa fingerprint manualmente
+    - Devuelve JSON siempre
+    """
+
+    engine = get_engine()
     if engine is None:
         return {
-            "status": "disabled",
-            "semantic": None,
-            "engine": semantic_status(),
+            "status": "error",
+            "reason": "semantic_engine_unavailable",
         }
 
     analysis = engine.analyze(payload.text)
 
-    # -------------------------------------------------
-    # B16.5 — Approval cache (deduplicación)
-    # -------------------------------------------------
-    fingerprint = proposal_fingerprint(
-        text=payload.text,
-        intent=analysis.signals.intent,
-        risk=analysis.signals.risk_level,
-        domains=analysis.signals.domains,
-    )
-
-    cached = find_recent_decision(fingerprint)
-    if cached:
-        return {
-            "status": "ok",
-            "semantic": analysis.dict(),
-            "gate": {
-                "gate": (
-                    "approved_cached"
-                    if cached["decision"] == "accepted"
-                    else "blocked_cached"
-                ),
-                "reason": "recent_human_decision",
-                "decision": cached["decision"],
-            },
-            "engine": semantic_status(),
-        }
-
-    # -------------------------------------------------
-    # Gate normal (crea proposal si corresponde)
-    # -------------------------------------------------
     gate_result = semantic_gate(
         analysis=analysis,
-        source="ops.semantic.analyze",
-        fingerprint=fingerprint,  # 👈 pasa fingerprint
+        source="api.semantic.analyze",
     )
 
     return {
         "status": "ok",
-        "semantic": analysis.dict(),
+        "analysis": {
+            "signals": analysis.signals.dict()
+            if hasattr(analysis.signals, "dict")
+            else analysis.signals,
+        },
         "gate": gate_result,
-        "engine": semantic_status(),
     }
