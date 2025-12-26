@@ -10,3 +10,17 @@ def collect_signals(
     signals += extract_semantic_signals(perception)
     signals += extract_memory_signals(status)
     return signals
+
+# Semantic signals (B16)
+try:
+    from ops.semantic.analyzer import analyze_texts
+
+    texts = []
+    if "recent_messages" in perception:
+        texts = perception["recent_messages"]
+
+    semantic_signals = analyze_texts(texts)
+    signals.extend(semantic_signals)
+
+except Exception:
+    pass

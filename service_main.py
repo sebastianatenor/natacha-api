@@ -244,6 +244,18 @@ def load_optional_routers():
         "system_decisions",
     )
 
+    safe_include(
+        app,
+        lambda: __import__("routes.system_semantic_init", fromlist=["router"]).router,
+        "system_semantic_init",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_semantic_analyze", fromlist=["router"]).router,
+        "system_semantic_analyze",
+    )
+
 # ================================================================
 # DEBUG (NO CRÍTICO)
 # ================================================================

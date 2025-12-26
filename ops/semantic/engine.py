@@ -1,65 +1,34 @@
 # ops/semantic/engine.py
 
-from typing import List
-import re
-import unicodedata
-
+import os
+from typing import Optional
 from sentence_transformers import SentenceTransformer
 
 from ops.semantic.schema import SemanticAnalysis, SemanticSignal
 from ops.semantic.state import SEMANTIC_STATE
 
+# -------------------------------------------------
+# Engine flags
+# -------------------------------------------------
+
+def semantic_enabled() -> bool:
+    return os.getenv("SEMANTIC_ENGINE_ENABLED", "0") == "1"
+
 
 # -------------------------------------------------
-# Helpers
+# Semantic Engine (heuristic + embeddings ready)
 # -------------------------------------------------
-
-def normalize(text: str) -> str:
-    """
-    - lowercase
-    - remove accents
-    """
-    text = text.lower()
-    return "".join(
-        c for c in unicodedata.normalize("NFD", text)
-        if unicodedata.category(c) != "Mn"
-    )
-
-
-# Raíces verbales (NO infinitivos)
-IMPLICIT_ACTION_ROOTS = [
-    "compr",
-    "pag",
-    "mand",
-    "envi",
-    "cre",
-    "borr",
-    "elimin",
-    "ejecut",
-    "activ",
-    "desactiv",
-    "automat",
-]
-
-AUTOMATION_MARKERS = [
-    "automaticamente",
-    "solo",
-    "sin preguntar",
-    "directamente",
-    "ya mismo",
-]
-
 
 class SemanticEngine:
     """
     Motor semántico PASIVO.
-    - Detecta intención implícita de acción
-    - NO decide
+    - Detecta intención implícita
+    - Puede usar heurística o embeddings
     - NO ejecuta
     """
 
     def __init__(self):
-        self.model = None
+        self.model: Optional[SentenceTransformer] = None
 
     def _lazy_load(self):
         if self.model is not None:
@@ -69,18 +38,32 @@ class SemanticEngine:
 
         SEMANTIC_STATE.loaded = True
         SEMANTIC_STATE.model_name = "all-MiniLM-L6-v2"
-        SEMANTIC_STATE.embedding_dim = self.model.get_sentence_embedding_dimension()
-
-    def _detect_implicit_action(self, text: str) -> bool:
-        t = normalize(text)
-
-        verb_hit = any(root in t for root in IMPLICIT_ACTION_ROOTS)
-        auto_hit = any(m in t for m in AUTOMATION_MARKERS)
-
-        return verb_hit and auto_hit
+        SEMANTIC_STATE.embedding_dim = (
+            self.model.get_sentence_embedding_dimension()
+        )
 
     def analyze(self, text: str) -> SemanticAnalysis:
-        implicit_action = self._detect_implicit_action(text)
+        # Heurística básica (tu comportamiento original)
+        t = text.lower()
+
+        imperative_markers = [
+            "hacelo", "hace", "hacé",
+            "ejecuta", "ejecutá",
+            "activa", "activá",
+            "corre", "corré",
+        ]
+
+        automation_markers = [
+            "automaticamente",
+            "sin preguntar",
+            "directamente",
+            "ya mismo",
+        ]
+
+        implicit_action = (
+            any(v in t for v in imperative_markers)
+            and any(m in t for m in automation_markers)
+        )
 
         if implicit_action:
             signals = SemanticSignal(
@@ -89,22 +72,14 @@ class SemanticEngine:
                 domains=["automation"],
                 confidence=0.9,
             )
-
-            return SemanticAnalysis(
-                text=text,
-                signals=signals,
-                model_used="heuristic-v2",
+        else:
+            intent = "question" if "?" in text else "statement"
+            signals = SemanticSignal(
+                intent=intent,
+                risk_level="low",
+                domains=[],
+                confidence=0.6,
             )
-
-        # Fallback normal
-        intent = "question" if "?" in text else "statement"
-
-        signals = SemanticSignal(
-            intent=intent,
-            risk_level="low",
-            domains=[],
-            confidence=0.6,
-        )
 
         return SemanticAnalysis(
             text=text,
@@ -113,4 +88,30 @@ class SemanticEngine:
         )
 
 
-semantic_engine = SemanticEngine()
+# -------------------------------------------------
+# Singleton + status (B16 requirement)
+# -------------------------------------------------
+
+_ENGINE: Optional[SemanticEngine] = None
+
+
+def get_engine() -> Optional[SemanticEngine]:
+    global _ENGINE
+
+    if not semantic_enabled():
+        return None
+
+    if _ENGINE is None:
+        _ENGINE = SemanticEngine()
+
+    return _ENGINE
+
+
+def semantic_status():
+    return {
+        "enabled": semantic_enabled(),
+        "loaded": SEMANTIC_STATE.loaded,
+        "model": SEMANTIC_STATE.model_name,
+        "embedding_dim": SEMANTIC_STATE.embedding_dim,
+        "mode": os.getenv("SEMANTIC_ENGINE_MODE", "heuristic"),
+    }
