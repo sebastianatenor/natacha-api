@@ -238,6 +238,12 @@ def load_optional_routers():
         "system_proposal_lifecycle",
     )
 
+    safe_include(
+        app,
+        lambda: __import__("routes.system_decisions", fromlist=["router"]).router,
+        "system_decisions",
+    )
+
 # ================================================================
 # DEBUG (NO CRÍTICO)
 # ================================================================
