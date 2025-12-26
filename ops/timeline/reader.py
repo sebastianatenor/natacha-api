@@ -1,25 +1,17 @@
-# ops/timeline/reader.py
 import json
-from typing import List, Dict, Any
-
 from ops.timeline.utils import get_timeline_path
 
-
-def read_events() -> List[Dict[str, Any]]:
+def read_events():
     path = get_timeline_path()
-
-    if not path.exists():
-        return []
-
     events = []
-    with path.open("r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            try:
+
+    try:
+        with open(path, "r") as f:
+            for line in f:
+                if not line.strip():
+                    continue
                 events.append(json.loads(line))
-            except Exception:
-                continue
+    except FileNotFoundError:
+        pass
 
     return events

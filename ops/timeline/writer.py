@@ -1,21 +1,18 @@
-# ops/timeline/writer.py
-import json
+import uuid
 from datetime import datetime
-from typing import Dict, Any
-
 from ops.timeline.utils import get_timeline_path
-
+import json
 
 def write_event(
-    *,
     kind: str,
     subsystem: str,
     state: str,
     revision: str,
-    confidence: float,
-    details: Dict[str, Any],
+    confidence,
+    details: dict,
 ):
     event = {
+        "event_id": str(uuid.uuid4()),  # ✅ CLAVE
         "timestamp": datetime.utcnow().isoformat() + "Z",
         "kind": kind,
         "subsystem": subsystem,
@@ -26,9 +23,7 @@ def write_event(
     }
 
     path = get_timeline_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-
-    with path.open("a", encoding="utf-8") as f:
+    with open(path, "a") as f:
         f.write(json.dumps(event) + "\n")
 
     return event

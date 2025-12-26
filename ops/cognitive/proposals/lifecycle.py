@@ -1,59 +1,64 @@
 # ops/cognitive/proposals/lifecycle.py
-from typing import Dict, Any, List
-from datetime import datetime, timedelta
-
+from typing import Dict, Any
 from ops.timeline.reader import read_events
-from .utils import compute_proposal_hash
+from ops.timeline.writer import write_event
 
 
-def enrich_with_lifecycle(
-    proposals: List[Dict[str, Any]],
-    ttl_days: int = 7,
-) -> List[Dict[str, Any]]:
+VALID_TRANSITIONS = {
+    "proposed": {"accepted", "rejected"},
+    "accepted": set(),
+    "rejected": set(),
+}
+
+
+def _latest_state(proposal_id: str) -> str | None:
+    events = read_events()
+    for e in reversed(events):
+        if e.get("kind") == "cognitive_proposal_lifecycle":
+            d = e.get("details", {})
+            if d.get("proposal_id") == proposal_id:
+                return d.get("new_state")
+    return None
+
+
+def transition_proposal(
+    proposal_id: str,
+    new_state: str,
+    actor: str,
+    rationale: str,
+    revision: str,
+) -> Dict[str, Any]:
     """
-    Adds lifecycle metadata:
-    - dedupe
-    - first_seen / last_seen
-    - occurrences
-    - expired
+    Append-only lifecycle transition.
     """
+    current = _latest_state(proposal_id) or "proposed"
 
-    now = datetime.utcnow()
-    timeline = read_events()
+    if new_state not in VALID_TRANSITIONS.get(current, set()):
+        return {
+            "status": "error",
+            "error": "invalid_transition",
+            "current": current,
+            "requested": new_state,
+        }
 
-    existing = {
-        e["details"].get("proposal_hash"): e
-        for e in timeline
-        if e.get("kind") == "cognitive_proposal"
+    write_event(
+        kind="cognitive_proposal_lifecycle",
+        subsystem="proposal",
+        state=new_state,
+        revision=revision,
+        confidence=1.0,
+        details={
+            "proposal_id": proposal_id,
+            "previous_state": current,
+            "new_state": new_state,
+            "actor": actor,
+            "rationale": rationale,
+        },
+    )
+
+    return {
+        "status": "ok",
+        "proposal_id": proposal_id,
+        "from": current,
+        "to": new_state,
     }
-
-    enriched: List[Dict[str, Any]] = []
-
-    for p in proposals:
-        h = compute_proposal_hash(p)
-        ts = now.isoformat() + "Z"
-
-        if h in existing:
-            prev = existing[h]["details"]
-            first_seen = prev.get("first_seen", prev.get("timestamp"))
-            occurrences = prev.get("occurrences", 1) + 1
-        else:
-            first_seen = ts
-            occurrences = 1
-
-        expired = False
-        if first_seen:
-            age = now - datetime.fromisoformat(first_seen.replace("Z", ""))
-            expired = age > timedelta(days=ttl_days)
-
-        p.update({
-            "proposal_hash": h,
-            "first_seen": first_seen,
-            "last_seen": ts,
-            "occurrences": occurrences,
-            "expired": expired,
-        })
-
-        enriched.append(p)
-
-    return enriched
