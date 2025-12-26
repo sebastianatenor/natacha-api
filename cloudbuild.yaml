@@ -1,13 +1,10 @@
 steps:
-  # STEP 0 — Build & push ONLY (deploy desactivado a propósito)
   - name: 'gcr.io/kaniko-project/executor:v1.23.2'
     args:
       - --destination=us-central1-docker.pkg.dev/$PROJECT_ID/natacha/natacha-api:$BUILD_ID
-      - --cache=true
-      - --cache-repo=us-central1-docker.pkg.dev/$PROJECT_ID/natacha/natacha-api/cache
+      - --cache=false
       - --use-new-run
       - --snapshotMode=time
-      - --compressed-caching=true
       - --dockerfile=Dockerfile
 
 options:
