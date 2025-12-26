@@ -2,30 +2,34 @@
 
 from typing import Optional, Dict, Any
 
-from ops.cognitive.proposals.writer import write_proposal
-from ops.cognitive.decisions.resolver import is_proposal_accepted
 from ops.semantic.schema import SemanticAnalysis
+from ops.semantic.fingerprint import semantic_fingerprint
+from ops.semantic.normalize import normalize_semantic_signals
 
+from ops.cognitive.proposals.writer import write_proposal
+from ops.cognitive.decisions.resolver import is_fingerprint_accepted
 
 def semantic_gate(
     analysis: SemanticAnalysis,
     source: str = "semantic.analyze",
 ) -> Optional[Dict[str, Any]]:
     """
-    Semantic Gate (B16.4)
+    Semantic Gate — B16 FINAL
 
     - NO ejecuta acciones
     - Detecta acciones implícitas de alto riesgo
+    - IDEMPOTENTE (fingerprint)
     - Bloquea por defecto
-    - Permite continuar SOLO si existe una decisión ACCEPTED
+    - Permite continuar SOLO si existe decisión ACCEPTED
     """
 
-    signals = analysis.signals
+    intent, risk_level = normalize_semantic_signals(analysis)
 
-    if (
-        signals.intent == "implicit_action"
-        and signals.risk_level == "high"
-    ):
+    # 🔒 Gate solo para acciones implícitas de alto riesgo
+    if intent == "implicit_action" and risk_level == "high":
+
+        fingerprint = semantic_fingerprint(analysis)
+
         proposal_data = {
             "title": "Implicit high-risk action detected",
             "description": (
@@ -38,15 +42,16 @@ def semantic_gate(
             ),
             "kind": "system",
             "status": "proposed",
-            "confidence": signals.confidence,
-            "source_revision": "B16.4",
+            "confidence": getattr(analysis.signals, "confidence", 0.9),
+            "source_revision": "B16",
             "source": source,
+            "fingerprint": fingerprint,
         }
 
         proposal = write_proposal(proposal_data)
 
-        # 🔐 B16.4 — decision-based unlock
-        if is_proposal_accepted(proposal.id):
+        # 🔓 Unlock SOLO con decisión ACCEPTED
+        if is_fingerprint_accepted(fingerprint):
             return {
                 "gate": "allowed",
                 "proposal_id": proposal.id,
@@ -59,4 +64,5 @@ def semantic_gate(
             "reason": "implicit_high_risk_action",
         }
 
+    # No aplica gate
     return None

@@ -3,23 +3,29 @@
 from ops.timeline.reader import read_events
 
 
-def is_proposal_accepted(proposal_id: str) -> bool:
+def is_fingerprint_accepted(fingerprint: str) -> bool:
     """
-    Returns True if the proposal has an ACCEPTED decision.
-    Timeline is the source of truth.
+    B16 — Decision resolver (fingerprint-based)
+
+    Una acción queda habilitada si existe una decisión ACCEPTED
+    con el mismo fingerprint semántico.
     """
+
+    if not fingerprint:
+        return False
 
     events = read_events()
 
-    for e in reversed(events):
+    for e in events:
         if e.get("kind") != "cognitive_decision":
             continue
 
-        d = e.get("details", {})
-        if (
-            d.get("proposal_id") == proposal_id
-            and d.get("decision") == "accepted"
-        ):
+        details = e.get("details", {})
+
+        if details.get("decision") != "accepted":
+            continue
+
+        if details.get("fingerprint") == fingerprint:
             return True
 
     return False

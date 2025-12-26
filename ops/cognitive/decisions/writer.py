@@ -1,4 +1,5 @@
 # ops/cognitive/decisions/writer.py
+
 from ops.timeline.writer import write_event
 from .model import CognitiveDecision
 
@@ -8,7 +9,7 @@ def write_decision(decision: CognitiveDecision):
         kind="cognitive_decision",
         subsystem="decision",
         state=decision.decision,
-        revision="B15",
+        revision="B16",
         confidence=decision.confidence,
         details=decision.dict(),
     )

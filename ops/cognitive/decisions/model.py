@@ -1,21 +1,23 @@
 # ops/cognitive/decisions/model.py
-from typing import Literal, Optional
+
 from pydantic import BaseModel, Field
+from uuid import uuid4
 from datetime import datetime
-import uuid
-
-
-DecisionState = Literal["accepted", "rejected", "deferred"]
+from typing import Optional
 
 
 class CognitiveDecision(BaseModel):
-    decision_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    decision_id: str = Field(default_factory=lambda: str(uuid4()))
     proposal_id: str
 
-    decision: DecisionState
+    # 🔑 CLAVE B16 FINAL
+    fingerprint: str
+
+    decision: str  # accepted | rejected
     reason: Optional[str] = None
+    confidence: float = 0.5
 
     decided_by: str = "human"
-    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
-
-    confidence: Optional[float] = None
+    timestamp: str = Field(
+        default_factory=lambda: datetime.utcnow().isoformat() + "Z"
+    )

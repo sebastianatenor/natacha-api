@@ -9,7 +9,20 @@ router = APIRouter(prefix="/ops/cognitive", tags=["cognitive"])
 
 @router.post("/decide")
 def decide(payload: dict):
-    decision = CognitiveDecision(**payload)
+    """
+    B16.5
+    - Normaliza el payload
+    - Asegura fingerprint si viene
+    """
+
+    decision_data = dict(payload)
+
+    # 🔑 Si viene fingerprint, lo preservamos
+    # (si no viene, queda None y no rompe nada)
+    if "fingerprint" not in decision_data:
+        decision_data["fingerprint"] = None
+
+    xdecision = CognitiveDecision(**payload)
     return write_decision(decision)
 
 
