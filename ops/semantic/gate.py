@@ -4,17 +4,17 @@ from typing import Optional, Dict, Any
 
 from ops.semantic.schema import SemanticAnalysis
 from ops.semantic.fingerprint import semantic_fingerprint
-from ops.semantic.normalize import normalize_semantic_signals
-
 from ops.cognitive.proposals.writer import write_proposal
 from ops.cognitive.decisions.resolver import is_fingerprint_accepted
+
 
 def semantic_gate(
     analysis: SemanticAnalysis,
     source: str = "semantic.analyze",
+    **_ignored_kwargs,  # ⬅️ compat con prod / routers viejos
 ) -> Optional[Dict[str, Any]]:
     """
-    Semantic Gate — B16 FINAL
+    Semantic Gate — B16 FINAL (PROD SAFE)
 
     - NO ejecuta acciones
     - Detecta acciones implícitas de alto riesgo
@@ -23,9 +23,11 @@ def semantic_gate(
     - Permite continuar SOLO si existe decisión ACCEPTED
     """
 
-    intent, risk_level = normalize_semantic_signals(analysis)
+    signals = analysis.signals
 
-    # 🔒 Gate solo para acciones implícitas de alto riesgo
+    intent = str(getattr(signals, "intent", "")).lower()
+    risk_level = str(getattr(signals, "risk_level", "")).lower()
+
     if intent == "implicit_action" and risk_level == "high":
 
         fingerprint = semantic_fingerprint(analysis)
@@ -42,7 +44,7 @@ def semantic_gate(
             ),
             "kind": "system",
             "status": "proposed",
-            "confidence": getattr(analysis.signals, "confidence", 0.9),
+            "confidence": float(getattr(signals, "confidence", 0.9)),
             "source_revision": "B16",
             "source": source,
             "fingerprint": fingerprint,
@@ -50,7 +52,6 @@ def semantic_gate(
 
         proposal = write_proposal(proposal_data)
 
-        # 🔓 Unlock SOLO con decisión ACCEPTED
         if is_fingerprint_accepted(fingerprint):
             return {
                 "gate": "allowed",
@@ -64,5 +65,4 @@ def semantic_gate(
             "reason": "implicit_high_risk_action",
         }
 
-    # No aplica gate
     return None
