@@ -16,26 +16,15 @@ class SemanticAnalyzePayload(BaseModel):
 @router.post("/analyze")
 def semantic_analyze(payload: SemanticAnalyzePayload):
     engine = get_engine()
-    if engine is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Semantic engine not available",
-        )
 
-    try:
-        analysis = engine.analyze(payload.text)
+    analysis = engine.analyze(payload.text)
 
-        gate_result = semantic_gate(
-            analysis,
-            source="api.semantic.analyze",
-        )
-
-        return {
-            "status": "ok",
-            "analysis": analysis.dict(),
-            "gate": gate_result,
-        }
-
+    return {
+        "status": "ok",
+        "semantic": analysis.dict(),
+        "gate": None,
+        "engine": semantic_status(),
+    }
     except Exception as e:
         # 🔒 NUNCA más text/plain
         raise HTTPException(
