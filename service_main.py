@@ -256,6 +256,12 @@ def load_optional_routers():
         "system_semantic_analyze",
     )
 
+    safe_include(
+        app,
+        lambda: __import__("v17.system.router", fromlist=["router"]).router,
+        "v17_orchestrator",
+    )
+
 # ================================================================
 # DEBUG (NO CRÍTICO)
 # ================================================================
