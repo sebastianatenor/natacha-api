@@ -159,12 +159,12 @@ def load_optional_routers():
         "system_perception",
     )
 
-    # ⚠️ ESTE ES EL QUE ESTABA ROMPIENDO TODO
-    safe_include(
-        app,
-        lambda: __import__("routes.memory_index", fromlist=["router"]).router,
-        "memory_index",
-    )
+#     ⚠️ ESTE ES EL QUE ESTABA ROMPIENDO TODO
+#    safe_include(
+#        app,
+#        lambda: __import__("routes.memory_index", fromlist=["router"]).router,
+#        "memory_index",
+#    )
 
     safe_include(
         app,
