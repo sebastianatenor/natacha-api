@@ -274,6 +274,12 @@ def load_optional_routers():
         "v17_shadow_orchestrator",
     )
 
+    safe_include(
+        app,
+        lambda: __import__("routes.system_checkpoint", fromlist=["router"]).router,
+        "system_checkpoint",
+    )
+
 # ================================================================
 # DEBUG (NO CRÍTICO)
 # ================================================================
@@ -316,6 +322,13 @@ def on_startup():
         print("[SUPERVISOR] cognitive supervisor running")
     except Exception as e:
         print(f"[SUPERVISOR][WARN] not started: {e}")
+
+    try:
+        from ops.startup.snapshot_scheduler import start_snapshot_scheduler
+        start_snapshot_scheduler()
+        print("[SNAPSHOT] daily scheduler active")
+    except Exception as e:
+        print(f"[SNAPSHOT][WARN] not started: {e}")
 
     print("[STARTUP] baseline ready")
 
