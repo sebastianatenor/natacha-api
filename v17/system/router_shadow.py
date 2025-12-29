@@ -14,21 +14,20 @@ class OrchestratePayload(BaseModel):
 
 @router.post("/orchestrate_shadow")
 def orchestrate_shadow(payload: OrchestratePayload):
-    try:
-        decision = orchestrate_with_shadow(payload.text)
+    decision = orchestrate_with_shadow(payload.text)
 
-        return {
-            "semantic": decision.semantic.model_dump(),
-            "gate": decision.gate.model_dump(),
-            "required_action": decision.required_action,
-            "engine": "v17",
-            "mode": "shadow",
-        }
-
-    except Exception as e:
-        return {
-            "error": "shadow_failed",
-            "detail": str(e),
-            "engine": "v17",
-            "mode": "shadow",
-        }
+    return {
+        "semantic": {
+            "intent": decision.semantic.intent,
+            "risk_level": decision.semantic.risk_level,
+            "confidence": decision.semantic.confidence,
+            "domains": decision.semantic.domains,
+        },
+        "gate": {
+            "blocked": decision.gate.blocked,
+            "reason": decision.gate.reason,
+        },
+        "required_action": decision.required_action,
+        "engine": "v17",
+        "mode": "shadow",
+    }
