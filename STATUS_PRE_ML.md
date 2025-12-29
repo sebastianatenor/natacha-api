@@ -21,3 +21,10 @@ Engine: v17 (shadow)
 ## Próximo paso autorizado
 → Diseño de semantic engine + vector memory
 → Sin ejecución hasta validación conceptual
+
+## Semantic Engine
+- Initialized: YES
+- Mode: heuristic_only
+- Vectorization: disabled
+- ML training: disabled
+- Bootstrap event: semantic_state
