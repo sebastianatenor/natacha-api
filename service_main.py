@@ -91,6 +91,10 @@ from routes.get_system_state import router as get_system_state_router
 
 app.include_router(health_router)
 app.include_router(get_system_state_router)
+app.include_router(
+    __import__("routes.memory_recent", fromlist=["router"]).router
+)
+
 
 print("[ROUTER] core loaded")
 
@@ -290,6 +294,12 @@ def load_optional_routers():
         app,
         lambda: __import__("routes.system_state_snapshot", fromlist=["router"]).router,
         "system_state_snapshot",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_semantic", fromlist=["router"]).router,
+        "system_semantic",
     )
 
 # ================================================================
