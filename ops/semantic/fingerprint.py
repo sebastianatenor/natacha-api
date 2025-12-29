@@ -7,18 +7,20 @@ from ops.semantic.schema import SemanticAnalysis
 
 def semantic_fingerprint(analysis: SemanticAnalysis) -> str:
     """
-    Genera un fingerprint determinístico para un análisis semántico.
+    B16 CANONICAL fingerprint
 
-    - Mismo texto + mismas señales → mismo hash
-    - Garantiza idempotencia del Semantic Gate (B16)
+    - SIEMPRE retorna fingerprint
+    - NO depende de embeddings
+    - Determinístico
+    - Idempotente
     """
 
     payload = {
-        "text": analysis.text,
-        "intent": analysis.signals.intent,
-        "risk_level": analysis.signals.risk_level,
-        "domains": analysis.signals.domains,
-        "model": analysis.model_used,
+        "intent": getattr(analysis.signals, "intent", ""),
+        "risk_level": getattr(analysis.signals, "risk_level", ""),
+        "domains": getattr(analysis.signals, "domains", []),
+        "confidence": round(getattr(analysis.signals, "confidence", 0), 2),
+        "text": analysis.text.strip().lower(),
     }
 
     raw = json.dumps(payload, sort_keys=True).encode("utf-8")

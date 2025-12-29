@@ -101,8 +101,10 @@ print("[ROUTER] core loaded")
 # ================================================================
 # OPTIONAL / EVOLUTIVE ROUTERS (AISLADOS)
 # ================================================================
+
 def load_optional_routers():
 
+    # --- SYSTEM / OPS ---
     safe_include(
         app,
         lambda: __import__("routes.system_daily_snapshot", fromlist=["router"]).router,
@@ -113,169 +115,6 @@ def load_optional_routers():
         app,
         lambda: __import__("routes.system_force_checkpoint", fromlist=["router"]).router,
         "system_force_checkpoint",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_diagnose", fromlist=["router"]).router,
-        "system_diagnose",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_narrative", fromlist=["router"]).router,
-        "system_narrative",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_memory_diagnostic_v2", fromlist=["router"]).router,
-        "memory_diagnostic_v2",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.memory_recent", fromlist=["router"]).router,
-        "memory_recent",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.memory_recall", fromlist=["router"]).router,
-        "memory_recall",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.memory_note", fromlist=["router"]).router,
-        "memory_note",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_state.router", fromlist=["router"]).router,
-        "system_state",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_perception.router", fromlist=["router"]).router,
-        "system_perception",
-    )
-
-#     ⚠️ ESTE ES EL QUE ESTABA ROMPIENDO TODO
-#    safe_include(
-#        app,
-#        lambda: __import__("routes.memory_index", fromlist=["router"]).router,
-#        "memory_index",
-#    )
-
-    safe_include(
-        app,
-        lambda: __import__("ops.agent.interact", fromlist=["router"]).router,
-        "agent_interact",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.natacha_routes", fromlist=["router"]).router,
-        "natacha_routes",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("ops.timeline.router", fromlist=["router"]).router,
-        "timeline",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("ops.symbolic.router", fromlist=["router"]).router,
-        "symbolic",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("ops.semantic.routes", fromlist=["router"]).router,
-        "semantic",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_baseline.router", fromlist=["router"]).router,
-        "system_baseline",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_self_repair.router", fromlist=["router"]).router,
-        "system_self_repair",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_full_status", fromlist=["router"]).router,
-        "system_full_status",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_proposals", fromlist=["router"]).router,
-        "system_proposals",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_generate_proposal", fromlist=["router"]).router,
-        "system_generate_proposal",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_signals", fromlist=["router"]).router,
-        "system_signals",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_proposal_lifecycle", fromlist=["router"]).router,
-        "system_proposal_lifecycle",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_decisions", fromlist=["router"]).router,
-        "system_decisions",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_semantic_init", fromlist=["router"]).router,
-        "system_semantic_init",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_semantic_analyze", fromlist=["router"]).router,
-        "system_semantic_analyze",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("v17.system.router", fromlist=["router"]).router,
-        "v17_orchestrator",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("v17.system.compare", fromlist=["router"]).router,
-        "v17_compare",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("v17.system.router_shadow", fromlist=["router"]).router,
-        "v17_shadow_orchestrator",
     )
 
     safe_include(
@@ -298,13 +137,127 @@ def load_optional_routers():
 
     safe_include(
         app,
+        lambda: __import__("routes.system_diagnose", fromlist=["router"]).router,
+        "system_diagnose",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_full_status", fromlist=["router"]).router,
+        "system_full_status",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_baseline.router", fromlist=["router"]).router,
+        "system_baseline",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_self_repair.router", fromlist=["router"]).router,
+        "system_self_repair",
+    )
+
+    # --- MEMORY ---
+    safe_include(
+        app,
+        lambda: __import__("routes.memory_recent", fromlist=["router"]).router,
+        "memory_recent",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.memory_recall", fromlist=["router"]).router,
+        "memory_recall",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.memory_note", fromlist=["router"]).router,
+        "memory_note",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_memory_diagnostic_v2", fromlist=["router"]).router,
+        "memory_diagnostic_v2",
+    )
+
+    # --- SEMANTIC ---
+    safe_include(
+        app,
         lambda: __import__("routes.system_semantic", fromlist=["router"]).router,
         "system_semantic",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_semantic_init", fromlist=["router"]).router,
+        "system_semantic_init",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_semantic_analyze", fromlist=["router"]).router,
+        "system_semantic_analyze",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("ops.semantic.routes", fromlist=["router"]).router,
+        "semantic_ops",
+    )
+
+    # --- SYMBOLIC / TIMELINE ---
+    safe_include(
+        app,
+        lambda: __import__("ops.symbolic.router", fromlist=["router"]).router,
+        "symbolic",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("ops.timeline.router", fromlist=["router"]).router,
+        "timeline",
+    )
+
+    # --- AGENT ---
+    safe_include(
+        app,
+        lambda: __import__("ops.agent.interact", fromlist=["router"]).router,
+        "agent_interact",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.natacha_routes", fromlist=["router"]).router,
+        "natacha_routes",
+    )
+
+    # --- V17 ENGINE ---
+    safe_include(
+        app,
+        lambda: __import__("v17.system.router", fromlist=["router"]).router,
+        "v17_orchestrator",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("v17.system.router_shadow", fromlist=["router"]).router,
+        "v17_shadow_orchestrator",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("v17.system.compare", fromlist=["router"]).router,
+        "v17_compare",
     )
 
 # ================================================================
 # DEBUG (NO CRÍTICO)
 # ================================================================
+
 @app.get("/__debug/memory_recent")
 def debug_memory_recent(limit: int = 20):
     from ops.timeline.reader import read_events
@@ -314,12 +267,6 @@ def debug_memory_recent(limit: int = 20):
         "count": min(len(events), limit),
         "events": events[-limit:]
     }
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_snapshot", fromlist=["router"]).router,
-        "system_snapshot",
-    )
 
 # ================================================================
 # STARTUP

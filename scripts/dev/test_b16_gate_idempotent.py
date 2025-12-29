@@ -1,5 +1,7 @@
 # scripts/dev/test_b16_gate_idempotent.py
 
+import os
+
 from ops.semantic.engine import get_engine
 from ops.semantic.gate import semantic_gate
 from ops.cognitive.decisions.writer import write_decision
@@ -9,7 +11,20 @@ from ops.semantic.fingerprint import semantic_fingerprint
 
 TEXT = "hacelo automaticamente sin preguntar"
 
+
+def reset_timeline():
+    """
+    Asegura aislamiento total del test.
+    Limpia cualquier decisión/proposal previa persistida.
+    """
+    path = os.environ.get("NATACHA_TIMELINE_PATH", ".dev_timeline.jsonl")
+    open(path, "w").close()
+
+
 def test_gate_idempotent():
+    # 🔑 CLAVE: aislamiento de estado
+    reset_timeline()
+
     engine = get_engine()
     assert engine is not None, "Semantic engine not available"
 
@@ -20,10 +35,10 @@ def test_gate_idempotent():
     assert gate1 is not None
     assert gate1["gate"] == "blocked"
 
-    proposal_id = gate1["proposal_id"]   # 👈 ESTA ES LA LÍNEA CLAVE
+    proposal_id = gate1["proposal_id"]
     fingerprint = semantic_fingerprint(analysis)
-    
-    print("Blocked with proposal:", gate1["proposal_id"])
+
+    print("Blocked with proposal:", proposal_id)
 
     # 2) Aceptar proposal (decisión humana)
     decision = CognitiveDecision(
@@ -41,7 +56,7 @@ def test_gate_idempotent():
     assert gate2 is not None
     assert gate2["gate"] == "allowed"
     assert gate2["proposal_id"] == proposal_id
-    
+
     print("Allowed with same proposal:", proposal_id)
 
     # 4) Verificar que NO se creó proposal nueva
@@ -54,6 +69,7 @@ def test_gate_idempotent():
     assert len(proposals) == 1, f"Expected 1 proposal, got {len(proposals)}"
 
     print("PASS: Gate is idempotent")
+
 
 if __name__ == "__main__":
     test_gate_idempotent()

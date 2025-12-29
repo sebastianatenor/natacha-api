@@ -2,6 +2,12 @@
 
 from v17.system.orchestrator import orchestrate
 from ops.timeline.write_shadow_ml import write_shadow_ml_event
+from ops.semantic.semantic_linker import link_semantic
+
+link_semantic(
+    reference=text,
+    domains=decision.semantic.domains
+)
 
 
 def orchestrate_with_shadow(text: str):

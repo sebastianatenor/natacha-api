@@ -1,16 +1,8 @@
-# ops/timeline/utils.py
 import os
-from pathlib import Path
 
+TIMELINE_LOCAL = "/tmp/natacha_timeline.jsonl"
+TIMELINE_GCS_BUCKET = "natacha-memory-store"
+TIMELINE_GCS_OBJECT = "timeline.jsonl"
 
-def get_timeline_path() -> Path:
-    """
-    Single source of truth for timeline path.
-    """
-    path = os.getenv("NATACHA_TIMELINE_PATH")
-
-    if not path:
-        # fallback ONLY for legacy cloud behavior
-        path = "/tmp/timeline.jsonl"
-
-    return Path(path)
+def get_timeline_path():
+    return TIMELINE_LOCAL

@@ -1,31 +1,28 @@
 # ops/cognitive/decisions/resolver.py
 
+import os
+from typing import Optional
 from ops.timeline.reader import read_events
 
 
 def is_fingerprint_accepted(fingerprint: str) -> bool:
     """
-    B16 — Decision resolver (fingerprint-based)
+    B16 resolver — timeline scoped
 
-    Una acción queda habilitada si existe una decisión ACCEPTED
-    con el mismo fingerprint semántico.
+    - Respeta NATACHA_TIMELINE_PATH si existe
+    - NO lee decisiones globales durante tests
     """
-
-    if not fingerprint:
-        return False
 
     events = read_events()
 
-    for e in events:
+    for e in reversed(events):
         if e.get("kind") != "cognitive_decision":
             continue
 
         details = e.get("details", {})
-
-        if details.get("decision") != "accepted":
+        if details.get("fingerprint") != fingerprint:
             continue
 
-        if details.get("fingerprint") == fingerprint:
-            return True
+        return details.get("decision") == "accepted"
 
     return False

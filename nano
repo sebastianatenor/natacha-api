@@ -1,0 +1,19 @@
+from datetime import datetime
+from ops.system.state_aggregator import compute_system_state
+from ops.timeline.writer import write_event
+
+def write_snapshot(reason: str = "manual"):
+    state = compute_system_state()
+
+    write_event(
+        kind="snapshot",
+        subsystem="system",
+        state="captured",
+        revision="v17",
+        confidence=0.8,
+        details={
+            "timestamp": datetime.utcnow().isoformat(),
+            "reason": reason,
+            "state": state,
+        }
+    )
