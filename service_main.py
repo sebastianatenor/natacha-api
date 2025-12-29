@@ -262,6 +262,18 @@ def load_optional_routers():
         "v17_orchestrator",
     )
 
+    safe_include(
+        app,
+        lambda: __import__("v17.system.compare", fromlist=["router"]).router,
+        "v17_compare",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("v17.system.router_shadow", fromlist=["router"]).router,
+        "v17_shadow_orchestrator",
+    )
+
 # ================================================================
 # DEBUG (NO CRÍTICO)
 # ================================================================
