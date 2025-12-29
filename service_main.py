@@ -280,6 +280,18 @@ def load_optional_routers():
         "system_checkpoint",
     )
 
+    safe_include(
+        app,
+        lambda: __import__("routes.system_snapshot", fromlist=["router"]).router,
+        "system_snapshot",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_state_snapshot", fromlist=["router"]).router,
+        "system_state_snapshot",
+    )
+
 # ================================================================
 # DEBUG (NO CRÍTICO)
 # ================================================================
@@ -292,6 +304,12 @@ def debug_memory_recent(limit: int = 20):
         "count": min(len(events), limit),
         "events": events[-limit:]
     }
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_snapshot", fromlist=["router"]).router,
+        "system_snapshot",
+    )
 
 # ================================================================
 # STARTUP
