@@ -1,22 +1,20 @@
 # ops/timeline/write_shadow_ml.py
 
-from datetime import datetime
-from typing import Dict, Any
-
 from ops.timeline.writer import write_event
 
 
-def write_shadow_ml_event(payload: Dict[str, Any]) -> None:
+def write_shadow_ml_event(payload: dict):
     """
-    Shadow ML logging.
-    No afecta decisiones.
-    No ejecuta acciones.
+    Shadow ML logging (NO side effects)
+
+    Adapta el payload v17 al contrato estable del timeline.
     """
 
-    event = {
-        "kind": "shadow_ml_sample",
-        "timestamp": datetime.utcnow().isoformat(),
-        "payload": payload,
-    }
-
-    write_event(event)
+    write_event(
+        kind="shadow_ml_sample",
+        subsystem="v17",
+        state="observed",
+        revision=payload.get("engine", "v17"),
+        confidence=payload.get("semantic", {}).get("confidence", 0.0),
+        details=payload,
+    )
