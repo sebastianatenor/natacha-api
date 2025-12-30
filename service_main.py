@@ -254,6 +254,12 @@ def load_optional_routers():
         "v17_compare",
     )
 
+    safe_include(
+        app,
+        lambda: __import__("routes.system_shadow_auto_cycle", fromlist=["router"]).router,
+        "system_shadow_auto_cycle",
+    )
+
 # ================================================================
 # DEBUG (NO CRÍTICO)
 # ================================================================
