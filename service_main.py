@@ -260,6 +260,54 @@ def load_optional_routers():
         "system_shadow_auto_cycle",
     )
 
+    safe_include(
+        app,
+        lambda: __import__("routes.system_vector_engine", fromlist=["router"]).router,
+        "system_vector_engine",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_semantic_vector_link", fromlist=["router"]).router,
+        "semantic_vector_link",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_snapshot_engine", fromlist=["router"]).router,
+        "system_snapshot_engine",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_checkpoint_engine", fromlist=["router"]).router,
+        "system_checkpoint_engine",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_sync", fromlist=["router"]).router,
+        "system_sync",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_temporal_memory", fromlist=["router"]).router,
+        "system_temporal_memory",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_semantic_init_final", fromlist=["router"]).router,
+        "system_semantic_init_final",
+    )
+
+    safe_include(
+        app,
+        lambda: __import__("routes.system_snapshot_scheduler", fromlist=["router"]).router,
+        "system_snapshot_scheduler",
+    )
+
 # ================================================================
 # DEBUG (NO CRÍTICO)
 # ================================================================
