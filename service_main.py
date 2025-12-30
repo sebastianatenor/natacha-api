@@ -308,6 +308,12 @@ def load_optional_routers():
         "system_snapshot_scheduler",
     )
 
+    safe_include(
+        app,
+        lambda: __import__("routes.system_global_status", fromlist=["router"]).router,
+        "system_global_status",
+    )
+
 # ================================================================
 # DEBUG (NO CRÍTICO)
 # ================================================================
