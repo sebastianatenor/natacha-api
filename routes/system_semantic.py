@@ -29,3 +29,12 @@ def semantic_bootstrap(
         "semantic_mode": semantic_mode,
         "event_id": event["event_id"],
     }
+
+def semantic_status():
+    return {
+        "engine": "v17",
+        "mode": "shadow",
+        "semantic_mode": "heuristic_only",
+        "vector": "declared_only",
+        "initialized": True
+    }
