@@ -7,6 +7,7 @@ from ops.semantic.engine import get_engine
 from ops.semantic.state import SEMANTIC_STATE
 from ops.cognitive.guardrail import evaluate_guardrail
 from ops.cognitive.veracity import check_veracity
+from ops.system.runtime_probe import runtime_verification
 
 def respond(
     user_id: str,
@@ -73,7 +74,9 @@ def respond(
     # -------------------------------------------------
     # 4) Veracidad (AGENTE_VERAZ – enforcement)
     # -------------------------------------------------
-    verified = False  # PRE-ML: nunca afirmar estado real
+    runtime = runtime_verification()
+
+    verified = runtime.get("health", False) and runtime.get("system_state", False)
 
     answer, blocked = check_veracity(
         answer=answer,
@@ -90,4 +93,5 @@ def respond(
             "verified": verified,
             "blocked": blocked
         }
+        "runtime_verified": runtime
     }
