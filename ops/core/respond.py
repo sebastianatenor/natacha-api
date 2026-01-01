@@ -6,7 +6,7 @@ from ops.memory.manager import user_context_manager
 from ops.semantic.engine import get_engine
 from ops.semantic.state import SEMANTIC_STATE
 from ops.cognitive.guardrail import evaluate_guardrail
-
+from ops.cognitive.veracity import check_veracity
 
 def respond(
     user_id: str,
@@ -70,10 +70,24 @@ def respond(
         "El sistema evaluó tu mensaje correctamente."
     )
 
+    # -------------------------------------------------
+    # 4) Veracidad (AGENTE_VERAZ – enforcement)
+    # -------------------------------------------------
+    verified = False  # PRE-ML: nunca afirmar estado real
+
+    answer, blocked = check_veracity(
+        answer=answer,
+        verified=verified
+    )
+
     return {
         "answer": answer,
         "model_called": False,
         "semantic": semantic_note,
         "channel": channel,
         "perception_attached": bool(perceived_state),
+        "veracity": {
+            "verified": verified,
+            "blocked": blocked
+        }
     }
