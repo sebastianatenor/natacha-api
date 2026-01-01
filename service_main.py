@@ -1,3 +1,4 @@
+# service_main.py
 import os
 import threading
 from pathlib import Path
@@ -8,11 +9,24 @@ from fastapi.openapi.utils import get_openapi
 print("[BOOT] service_main starting")
 
 # ================================================================
-# ENV
+# ENV / CONSTANTS
 # ================================================================
-os.environ.setdefault("NATACHA_FAST_BOOT", "1")
 os.environ.setdefault("PORT", "8080")
-os.environ.setdefault("NATACHA_MEMORY_LOCAL", "/tmp/memory_store.jsonl")
+
+IS_CLOUD_RUN = bool(os.getenv("K_SERVICE"))
+CANONICAL_MEMORY_PATH = (
+    Path("/tmp/memory_store.jsonl")
+    if IS_CLOUD_RUN
+    else Path("memory_store.jsonl")
+)
+
+# ================================================================
+# GLOBAL STATE (READ-ONLY)
+# ================================================================
+COGNITIVE_RESTORE = {
+    "restored": False,
+    "reason": "not_initialized",
+}
 
 # ================================================================
 # HELPERS
@@ -23,10 +37,6 @@ def start_background(fn):
 
 
 def safe_include(app, import_fn, name: str):
-    """
-    Importa e incluye routers de forma segura.
-    Si falla, el sistema sigue vivo.
-    """
     try:
         router = import_fn()
         app.include_router(router)
@@ -35,337 +45,147 @@ def safe_include(app, import_fn, name: str):
         print(f"[ROUTER][SKIPPED] {name}: {e}")
 
 
-def _safe_reset_memory_index(reason: str = ""):
-    try:
-        from unified_core.memory_lazy import reset_memory_index
-        reset_memory_index()
-        print(f"[MEMORY] Memory index reset ({reason})")
-    except Exception as e:
-        print(f"[MEMORY][WARN] reset skipped: {e}")
-
 # ================================================================
-# CANONICAL MEMORY BOOTSTRAP (GCS → /tmp)
+# MEMORY BOOTSTRAP (GCS → LOCAL CANONICAL)
 # ================================================================
 def bootstrap_memory():
+    print("[MEMORY] bootstrap start")
+    print("[MEMORY] canonical path:", CANONICAL_MEMORY_PATH)
+
+    if not IS_CLOUD_RUN:
+        CANONICAL_MEMORY_PATH.touch(exist_ok=True)
+        print("[MEMORY] local mode → ensured file exists")
+        return
+
     try:
-        if os.getenv("K_SERVICE") is None:
-            print("[MEMORY] Local run detected, bootstrap skipped")
-            return
-
-        local_path = Path(os.getenv("NATACHA_MEMORY_LOCAL"))
-
         from google.cloud import storage
+
         client = storage.Client()
         bucket = client.bucket("natacha-memory-store")
         blob = bucket.blob("memory_store.jsonl")
 
         if blob.exists():
-            blob.download_to_filename(local_path)
-            print("[MEMORY] Canonical memory restored from GCS")
+            blob.download_to_filename(CANONICAL_MEMORY_PATH)
+            print("[MEMORY] restored from GCS")
         else:
-            local_path.touch(exist_ok=True)
-            print("[MEMORY] Empty memory initialized")
-
-        _safe_reset_memory_index("after bootstrap")
+            CANONICAL_MEMORY_PATH.touch(exist_ok=True)
+            print("[MEMORY] GCS empty → created new memory file")
 
     except Exception as e:
-        print(f"[MEMORY][ERROR] bootstrap failed: {e}")
+        print("[MEMORY][FATAL] bootstrap failed:", e)
+        CANONICAL_MEMORY_PATH.touch(exist_ok=True)
+
 
 # ================================================================
 # FASTAPI APP
 # ================================================================
 app = FastAPI(
     title="Natacha API",
-    version="BASELINE-v1.0",
+    version="PRE-ML-CANONICAL",
 )
+
 
 @app.get("/")
 def root():
-    return {"status": "ok", "engine": "natacha"}
+    return {
+        "status": "ok",
+        "engine": "natacha",
+        "mode": "pre-ml",
+    }
+
 
 # ================================================================
-# CORE ROUTERS (DEBEN EXISTIR)
+# CORE ROUTERS (MÍNIMOS, ESTABLES)
 # ================================================================
 from routes.health import router as health_router
 from routes.get_system_state import router as get_system_state_router
+from routes.ops_executive_brief import router as executive_router
+from routes.system_restore_status import router as restore_status_router
+from routes.memory_recent_canonical import router as memory_recent_router
+from routes.system_executive_state import router as executive_state_router
+from routes.system_guardrail import router as guardrail_router
 
 app.include_router(health_router)
 app.include_router(get_system_state_router)
-app.include_router(
-    __import__("routes.memory_recent", fromlist=["router"]).router
-)
-
+app.include_router(executive_router)
+app.include_router(restore_status_router)
+app.include_router(memory_recent_router)
+app.include_router(executive_state_router)
+app.include_router(guardrail_router)
 
 print("[ROUTER] core loaded")
 
 # ================================================================
-# OPTIONAL / EVOLUTIVE ROUTERS (AISLADOS)
+# AGENT INTERACT — COGNITIVE (REAL)
 # ================================================================
+from ops.agent.interact import router as agent_router
+app.include_router(agent_router)
+print("[ROUTER] cognitive agent mounted: /agent/interact")
 
+# ================================================================
+# AGENT INTERACT — PROXY HACIA NATCHA-OS
+# ================================================================
+#from fastapi import Request
+#import requests
+#
+#NATACHA_OS_URL = os.getenv(
+#    "NATACHA_OS_URL",
+#    "https://natacha-os-v7-422255208682.us-central1.run.app"
+#)
+#
+#@app.post("/agent/interact")
+#async def agent_interact_proxy(request: Request):
+#    payload = await request.json()
+#    r = requests.post(
+#        f"{NATACHA_OS_URL}/agent/interact",
+#        json=payload,
+#        timeout=30
+#    )
+#    return r.json()
+
+# ================================================================
+# OPTIONAL ROUTERS (NO BLOQUEAN)
+# ================================================================
 def load_optional_routers():
+    safe_include(app, lambda: __import__("routes.memory_recent", fromlist=["router"]).router, "memory_recent")
+    safe_include(app, lambda: __import__("routes.memory_recall", fromlist=["router"]).router, "memory_recall")
+    safe_include(app, lambda: __import__("routes.memory_note", fromlist=["router"]).router, "memory_note")
 
-    # --- SYSTEM / OPS ---
-    safe_include(
-        app,
-        lambda: __import__("routes.system_daily_snapshot", fromlist=["router"]).router,
-        "system_daily_snapshot",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_force_checkpoint", fromlist=["router"]).router,
-        "system_force_checkpoint",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_checkpoint", fromlist=["router"]).router,
-        "system_checkpoint",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_snapshot", fromlist=["router"]).router,
-        "system_snapshot",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_state_snapshot", fromlist=["router"]).router,
-        "system_state_snapshot",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_diagnose", fromlist=["router"]).router,
-        "system_diagnose",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_full_status", fromlist=["router"]).router,
-        "system_full_status",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_baseline.router", fromlist=["router"]).router,
-        "system_baseline",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_self_repair.router", fromlist=["router"]).router,
-        "system_self_repair",
-    )
-
-    # --- MEMORY ---
-    safe_include(
-        app,
-        lambda: __import__("routes.memory_recent", fromlist=["router"]).router,
-        "memory_recent",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.memory_recall", fromlist=["router"]).router,
-        "memory_recall",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.memory_note", fromlist=["router"]).router,
-        "memory_note",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_memory_diagnostic_v2", fromlist=["router"]).router,
-        "memory_diagnostic_v2",
-    )
-
-    # --- SEMANTIC ---
-    safe_include(
-        app,
-        lambda: __import__("routes.system_semantic", fromlist=["router"]).router,
-        "system_semantic",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_semantic_init", fromlist=["router"]).router,
-        "system_semantic_init",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_semantic_analyze", fromlist=["router"]).router,
-        "system_semantic_analyze",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("ops.semantic.routes", fromlist=["router"]).router,
-        "semantic_ops",
-    )
-
-    # --- SYMBOLIC / TIMELINE ---
-    safe_include(
-        app,
-        lambda: __import__("ops.symbolic.router", fromlist=["router"]).router,
-        "symbolic",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("ops.timeline.router", fromlist=["router"]).router,
-        "timeline",
-    )
-
-    # --- AGENT ---
-    safe_include(
-        app,
-        lambda: __import__("ops.agent.interact", fromlist=["router"]).router,
-        "agent_interact",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.natacha_routes", fromlist=["router"]).router,
-        "natacha_routes",
-    )
-
-    # --- V17 ENGINE ---
-    safe_include(
-        app,
-        lambda: __import__("v17.system.router", fromlist=["router"]).router,
-        "v17_orchestrator",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("v17.system.router_shadow", fromlist=["router"]).router,
-        "v17_shadow_orchestrator",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("v17.system.compare", fromlist=["router"]).router,
-        "v17_compare",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_shadow_auto_cycle", fromlist=["router"]).router,
-        "system_shadow_auto_cycle",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_vector_engine", fromlist=["router"]).router,
-        "system_vector_engine",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_semantic_vector_link", fromlist=["router"]).router,
-        "semantic_vector_link",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_snapshot_engine", fromlist=["router"]).router,
-        "system_snapshot_engine",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_checkpoint_engine", fromlist=["router"]).router,
-        "system_checkpoint_engine",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_sync", fromlist=["router"]).router,
-        "system_sync",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_temporal_memory", fromlist=["router"]).router,
-        "system_temporal_memory",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_semantic_init_final", fromlist=["router"]).router,
-        "system_semantic_init_final",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_snapshot_scheduler", fromlist=["router"]).router,
-        "system_snapshot_scheduler",
-    )
-
-    safe_include(
-        app,
-        lambda: __import__("routes.system_global_status", fromlist=["router"]).router,
-        "system_global_status",
-    )
+    safe_include(app, lambda: __import__("routes.system_global_status", fromlist=["router"]).router, "system_global_status")
+    safe_include(app, lambda: __import__("routes.system_snapshot", fromlist=["router"]).router, "system_snapshot")
+    safe_include(app, lambda: __import__("routes.system_checkpoint", fromlist=["router"]).router, "system_checkpoint")
+    safe_include(app, lambda: __import__("routes.system_sync", fromlist=["router"]).router, "system_sync")
+    safe_include(app, lambda: __import__("routes.system_capabilities", fromlist=["router"]).router, "system_capabilities")
 
 # ================================================================
-# DEBUG (NO CRÍTICO)
-# ================================================================
-
-@app.get("/__debug/memory_recent")
-def debug_memory_recent(limit: int = 20):
-    from ops.timeline.reader import read_events
-    events = read_events()
-    return {
-        "status": "ok",
-        "count": min(len(events), limit),
-        "events": events[-limit:]
-    }
-
-# ================================================================
-# STARTUP
+# STARTUP SEQUENCE (CANÓNICA)
 # ================================================================
 @app.on_event("startup")
 def on_startup():
+    global COGNITIVE_RESTORE
+
+    # 1️⃣ Bootstrap memory FIRST
     bootstrap_memory()
+
+    # 2️⃣ Load routers
     load_optional_routers()
 
+    # 3️⃣ Restore cognitive state (READ-ONLY)
     try:
-        from ops.startup.post_startup import launch_post_startup
-        start_background(launch_post_startup)
-        print("[STARTUP] post_startup launched")
-    except Exception as e:
-        print(f"[STARTUP][WARN] post_startup skipped: {e}")
+        from ops.system.restore_from_memory import restore_cognitive_state
 
-    try:
-        from ops.cognitive.startup_self_repair import attempt_startup_self_repair
-        attempt_startup_self_repair()
-        print("[STARTUP] startup self-repair evaluated")
-    except Exception as e:
-        print(f"[STARTUP][WARN] self-repair skipped: {e}")
+        COGNITIVE_RESTORE = restore_cognitive_state()
+        print("[RESTORE] result:", COGNITIVE_RESTORE)
 
-    # 🧠 B5 — Cognitive Supervisor (auto-repair proposal loop)
-    try:
-        from ops.cognitive.supervisor import supervisor_loop
-        start_background(supervisor_loop)
-        print("[SUPERVISOR] cognitive supervisor running")
     except Exception as e:
-        print(f"[SUPERVISOR][WARN] not started: {e}")
+        print("[RESTORE][ERROR]", e)
+        COGNITIVE_RESTORE = {
+            "restored": False,
+            "reason": str(e),
+        }
 
-    try:
-        from ops.startup.snapshot_scheduler import start_snapshot_scheduler
-        start_snapshot_scheduler()
-        print("[SNAPSHOT] daily scheduler active")
-    except Exception as e:
-        print(f"[SNAPSHOT][WARN] not started: {e}")
+    print("[STARTUP] system ready")
 
-    print("[STARTUP] baseline ready")
 
 # ================================================================
 # OPENAPI
@@ -376,10 +196,11 @@ def custom_openapi():
 
     schema = get_openapi(
         title="Natacha Internal API",
-        version="BASELINE-v1.0",
+        version="PRE-ML-CANONICAL",
         routes=app.routes,
     )
     app.openapi_schema = schema
     return schema
+
 
 app.openapi = custom_openapi

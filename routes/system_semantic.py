@@ -38,3 +38,13 @@ def semantic_status():
         "vector": "declared_only",
         "initialized": True
     }
+
+@router.get("/system/semantic/status")
+def semantic_status():
+    return {
+        "engine": "v17",
+        "mode": "shadow",
+        "semantic_mode": "heuristic_only",
+        "vector": "declared_only",
+        "initialized": True,
+    }

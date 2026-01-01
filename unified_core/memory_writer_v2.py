@@ -2,13 +2,10 @@ import json
 import uuid
 from datetime import datetime
 from typing import Dict, Any
-
 from unified_core.vectorstore.store import vector_store
-
-MEMORY_PATH = "memory_store.jsonl"
+from unified_core.memory_paths import get_canonical_memory_path
 
 class MemoryWriterV2:
-
     def write(self, text: str, meta: Dict[str, Any] = None, tags=None):
         meta = meta or {}
         record = {
@@ -19,14 +16,18 @@ class MemoryWriterV2:
             "tags": tags or []
         }
 
-        # --- Persistencia en memoria histórica ---
-        with open(MEMORY_PATH, "a") as f:
-            f.write(json.dumps(record) + "\n")
+        path = get_canonical_memory_path()
 
-        # --- Persistencia vectorial ---
-        vector_store.add(text, meta)
+        # Persistencia NDJSON (CANÓNICA)
+        with path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+        # Persistencia vectorial (si está activa)
+        try:
+            vector_store.add(text, meta)
+        except Exception:
+            pass
 
         return record
-
 
 memory_writer_v2 = MemoryWriterV2()

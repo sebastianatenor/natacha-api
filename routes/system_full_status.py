@@ -11,8 +11,8 @@ from ops.system.capability_reader import read_capability_manifest
 router = APIRouter(tags=["system"])
 
 
-@router.get("/ops/system/full_status")
-def system_full_status(
+@router.get("/ops/system/capabilities")
+def system_capabilities_report(
     user_id: str | None = None,
     include_semantic: bool = True,
 ):
@@ -99,7 +99,9 @@ def system_full_status(
         "timestamp": now_ts,
         "generated_at": datetime.utcnow().isoformat(),
         "mode": "A",
-        "source_of_truth": "capability_manifest > runtime > historical_memory",
+        "source_of_truth": "capability_manifest (DESIGN-TIME, NOT RUNTIME)",
+        "authoritative_runtime": "/system/status/global",
+        "warning": "This endpoint does NOT represent live system health",
         "capability_manifest": capability_manifest,
         "runtime": runtime,
         "infra": infra,
@@ -145,5 +147,7 @@ def system_full_status(
         )
 
         status["extended"] = extended
+
+    status["deprecated_for_health"] = True
 
     return status

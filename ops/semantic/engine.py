@@ -1,8 +1,7 @@
 # ops/semantic/engine.py
 
 import os
-from typing import Optional
-from sentence_transformers import SentenceTransformer
+from typing import Optional, Any
 
 from ops.semantic.schema import SemanticAnalysis, SemanticSignal
 from ops.semantic.state import SEMANTIC_STATE
@@ -28,11 +27,15 @@ class SemanticEngine:
     """
 
     def __init__(self):
-        self.model: Optional[SentenceTransformer] = None
+        # ⛔ NO tipar con SentenceTransformer (lazy + optional)
+        self.model: Optional[Any] = None
 
     def _lazy_load(self):
         if self.model is not None:
             return
+
+        # 🚫 Import pesado SOLO si se habilita semántica
+        from sentence_transformers import SentenceTransformer
 
         self.model = SentenceTransformer("all-MiniLM-L6-v2")
 
@@ -43,7 +46,7 @@ class SemanticEngine:
         )
 
     def analyze(self, text: str) -> SemanticAnalysis:
-        # Heurística básica (tu comportamiento original)
+        # Heurística básica (FASE 1)
         t = text.lower()
 
         imperative_markers = [
@@ -89,7 +92,7 @@ class SemanticEngine:
 
 
 # -------------------------------------------------
-# Singleton + status (B16 requirement)
+# Singleton + status
 # -------------------------------------------------
 
 _ENGINE: Optional[SemanticEngine] = None

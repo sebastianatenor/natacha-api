@@ -5,10 +5,7 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import unicodedata
 
-from ops.cognitive.cognitive_guardrail import (
-    CognitiveGuardrail,
-    CognitiveInput,
-)
+from ops.cognitive.guardrail import evaluate_guardrail
 
 from ops.core.respond import respond
 from ops.system.perception_provider import read_system_perception
@@ -16,7 +13,6 @@ from ops.system.baseline_provider import read_baseline
 from ops.cognitive.boot_reader import read_last_cognitive_boot
 
 router = APIRouter(prefix="/agent", tags=["agent"])
-guardrail = CognitiveGuardrail()
 
 
 # -------------------------------------------------
@@ -87,7 +83,7 @@ def _fallback_narrative(perception: Dict[str, Any]) -> str:
 def agent_interact(payload: AgentInteractRequest):
     try:
         # -------------------------------------------------
-        # 0️⃣ Estado REAL del sistema (orden jerárquico)
+        # 0️⃣ Estado REAL del sistema
         # -------------------------------------------------
         perception = read_system_perception()
         baseline = read_baseline()
@@ -98,21 +94,17 @@ def agent_interact(payload: AgentInteractRequest):
         is_state = _is_state_question(payload.message)
 
         # -------------------------------------------------
-        # 1️⃣ Guardrail cognitivo (siempre)
+        # 1️⃣ Guardrail ejecutivo PRE-ML (pasivo)
         # -------------------------------------------------
-        guardrail.evaluate(
-            CognitiveInput(
-                user_id=payload.user_id,
-                project=payload.project,
-                message=payload.message,
-            )
+        _ = evaluate_guardrail(
+            executive_state=baseline or {},
+            action="context_read"
         )
 
         # -------------------------------------------------
-        # 2️⃣ RESPUESTA DE ESTADO (baseline-aware)
+        # 2️⃣ RESPUESTA DE ESTADO
         # -------------------------------------------------
         if perception and is_state:
-            # Drift explícito (conciencia operacional)
             drift = {
                 "revision_changed": (
                     baseline.get("revision") != perception.get("revision")
@@ -129,7 +121,6 @@ def agent_interact(payload: AgentInteractRequest):
                 from ops.narrative.composer import compose_system_narrative
                 narrative = compose_system_narrative(perception)
 
-                # ⛔ Garantía fuerte de tipo
                 if not isinstance(narrative, str):
                     narrative = _fallback_narrative(perception)
 
@@ -147,7 +138,7 @@ def agent_interact(payload: AgentInteractRequest):
             )
 
         # -------------------------------------------------
-        # 3️⃣ RESPUESTA NORMAL (con estado adjunto)
+        # 3️⃣ RESPUESTA NORMAL
         # -------------------------------------------------
         result = respond(
             user_id=payload.user_id,
