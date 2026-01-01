@@ -1,0 +1,24 @@
+name: Natacha Release
+
+on:
+  push:
+    tags:
+      - stable-*
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate release notes
+        run: |
+          echo "## Natacha Release $GITHUB_REF_NAME" > release.md
+          git log -1 --pretty=format:"%h %s" >> release.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: release.md
