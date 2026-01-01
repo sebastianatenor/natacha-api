@@ -1,0 +1,52 @@
+name: Natacha CI (Stable v1)
+
+on:
+  push:
+    branches:
+      - unification/v7-brain
+    tags:
+      - stable-*
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Preflight check (imports + OpenAPI)
+        run: |
+          source venv/bin/activate
+          python - << 'PY'
+          from service_main import app
+          from ops.agent.interact import router
+          from ops.core.respond import respond
+
+          paths = app.openapi()["paths"]
+          assert "/agent/interact" in paths, "agent/interact missing"
+
+          r = respond(user_id="ci", message="estado", channel="ci")
+          assert isinstance(r, dict)
+          assert "answer" in r
+
+          print("CI PREFLIGHT OK")
+          PY
+
+      - name: Docker build (no push)
+        run: |
+          docker build -t natacha-api:ci-test .
+
