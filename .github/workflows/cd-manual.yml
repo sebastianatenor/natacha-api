@@ -1,0 +1,28 @@
+name: Natacha CD (Manual Approval)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Tag a desplegar (ej: stable-v1.0.0)"
+        required: true
+        default: "stable-v1.0.0"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout tagged version
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+
+      - name: Sanity check
+        run: |
+          grep -q "Architecture Freeze v1" ARCHITECTURE_FREEZE.md
+
+      - name: Deploy reminder
+        run: |
+          echo "Deploy manual autorizado para ${{ github.event.inputs.version }}"
+          echo "Ejecutar gcloud run deploy desde entorno controlado"
