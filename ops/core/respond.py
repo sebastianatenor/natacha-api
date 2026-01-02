@@ -81,7 +81,7 @@ def respond(
         verified=verified,
     )
 
-    blocked = veracity_result["blocked"]final_answer = veracity_result["answer"]
+    final_answer = veracity_result["answer"]
     blocked = not veracity_result["allowed"]
     
     return {
