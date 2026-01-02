@@ -64,12 +64,9 @@ def respond(
             semantic_note = None
 
     # -------------------------------------------------
-    # 3) Respuesta base (SAFE)
+    # 3) Respuesta base (AGENTE_VERAZ)
     # -------------------------------------------------
-    answer = (
-        "🧠 Canal cognitivo activo.\n\n"
-        "El sistema evaluó tu mensaje correctamente."
-    )
+    answer = message  # ← la afirmación del usuario pasa por veracity
 
     # -------------------------------------------------
     # 4) Veracidad (AGENTE_VERAZ – obligatorio)
