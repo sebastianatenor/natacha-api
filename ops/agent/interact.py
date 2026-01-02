@@ -138,22 +138,18 @@ def agent_interact(payload: AgentInteractRequest):
             )
 
         # -------------------------------------------------
-        # 3️⃣ RESPUESTA NORMAL
+        # 3️⃣ RESPUESTA NORMAL (AGENTE_VERAZ)
         # -------------------------------------------------
         result = respond(
             user_id=payload.user_id,
             message=payload.message,
             channel="agent",
-            perceived_state=perception,
+            perceived_state=None   # ✅ NUNCA INYECTAR ESTADO
         )
 
         return AgentInteractResponse(
             answer=result.get("answer", ""),
             model_called=result.get("model_called", False),
-            perceived_state={
-                "baseline": baseline,
-                "perception": perception,
-            },
         )
 
     except Exception as e:
