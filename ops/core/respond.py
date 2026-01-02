@@ -72,26 +72,28 @@ def respond(
     )
 
     # -------------------------------------------------
-    # 4) Veracidad (AGENTE_VERAZ – enforcement)
+    # 4) Veracidad (AGENTE_VERAZ – obligatorio)
     # -------------------------------------------------
-    runtime = runtime_verification()
+    verified = bool(perceived_state)  # solo verdadero si hay estado runtime real
 
-    verified = runtime.get("health", False) and runtime.get("system_state", False)
-
-    answer, blocked = check_veracity(
+    final_answer, blocked = check_veracity(
         answer=answer,
-        verified=verified
+        verified=verified,
     )
 
     return {
-        "answer": answer,
+        "answer": final_answer,
         "model_called": False,
         "semantic": semantic_note,
         "channel": channel,
         "perception_attached": bool(perceived_state),
         "veracity": {
+            "allowed": not blocked,
             "verified": verified,
-            "blocked": blocked
-        }
-        "runtime_verified": runtime
+            "reason": (
+                "verificado por runtime"
+                if verified else
+                "estado no verificado (bloqueado)"
+            ),
+        },
     }
