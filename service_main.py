@@ -216,6 +216,10 @@ def on_startup():
         source="startup",
     )
 
+    from ops.cognitive.semantic_guard import semantic_startup_guard
+
+    semantic_startup_guard()
+
     print("[STARTUP] system ready")
 
 
