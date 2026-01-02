@@ -51,7 +51,7 @@ def check_veracity(answer: str, verified: bool) -> Dict[str, object]:
                 "allowed": False,
                 "verified": False,
                 "answer": SAFE_FALLBACK,
-                "reason": "estado_no_verificado_bloqueado",
+                "reason": "estado no verificado (bloqueado)",
             }
 
     return {
