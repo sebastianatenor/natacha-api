@@ -104,6 +104,9 @@ from routes.system_restore_status import router as restore_status_router
 from routes.memory_recent_canonical import router as memory_recent_router
 from routes.system_executive_state import router as executive_state_router
 from routes.system_guardrail import router as guardrail_router
+from routes.system_state import router as system_state_router
+from ops.semantic.startup_guard import semantic_startup_guard
+from routes.semantic_status import router as semantic_status_router
 
 app.include_router(health_router)
 app.include_router(get_system_state_router)
@@ -112,6 +115,8 @@ app.include_router(restore_status_router)
 app.include_router(memory_recent_router)
 app.include_router(executive_state_router)
 app.include_router(guardrail_router)
+app.include_router(system_state_router)
+app.include_router(semantic_status_router)
 
 print("[ROUTER] core loaded")
 
@@ -164,6 +169,9 @@ def load_optional_routers():
 def on_startup():
     global COGNITIVE_RESTORE
 
+    # 0️⃣ Registrar estado semántico REAL (AGENTE_VERAZ)
+    semantic_startup_guard()
+
     # 1️⃣ Bootstrap memory FIRST
     bootstrap_memory()
 
@@ -183,6 +191,30 @@ def on_startup():
             "restored": False,
             "reason": str(e),
         }
+
+    # 4️⃣ Initialize semantic registry (VERIFIED, unloaded)
+    try:
+        from ops.cognitive.semantic_registry import register_semantic_event
+
+        register_semantic_event(
+            state="unloaded",
+            confidence="high",
+            source="startup"
+        )
+
+        print("[SEMANTIC] registry initialized (unloaded)")
+
+    except Exception as e:
+        print("[SEMANTIC][ERROR] registry init failed:", e)
+
+
+    from ops.cognitive.semantic_registry import register_semantic_event
+
+    register_semantic_event(
+        state="unloaded",
+        confidence="high",
+        source="startup",
+    )
 
     print("[STARTUP] system ready")
 
