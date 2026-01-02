@@ -76,11 +76,14 @@ def respond(
     # -------------------------------------------------
     verified = bool(perceived_state)  # solo verdadero si hay estado runtime real
 
-    final_answer, blocked = check_veracity(
+    veracity_result = check_veracity(
         answer=answer,
         verified=verified,
     )
 
+    blocked = veracity_result["blocked"]final_answer = veracity_result["answer"]
+    blocked = not veracity_result["allowed"]
+    
     return {
         "answer": final_answer,
         "model_called": False,
