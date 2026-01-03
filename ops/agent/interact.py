@@ -1,11 +1,18 @@
 # ops/agent/interact.py
-
 from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import unicodedata
 
 from ops.cognitive.guardrail import evaluate_guardrail
+from ops.cognitive.semantic_decider import decide_semantic_signal
+from ops.cognitive.permission_gate import permission_allowed
+from ops.cognitive.action_executor import execute_confirmed_action
+from ops.cognitive.pending_intent import (
+    set_pending_intent,
+    get_pending_intent,
+    clear_pending_intent,
+)
 
 from ops.core.respond import respond
 from ops.system.perception_provider import read_system_perception
@@ -43,6 +50,7 @@ def _normalize(text: str) -> str:
         .encode("ascii", "ignore")
         .decode()
         .lower()
+        .strip()
     )
 
 
@@ -60,18 +68,24 @@ def _is_state_question(message: str) -> bool:
     )
 
 
-def _fallback_narrative(perception: Dict[str, Any]) -> str:
+def _is_explicit_confirmation(message: str) -> bool:
+    msg = _normalize(message)
+    return msg in (
+        "confirmo",
+        "confirmar",
+        "si",
+        "sí",
+        "ok",
+        "adelante",
+        "adelante hacelo",
+        "hacelo",
+    )
+
+
+def _blocked_by_semantic(signal: Dict[str, Any]) -> bool:
     return (
-        "🧠 Estado actual del sistema\n\n"
-        f"• Servicio: {perception.get('service')}\n"
-        f"• Revisión: {perception.get('revision')}\n"
-        f"• Entorno: {perception.get('environment')}\n"
-        f"• Memoria canónica: "
-        f"{'activa' if perception.get('memory', {}).get('exists') else 'no disponible'}\n"
-        f"• Eventos en timeline: {perception.get('timeline', {}).get('events_total')}\n"
-        f"• Motor semántico cargado: "
-        f"{perception.get('semantic', {}).get('loaded', False)}\n\n"
-        "Sistema operativo y estable."
+        signal.get("intent") == "implicit_action"
+        and signal.get("risk_level") == "high"
     )
 
 
@@ -91,60 +105,96 @@ def agent_interact(payload: AgentInteractRequest):
         if perception is None:
             perception = read_last_cognitive_boot()
 
-        is_state = _is_state_question(payload.message)
-
         # -------------------------------------------------
         # 1️⃣ Guardrail ejecutivo PRE-ML (pasivo)
         # -------------------------------------------------
         _ = evaluate_guardrail(
             executive_state=baseline or {},
-            action="context_read"
+            action="context_read",
         )
 
         # -------------------------------------------------
-        # 2️⃣ RESPUESTA DE ESTADO
+        # 2️⃣ Pregunta de estado (NO semántica)
         # -------------------------------------------------
-        if perception and is_state:
-            drift = {
-                "revision_changed": (
-                    baseline.get("revision") != perception.get("revision")
-                    if baseline else None
-                ),
-                "semantic_expected": (
-                    baseline.get("semantic", {}).get("expected_loaded")
-                    if baseline else None
-                ),
-                "semantic_loaded": perception.get("semantic", {}).get("loaded"),
-            }
-
-            try:
-                from ops.narrative.composer import compose_system_narrative
-                narrative = compose_system_narrative(perception)
-
-                if not isinstance(narrative, str):
-                    narrative = _fallback_narrative(perception)
-
-            except Exception:
-                narrative = _fallback_narrative(perception)
-
+        if perception and _is_state_question(payload.message):
             return AgentInteractResponse(
-                answer=narrative,
+                answer="Estado del sistema disponible.",
                 model_called=False,
                 perceived_state={
                     "baseline": baseline,
                     "perception": perception,
-                    "drift": drift,
                 },
             )
 
         # -------------------------------------------------
-        # 3️⃣ RESPUESTA NORMAL (AGENTE_VERAZ)
+        # 3️⃣ Confirmación explícita (E + F)
+        # -------------------------------------------------
+
+        pending = get_pending_intent()
+
+        # ✅ Confirmación explícita SIN intención pendiente
+        if not pending and _is_explicit_confirmation(payload.message):
+            return AgentInteractResponse(
+                answer="⚠️ No hay ninguna acción pendiente para confirmar.",
+                model_called=False,
+            )
+
+        # ✅ Confirmación explícita CON intención pendiente
+        if pending and _is_explicit_confirmation(payload.message):
+            clear_pending_intent()
+            signal = pending["signal"]
+
+            if not permission_allowed(payload.user_id, signal):
+                return AgentInteractResponse(
+                    answer="⛔ No tenés permisos para ejecutar esta acción.",
+                    model_called=False,
+                    perceived_state={
+                        "blocked": "permission_denied",
+                        "signal": signal,
+                    },
+                )
+
+            execution = execute_confirmed_action(signal)
+
+            return AgentInteractResponse(
+                answer="🚀 Acción ejecutada correctamente.",
+                model_called=False,
+                perceived_state={
+                    "execution": execution,
+                },
+            )
+
+        # -------------------------------------------------
+        # 4️⃣ Decisión semántica (A + B)
+        # -------------------------------------------------
+        decision = decide_semantic_signal(payload.message)
+        signal = decision.get("signal")
+
+        if signal and _blocked_by_semantic(signal):
+            set_pending_intent(signal)
+
+            return AgentInteractResponse(
+                answer=(
+                    "⚠️ Detecté una intención implícita de acción automática.\n\n"
+                    "Para continuar, confirmá explícitamente escribiendo:\n"
+                    "👉 “confirmo” o “adelante, hacelo”"
+                ),
+                model_called=False,
+                perceived_state={
+                    "semantic": signal,
+                    "semantic_decision": decision,
+                    "pending": True,
+                },
+            )
+
+        # -------------------------------------------------
+        # 5️⃣ Respuesta normal (AGENTE_VERAZ)
         # -------------------------------------------------
         result = respond(
             user_id=payload.user_id,
             message=payload.message,
             channel="agent",
-            perceived_state=None   # ✅ NUNCA INYECTAR ESTADO
+            perceived_state=None,
         )
 
         return AgentInteractResponse(
