@@ -1,0 +1,13 @@
+displayName: "Natacha API – Healthcheck"
+monitoredResource:
+  type: uptime_url
+  labels:
+    host: natacha-api-422255208682.us-central1.run.app
+httpCheck:
+  path: /health
+  port: 443
+  useSsl: true
+timeout: 10s
+period: 60s
+selectedRegions:
+- USA
